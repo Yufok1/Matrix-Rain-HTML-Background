@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌊 Matrix Rain - Advanced Visual Control Unit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff41;
+            overflow-x: hidden;
+        }
+
+        .matrix-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95vw;
+            height: 90vh;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid #00ff41;
+            border-radius: 15px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(90deg, #00ff41, #00cc33);
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .minimize-btn {
+            background: #ffaa00;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .matrix-modal.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .matrix-modal.minimized .modal-content {
+            display: none;
+        }
+
+        .modal-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected { background: #00ff41; }
+        .status-warning { background: #ffaa00; }
+        .status-error { background: #ff4444; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .rain-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .control-group h4 {
+            color: #00ff41;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .control-item {
+            margin-bottom: 10px;
+        }
+
+        .control-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            background: #333;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .control-item input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .control-item select {
+            width: 100%;
+            background: #333;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pattern-btn {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            color: #00ff41;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pattern-btn:hover {
+            background: rgba(0, 255, 65, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .pattern-btn.active {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .rainbow-spectrum {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .spectrum-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .spectrum-color:hover {
+            transform: scale(1.2);
+        }
+
+        .spectrum-color.active {
+            border-color: #fff;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .activity-feed {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .activity-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            font-size: 12px;
+        }
+
+        .audit-canvas {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 150px;
+        }
+
+        .audit-entry {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .btn {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #00cc33;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffaa00;
+            color: #000;
+        }
+
+        .toolkit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .toolkit-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .toolkit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .toolkit-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toolkit-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .toolkit-name {
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .toolkit-status {
+            font-size: 12px;
+            color: #00ff41;
+            margin-left: auto;
+        }
+
+        .function-list {
+            list-style: none;
+            margin: 10px 0;
+        }
+
+        .function-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            font-size: 12px;
+        }
+
+        .sample-analysis {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: transparent;"></canvas>
+    
+    <div class="matrix-modal scrollbar">
+        <div class="modal-header">
+            <div>
+                🌊 Matrix Rain - Advanced Visual Control Unit
+                <span class="status-indicator status-connected"></span>
+                <span style="font-size: 14px; color: #000;">Connected</span>
+            </div>
+            <div>
+                <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
+                <button class="close-btn" onclick="closeMatrixModal()">×</button>
+            </div>
+        </div>
+
+        <div class="modal-content scrollbar">
+            <!-- Left Column -->
+            <div>
+                <!-- Core Intelligence Analysis -->
+                <div class="section">
+                    <h3>🌊 Core Intelligence Analysis</h3>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Core Function:</strong> Advanced data pattern analysis and information flow management with temporal synchronization
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>System Status:</strong>
+                        <span class="status-indicator status-connected"></span>
+                        <span>Connected | Last Ping: 1s ago | Connections: 5</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">99.2%</div>
+                            <div class="metric-label">Pattern Integrity</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">7.43</div>
+                            <div class="metric-label">TB/s Flow Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">5</div>
+                            <div class="metric-label">Active Patterns</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rain Pattern Controls -->
+                <div class="section">
+                    <h3>🌧️ Rain Pattern Controls</h3>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" onclick="toggleMatrixRain()" style="background: #00ff41; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🌊 Toggle Matrix Rain
+                        </button>
+                        <button class="btn btn-danger" onclick="emergencyStop()" style="margin-left: 10px;">
+                            🛑 Emergency Stop
+                        </button>
+                        <button class="btn" onclick="activateChaosRandomizer()" style="background: #ff00ff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            🌀 CHAOS RANDOMIZER
+                        </button>
+                    </div>
+                    <div class="pattern-grid">
+                        <button class="pattern-btn active" onclick="setRainPattern('classic')">Classic Matrix</button>
+                        <button class="pattern-btn" onclick="setRainPattern('rainbow')">Rainbow Spectrum</button>
+                        <button class="pattern-btn" onclick="setRainPattern('pentad')">Pentad Prism</button>
+                        <button class="pattern-btn" onclick="setRainPattern('chaos')">Chaos Flow</button>
+                        <button class="pattern-btn" onclick="setRainPattern('harmonic')">Harmonic Waves</button>
+                    </div>
+                </div>
+
+                <!-- Visual Controls -->
+                <div class="section">
+                    <h3>🎨 Visual Controls</h3>
+                    <div class="rain-controls">
+                        <div class="control-group">
+                            <h4>Speed & Intensity</h4>
+                            <div class="control-item">
+                                <label>Rain Speed</label>
+                                <input type="range" id="rainSpeed" min="1" max="100" value="35" onchange="updateRainSpeed()">
+                            </div>
+                            <div class="control-item">
+                                <label>Intensity</label>
+                                <input type="range" id="rainIntensity" min="1" max="100" value="70" onchange="updateRainIntensity()">
+                            </div>
+                            <div class="control-item">
+                                <label>Density</label>
+                                <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Colors & Effects</h4>
+                            <div class="control-item">
+                                <label>Primary Color</label>
+                                <input type="color" id="primaryColor" value="#00ff41" onchange="updateRainColors()">
+                            </div>
+                            <div class="control-item">
+                                <label>Secondary Color</label>
+                                <input type="color" id="secondaryColor" value="#00cc33" onchange="updateRainColors()">
+                            </div>
+                            <div class="control-item">
+                                <label>Opacity</label>
+                                <input type="range" id="rainOpacity" min="0" max="100" value="30" onchange="updateRainOpacity()">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Rainbow Spectrum</h4>
+                            <div class="rainbow-spectrum">
+                                <div class="spectrum-color active" style="background: #ff0000;" onclick="setSpectrumColor('#ff0000')"></div>
+                                <div class="spectrum-color" style="background: #ff8000;" onclick="setSpectrumColor('#ff8000')"></div>
+                                <div class="spectrum-color" style="background: #ffff00;" onclick="setSpectrumColor('#ffff00')"></div>
+                                <div class="spectrum-color" style="background: #00ff00;" onclick="setSpectrumColor('#00ff00')"></div>
+                                <div class="spectrum-color" style="background: #0080ff;" onclick="setSpectrumColor('#0080ff')"></div>
+                                <div class="spectrum-color" style="background: #8000ff;" onclick="setSpectrumColor('#8000ff')"></div>
+                                <div class="spectrum-color" style="background: #ff0080;" onclick="setSpectrumColor('#ff0080')"></div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Pattern Settings</h4>
+                            <div class="control-item">
+                                <label>Font Size</label>
+                                <input type="range" id="fontSize" min="8" max="24" value="10" onchange="updateFontSize()">
+                            </div>
+                            <div class="control-item">
+                                <label>Character Set</label>
+                                <select id="characterSet" onchange="updateCharacterSet()">
+                                    <option value="matrix">Matrix (A-Z, 0-9, @#$)</option>
+                                    <option value="binary">Binary (01)</option>
+                                    <option value="hex">Hexadecimal (0-F)</option>
+                                    <option value="symbols">Symbols (@#$%^&*)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label>Direction</label>
+                                <select id="rainDirection" onchange="updateRainDirection()">
+                                    <option value="down">Down</option>
+                                    <option value="up">Up</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                    <option value="diagonal">Diagonal</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Toolkit Integration -->
+                <div class="section">
+                    <h3>🛠️ Toolkit Integration</h3>
+                    <div class="toolkit-grid">
+                        <div class="toolkit-card">
+                            <div class="toolkit-header">
+                                <span class="toolkit-icon">🔬</span>
+                                <span class="toolkit-name">Kleene Convergence</span>
+                                <span class="toolkit-status">Ready</span>
+                            </div>
+                            <ul class="function-list">
+                                <li>• analyzeRecursiveConvergence</li>
+                                <li>• detectFixedPoints</li>
+                                <li>• applyKleeneStar</li>
+                            </ul>
+                            <div class="sample-analysis" id="kleene-result">
+                                Recursive convergence detected with 85% confidence
+                            </div>
+                            <button class="btn" onclick="activatePatternAnalysis()" style="margin-top: 10px; width: 100%;">🔬 Activate Analysis</button>
+                        </div>
+
+                        <div class="toolkit-card">
+                            <div class="toolkit-header">
+                                <span class="toolkit-icon">🔥</span>
+                                <span class="toolkit-name">Phoenix Resurrection</span>
+                                <span class="toolkit-status">Ready</span>
+                            </div>
+                            <ul class="function-list">
+                                <li>• resurrectData</li>
+                                <li>• forgeNewStructures</li>
+                                <li>• applyTemporalHealing</li>
+                            </ul>
+                            <div class="sample-analysis" id="phoenix-result">
+                                Data resurrected through Phoenix protocols: 11 elements restored
+                            </div>
+                            <button class="btn" onclick="resurrectVisualData()" style="margin-top: 10px; width: 100%;">🔥 Resurrect Data</button>
+                        </div>
+
+                        <div class="toolkit-card">
+                            <div class="toolkit-header">
+                                <span class="toolkit-icon">🔥</span>
+                                <span class="toolkit-name">Harmonic Purveyor</span>
+                                <span class="toolkit-status">Ready</span>
+                            </div>
+                            <ul class="function-list">
+                                <li>• setMood</li>
+                                <li>• integratePatterns</li>
+                                <li>• synchronizeSystems</li>
+                            </ul>
+                            <div class="sample-analysis" id="harmonic-result">
+                                Mood shifted to bonfire - flame encapsulation updated
+                            </div>
+                            <button class="btn" onclick="harmonizePatterns()" style="margin-top: 10px; width: 100%;">🔥 Harmonize</button>
+                        </div>
+
+                        <div class="toolkit-card">
+                            <div class="toolkit-header">
+                                <span class="toolkit-icon">🌬️</span>
+                                <span class="toolkit-name">Breath Echo Chamber</span>
+                                <span class="toolkit-status">Ready</span>
+                            </div>
+                            <ul class="function-list">
+                                <li>• analyzeBreathPatterns</li>
+                                <li>• createEchoChamber</li>
+                                <li>• detectTemporalEchoes</li>
+                            </ul>
+                            <div class="sample-analysis" id="breath-result">
+                                Breath pattern detected: 73.2 temporal cycles
+                            </div>
+                            <button class="btn" onclick="createEchoChamber()" style="margin-top: 10px; width: 100%;">🌬️ Create Echo</button>
+                        </div>
+
+                        <div class="toolkit-card">
+                            <div class="toolkit-header">
+                                <span class="toolkit-icon">🔮</span>
+                                <span class="toolkit-name">Symbolic Archetype</span>
+                                <span class="toolkit-status">Ready</span>
+                            </div>
+                            <ul class="function-list">
+                                <li>• interpretArchetypalSymbol</li>
+                                <li>• decodeSymbolicPatterns</li>
+                                <li>• extractDeepMeaning</li>
+                            </ul>
+                            <div class="sample-analysis" id="symbolic-result">
+                                Archetypal symbol interpreted: matrix - 67% archetypal resonance
+                            </div>
+                            <button class="btn" onclick="interpretSymbols()" style="margin-top: 10px; width: 100%;">🔮 Interpret</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Controls -->
+                <div class="section">
+                    <h3>🎛️ Advanced Controls</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                        <button class="btn" onclick="activatePatternAnalysis()">🔬 Pattern Analysis</button>
+                        <button class="btn" onclick="resurrectVisualData()">🔥 Resurrect Data</button>
+                        <button class="btn" onclick="harmonizePatterns()">🔥 Harmonize</button>
+                        <button class="btn" onclick="createEchoChamber()">🌬️ Echo Chamber</button>
+                        <button class="btn" onclick="interpretSymbols()">🔮 Interpret</button>
+                        <button class="btn" onclick="optimizeFlow()">⚡ Optimize Flow</button>
+                        <button class="btn" onclick="backupVisualState()">💾 Backup State</button>
+                        <button class="btn" onclick="restoreVisualState()">🔄 Restore</button>
+                        <button class="btn btn-warning" onclick="emergencyStop()">🚨 Emergency Stop</button>
+                    </div>
+                </div>
+
+                <!-- Real-time Activity Feed -->
+                <div class="section">
+                    <h3>📊 Real-time Activity Feed</h3>
+                    <div class="activity-feed">
+                        <div class="activity-item">🌊 Matrix rain pattern initialized</div>
+                        <div class="activity-item">🔬 Pattern analysis in progress</div>
+                        <div class="activity-item">🔥 Visual data harmonization active</div>
+                        <div class="activity-item">🌬️ Echo chamber patterns detected</div>
+                        <div class="activity-item">🔮 Symbolic interpretation complete</div>
+                        <div class="activity-item">⚡ Flow optimization applied</div>
+                        <div class="activity-item">💾 Visual state backup created</div>
+                        <div class="activity-item">🔄 Pattern restoration successful</div>
+                        <div class="activity-item">🎨 Color spectrum updated</div>
+                        <div class="activity-item">🌧️ Rain intensity adjusted</div>
+                    </div>
+                </div>
+
+                <!-- Audit Canvas -->
+                <div class="section">
+                    <h3>🛡️ 🌊 Matrix Rain Auditing Canvas</h3>
+                    <div class="audit-canvas">
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🔬 Kleene engine: Recursive pattern analysis for visual flows
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🔥 Phoenix forge: Visual data resurrection protocols
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🔥 Harmonic purveyor: Pattern harmonization and synchronization
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🌬️ Breath echo: Temporal visual pattern analysis
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🔮 Symbolic nexus: Visual archetype interpretation
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 📊 Data correlation: Cross-pattern visual analysis
+                        </div>
+                        <div class="audit-entry">
+                            [🌊 Matrix Rain] 🛡️ Meta-audit: Visual integrity verification
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === MATRIX RAIN ADVANCED VISUAL CONTROL ENGINE ===
+        const MatrixRainEngine = {
+            // Rain configuration
+            rainConfig: {
+                pattern: 'classic',
+                speed: 35,
+                intensity: 70,
+                density: 50,
+                primaryColor: '#00ff41',
+                secondaryColor: '#00cc33',
+                opacity: 30,
+                fontSize: 10,
+                characterSet: 'matrix',
+                direction: 'down',
+                spectrumColor: '#ff0000'
+            },
+            
+            // Pattern definitions
+            patterns: {
+                classic: {
+                    name: 'Classic Matrix',
+                    description: 'Traditional matrix rain effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down'
+                },
+                reverse: {
+                    name: 'Reverse Flow',
+                    description: 'Matrix rain flowing upward',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'up'
+                },
+                sideways: {
+                    name: 'Sideways Flow',
+                    description: 'Matrix rain flowing horizontally',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'left'
+                },
+                bidirectional: {
+                    name: 'Bidirectional',
+                    description: 'Matrix rain flowing in two directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'bidirectional'
+                },
+                quadirectional: {
+                    name: 'Quadirectional',
+                    description: 'Matrix rain flowing in four directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'quadirectional'
+                },
+                interdimensional: {
+                    name: 'Interdimensional',
+                    description: 'Multi-dimensional matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'interdimensional'
+                },
+                rainbow: {
+                    name: 'Rainbow Spectrum',
+                    description: 'Rainbow-colored matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down',
+                    colors: ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080']
+                },
+                pentad: {
+                    name: 'Pentad Prism',
+                    description: 'Five-dimensional prism effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'pentad'
+                },
+                chaos: {
+                    name: 'Chaos Flow',
+                    description: 'Chaotic matrix rain patterns',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'chaos'
+                },
+                harmonic: {
+                    name: 'Harmonic Waves',
+                    description: 'Harmonically synchronized rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'harmonic'
+                }
+            },
+            
+            // === LOGGING FUNCTIONS ===
+            logActivity(message, type = 'info') {
+                console.log(`🌊 Matrix Rain: ${message}`);
+                try {
+                    this.addActivity(message, type === 'success');
+                    this.addAuditEntry(`[🌊 Matrix Rain] ${message}`);
+                } catch (error) {
+                    console.log(`🌊 Matrix Rain: ${message} (UI elements not ready)`);
+                }
+            },
+
+            // === PATTERN CONTROL FUNCTIONS ===
+            setRainPattern(pattern) {
+                console.log(`🌊 Matrix Rain: Setting pattern to ${pattern}`);
+                
+                // Update active button
+                document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                this.rainConfig.pattern = pattern;
+                const patternData = this.patterns[pattern];
+                
+                this.addActivity(`🌧️ Rain pattern changed to: ${patternData.name}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Pattern changed: ${patternData.name} - ${patternData.description}`);
+                
+                // Apply pattern-specific settings
+                this.applyPatternSettings(pattern);
+                
+                return `Pattern set to: ${patternData.name}`;
+            },
+
+            applyPatternSettings(pattern) {
+                const patternData = this.patterns[pattern];
+                
+                // Update character set
+                if (patternData.characters) {
+                    this.rainConfig.characterSet = patternData.characters;
+                    document.getElementById('characterSet').value = 'custom';
+                }
+                
+                // Update direction
+                if (patternData.direction) {
+                    this.rainConfig.direction = patternData.direction;
+                    document.getElementById('rainDirection').value = patternData.direction;
+                }
+                
+                // Apply special effects
+                if (pattern === 'rainbow') {
+                    this.applyRainbowEffect();
+                } else if (pattern === 'pentad') {
+                    this.applyPentadEffect();
+                } else if (pattern === 'chaos') {
+                    this.applyChaosEffect();
+                } else if (pattern === 'harmonic') {
+                    this.applyHarmonicEffect();
+                }
+            },
+
+            applyRainbowEffect() {
+                console.log("🌈 Applying rainbow spectrum effect...");
+                this.addActivity("🌈 Rainbow spectrum effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌈 Rainbow spectrum effect activated");
+            },
+
+            applyPentadEffect() {
+                console.log("🔮 Applying pentad prism effect...");
+                this.addActivity("🔮 Pentad prism effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🔮 Pentad prism effect activated");
+            },
+
+            applyChaosEffect() {
+                console.log("🌀 Applying chaos flow effect...");
+                this.addActivity("🌀 Chaos flow effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌀 Chaos flow effect activated");
+            },
+
+            applyHarmonicEffect() {
+                console.log("🎵 Applying harmonic wave effect...");
+                this.addActivity("🎵 Harmonic wave effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🎵 Harmonic wave effect activated");
+            },
+
+            // === VISUAL CONTROL FUNCTIONS ===
+            updateRainSpeed() {
+                const speed = document.getElementById('rainSpeed').value;
+                this.rainConfig.speed = parseInt(speed);
+                this.addActivity(`⚡ Rain speed updated to: ${speed}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Speed updated: ${speed}`);
+            },
+
+            updateRainIntensity() {
+                const intensity = document.getElementById('rainIntensity').value;
+                this.rainConfig.intensity = parseInt(intensity);
+                this.addActivity(`🔥 Rain intensity updated to: ${intensity}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔥 Intensity updated: ${intensity}%`);
+            },
+
+            updateRainDensity() {
+                const density = document.getElementById('rainDensity').value;
+                this.rainConfig.density = parseInt(density);
+                this.addActivity(`🌧️ Rain density updated to: ${density}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Density updated: ${density}%`);
+            },
+
+            updateRainColors() {
+                const primary = document.getElementById('primaryColor').value;
+                const secondary = document.getElementById('secondaryColor').value;
+                this.rainConfig.primaryColor = primary;
+                this.rainConfig.secondaryColor = secondary;
+                this.addActivity(`🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`);
+            },
+
+            updateRainOpacity() {
+                const opacity = document.getElementById('rainOpacity').value;
+                this.rainConfig.opacity = parseInt(opacity);
+                this.addActivity(`👁️ Opacity updated to: ${opacity}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 👁️ Opacity updated: ${opacity}%`);
+            },
+
+            updateFontSize() {
+                const fontSize = document.getElementById('fontSize').value;
+                this.rainConfig.fontSize = parseInt(fontSize);
+                this.addActivity(`📝 Font size updated to: ${fontSize}px`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 📝 Font size updated: ${fontSize}px`);
+            },
+
+            updateCharacterSet() {
+                const characterSet = document.getElementById('characterSet').value;
+                this.rainConfig.characterSet = characterSet;
+                this.addActivity(`🔤 Character set updated to: ${characterSet}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔤 Character set updated: ${characterSet}`);
+            },
+
+            updateRainDirection() {
+                const direction = document.getElementById('rainDirection').value;
+                this.rainConfig.direction = direction;
+                this.addActivity(`➡️ Rain direction updated to: ${direction}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ➡️ Direction updated: ${direction}`);
+            },
+
+            setSpectrumColor(color) {
+                document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                this.rainConfig.primaryColor = color;
+                this.rainConfig.secondaryColor = color;
+                this.addActivity(`🌈 Spectrum color set to: ${color}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌈 Spectrum color: ${color}`);
+            },
+
+            // === TOOLKIT INTEGRATION FUNCTIONS ===
+            activatePatternAnalysis() {
+                const result = toolkits.kleene.functions.analyzeRecursiveConvergence("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('kleene-result').textContent = result;
+            },
+
+            resurrectVisualData() {
+                const result = toolkits.phoenix.functions.resurrectData("visual_data");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('phoenix-result').textContent = result;
+            },
+
+            harmonizePatterns() {
+                const result = toolkits.harmonic.functions.integratePatterns("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('harmonic-result').textContent = result;
+            },
+
+            createEchoChamber() {
+                const result = toolkits.breath.functions.createEchoChamber("matrix_echoes");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('breath-result').textContent = result;
+            },
+
+            interpretSymbols() {
+                const result = toolkits.symbolic.functions.interpretArchetypalSymbol("matrix");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('symbolic-result').textContent = result;
+            },
+
+            optimizeFlow() {
+                console.log("⚡ Matrix Rain: Optimizing flow...");
+                
+                const optimization = Math.floor(Math.random() * 20) + 80;
+                const efficiency = Math.floor(Math.random() * 15) + 85;
+                
+                this.addActivity(`⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`);
+                
+                return `Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`;
+            },
+
+            backupVisualState() {
+                console.log("💾 Matrix Rain: Backing up visual state...");
+                
+                const backupSize = Math.floor(Math.random() * 1000) + 100;
+                const redundancy = Math.floor(Math.random() * 100);
+                
+                this.addActivity(`💾 Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 💾 Visual backup: ${backupSize}MB, ${redundancy}% redundancy`);
+                
+                return `Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`;
+            },
+
+            restoreVisualState() {
+                console.log("🔄 Matrix Rain: Restoring visual state...");
+                
+                const restoreTime = Math.floor(Math.random() * 3000) + 1000;
+                
+                this.addActivity(`🔄 Visual state restore initiated (${restoreTime}ms)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔄 Visual restore initiated: ${restoreTime}ms`);
+                
+                setTimeout(() => {
+                    this.addActivity('🔄 Visual state restore completed', true);
+                    this.addAuditEntry('[🌊 Matrix Rain] 🔄 Visual restore completed');
+                }, restoreTime);
+                
+                return `Visual state restore initiated (${restoreTime}ms)`;
+            },
+
+            emergencyStop() {
+                console.log("🚨 Matrix Rain: Emergency stop initiated...");
+                
+                this.addActivity('🚨 EMERGENCY STOP INITIATED!', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🚨 Emergency stop protocol executed');
+                
+                setTimeout(() => {
+                    alert('Emergency stop completed. All visual patterns safely halted.');
+                }, 2000);
+                
+                return 'Emergency stop initiated';
+            },
+
+            // === UTILITY FUNCTIONS ===
+            addActivity(message, isRecent = false) {
+                const activityFeed = document.querySelector('.activity-feed');
+                if (!activityFeed) {
+                    console.log(`🌊 Matrix Rain: ${message} (activity feed not found)`);
+                    return;
+                }
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+                activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+                if (activityFeed.children.length > 20) {
+                    activityFeed.removeChild(activityFeed.lastChild);
+                }
+                if (isRecent) {
+                    setTimeout(() => {
+                        activityItem.classList.remove('recent');
+                    }, 5000);
+                }
+            },
+
+            addAuditEntry(message) {
+                const auditCanvas = document.querySelector('.audit-canvas');
+                if (!auditCanvas) {
+                    console.log(`🌊 Matrix Rain: ${message} (audit canvas not found)`);
+                    return;
+                }
+                const auditEntry = document.createElement('div');
+                auditEntry.className = 'audit-entry';
+                auditEntry.textContent = message;
+                auditCanvas.insertBefore(auditEntry, auditCanvas.firstChild);
+                if (auditCanvas.children.length > 15) {
+                    auditCanvas.removeChild(auditCanvas.lastChild);
+                }
+            },
+
+            // === INITIALIZATION ===
+            init() {
+                this.addActivity('🌊 Matrix Rain Advanced Visual Control Unit initialized', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🌊 Advanced Visual Control Unit initialized');
+                console.log("🌊 Matrix Rain Advanced Visual Control Unit initialized");
+            }
+        };
+
+        // === GLOBAL FUNCTIONS FOR BUTTON INTERACTIONS ===
+        function setRainPattern(pattern) { MatrixRainEngine.setRainPattern(pattern); }
+        function updateRainSpeed() { MatrixRainEngine.updateRainSpeed(); }
+        function updateRainIntensity() { MatrixRainEngine.updateRainIntensity(); }
+        function updateRainDensity() { MatrixRainEngine.updateRainDensity(); }
+        function updateRainColors() { MatrixRainEngine.updateRainColors(); }
+        function updateRainOpacity() { MatrixRainEngine.updateRainOpacity(); }
+        function updateFontSize() { MatrixRainEngine.updateFontSize(); }
+        function updateCharacterSet() { MatrixRainEngine.updateCharacterSet(); }
+        function updateRainDirection() { MatrixRainEngine.updateRainDirection(); }
+        function setSpectrumColor(color) { MatrixRainEngine.setSpectrumColor(color); }
+        function activatePatternAnalysis() { MatrixRainEngine.activatePatternAnalysis(); }
+        function resurrectVisualData() { MatrixRainEngine.resurrectVisualData(); }
+        function harmonizePatterns() { MatrixRainEngine.harmonizePatterns(); }
+        function createEchoChamber() { MatrixRainEngine.createEchoChamber(); }
+        function interpretSymbols() { MatrixRainEngine.interpretSymbols(); }
+        function optimizeFlow() { MatrixRainEngine.optimizeFlow(); }
+        function backupVisualState() { MatrixRainEngine.backupVisualState(); }
+        function restoreVisualState() { MatrixRainEngine.restoreVisualState(); }
+        function emergencyStop() { MatrixRainEngine.emergencyStop(); }
+
+        function closeMatrixModal() {
+            const modal = document.querySelector('.matrix-modal');
+            modal.style.display = 'none';
+        }
+
+        function toggleMatrixModal() {
+            const modal = document.querySelector('.matrix-modal');
+            const minimizeBtn = document.getElementById('minimizeBtn');
+            
+            if (modal.classList.contains('minimized')) {
+                modal.classList.remove('minimized');
+                minimizeBtn.textContent = '−';
+                minimizeBtn.title = 'Minimize utilities to see matrix rain';
+            } else {
+                modal.classList.add('minimized');
+                minimizeBtn.textContent = '+';
+                minimizeBtn.title = 'Maximize utilities panel';
+            }
+        }
+
+        // === MATRIX RAIN ANIMATION ENGINE ===
+        let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
+        
+        function initMatrixRain() {
+            console.log("🌊 Matrix Rain: Initializing animation...");
+            matrixCanvas = document.getElementById('matrixRainCanvas');
+            if (!matrixCanvas) {
+                console.error("🌊 Matrix Rain: Canvas element not found!");
+                return;
+            }
+            matrixCtx = matrixCanvas.getContext('2d');
+            if (!matrixCtx) {
+                console.error("🌊 Matrix Rain: Could not get canvas context!");
+                return;
+            }
+            console.log("🌊 Matrix Rain: Canvas initialized successfully");
+            
+            // Ensure canvas is visible
+            matrixCanvas.style.display = 'block';
+            matrixCanvas.style.opacity = '0.8';
+            console.log("🌊 Matrix Rain: Canvas visibility set to:", matrixCanvas.style.display, "opacity:", matrixCanvas.style.opacity);
+            
+            // Set canvas size
+            function resizeCanvas() {
+                matrixCanvas.width = window.innerWidth;
+                matrixCanvas.height = window.innerHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Initialize drops
+            const fontSize = MatrixRainEngine.rainConfig.fontSize;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            matrixDrops = [];
+            
+            for (let i = 0; i < columns; i++) {
+                matrixDrops[i] = Math.random() * -100;
+            }
+            
+            console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
+            
+            // Start animation
+            startMatrixAnimation();
+        }
+        
+        function startMatrixAnimation() {
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+            }
+            
+            const speed = MatrixRainEngine.rainConfig.speed;
+            console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
+            matrixInterval = setInterval(drawMatrixRain, speed);
+            console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
+        }
+        
+        function drawMatrixRain() {
+            const config = MatrixRainEngine.rainConfig;
+            const fontSize = config.fontSize;
+            const opacity = config.opacity / 100;
+            
+            // Debug: Log first few calls
+            if (!window.drawCount) window.drawCount = 0;
+            window.drawCount++;
+            if (window.drawCount <= 5) {
+                console.log(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
+            }
+            
+            // Clear canvas with fade effect
+            matrixCtx.fillStyle = `rgba(0, 0, 0, ${0.05})`;
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            
+            // Set font
+            matrixCtx.font = `${fontSize}px monospace`;
+            
+            // Get character set
+            let characters = config.characterSet;
+            if (characters === 'matrix') {
+                characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}';
+            } else if (characters === 'binary') {
+                characters = '01';
+            } else if (characters === 'hex') {
+                characters = '0123456789ABCDEF';
+            } else if (characters === 'symbols') {
+                characters = '@#$%^&*()_+-=[]{}|;:,.<>?';
+            }
+            
+            // Draw rain based on pattern
+            if (config.pattern === 'rainbow') {
+                drawRainbowRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'pentad') {
+                drawPentadRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'chaos') {
+                drawChaosRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'harmonic') {
+                drawHarmonicRain(characters, fontSize, opacity);
+            } else {
+                drawClassicRain(characters, fontSize, opacity);
+            }
+        }
+        
+        function drawClassicRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            
+            // Debug: Log drawing info for first few frames
+            if (window.drawCount <= 3) {
+                console.log(`🌊 Matrix Rain: Drawing ${columns} columns, color: ${config.primaryColor}, opacity: ${opacity}`);
+            }
+            
+            for (let i = 0; i < columns; i++) {
+                // Random character
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                
+                // Position
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                
+                // Color based on pattern
+                let color = config.primaryColor;
+                if (config.pattern === 'reverse') {
+                    color = config.secondaryColor;
+                }
+                
+                // Draw character
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                // Update drop position
+                if (config.pattern === 'reverse') {
+                    matrixDrops[i] -= 1;
+                    if (matrixDrops[i] * fontSize < 0) {
+                        matrixDrops[i] = matrixCanvas.height / fontSize;
+                    }
+                } else {
+                    matrixDrops[i] += 1;
+                    if (matrixDrops[i] * fontSize > matrixCanvas.height) {
+                        matrixDrops[i] = 0;
+                    }
+                }
+            }
+        }
+        
+        function drawRainbowRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
+            
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                
+                // Rainbow color cycling
+                const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
+                const color = colors[colorIndex];
+                
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                matrixDrops[i] += 1;
+                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
+                    matrixDrops[i] = 0;
+                }
+            }
+        }
+        
+        function drawPentadRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                
+                // Pentad prism effect - 5 different colors
+                const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+                const colorIndex = i % 5;
+                const color = pentadColors[colorIndex];
+                
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                // Add some variation to speed
+                matrixDrops[i] += 0.5 + Math.random() * 0.5;
+                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
+                    matrixDrops[i] = 0;
+                }
+            }
+        }
+        
+        function drawChaosRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize + (Math.random() - 0.5) * 10; // Random x offset
+                const y = matrixDrops[i] * fontSize;
+                
+                // Chaotic color changes
+                const hue = (Date.now() + i * 50) % 360;
+                const color = `hsl(${hue}, 100%, 50%)`;
+                
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                // Chaotic speed
+                matrixDrops[i] += 0.2 + Math.random() * 1.5;
+                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
+                    matrixDrops[i] = Math.random() * -50;
+                }
+            }
+        }
+        
+        function drawHarmonicRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                
+                // Harmonic wave effect
+                const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
+                const harmonicY = y + wave;
+                
+                // Harmonic color
+                const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
+                const color = `hsl(${hue}, 100%, 50%)`;
+                
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, harmonicY);
+                
+                matrixDrops[i] += 0.8;
+                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
+                    matrixDrops[i] = 0;
+                }
+            }
+        }
+        
+        // === CONTROL FUNCTIONS ===
+        function updateRainConfig() {
+            const config = MatrixRainEngine.rainConfig;
+            console.log('Matrix Rain Config Updated:', config);
+            MatrixRainEngine.logActivity('Configuration updated', 'info');
+            
+            // Update animation with new settings
+            if (matrixInterval) {
+                startMatrixAnimation();
+            }
+        }
+        
+        function toggleMatrixRain() {
+            const canvas = document.getElementById('matrixRainCanvas');
+            if (canvas.style.display === 'none') {
+                canvas.style.display = 'block';
+                startMatrixAnimation();
+                MatrixRainEngine.logActivity('Matrix rain activated', 'success');
+            } else {
+                canvas.style.display = 'none';
+                if (matrixInterval) {
+                    clearInterval(matrixInterval);
+                }
+                MatrixRainEngine.logActivity('Matrix rain deactivated', 'warning');
+            }
+        }
+        
+        function emergencyStop() {
+            const canvas = document.getElementById('matrixRainCanvas');
+            canvas.style.display = 'none';
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+            }
+            MatrixRainEngine.logActivity('EMERGENCY STOP: Matrix rain terminated', 'error');
+        }
+        
+        function setRainPattern(pattern) {
+            MatrixRainEngine.rainConfig.pattern = pattern;
+            updateRainConfig();
+            
+            // Update active button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function updateRainSpeed() {
+            const speed = document.getElementById('rainSpeed').value;
+            MatrixRainEngine.rainConfig.speed = 101 - speed; // Invert for intuitive control
+            updateRainConfig();
+        }
+        
+        function updateRainIntensity() {
+            const intensity = document.getElementById('rainIntensity').value;
+            MatrixRainEngine.rainConfig.intensity = intensity;
+            updateRainConfig();
+        }
+        
+        function updateRainDensity() {
+            const density = document.getElementById('rainDensity').value;
+            MatrixRainEngine.rainConfig.density = density;
+            updateRainConfig();
+        }
+        
+        function updateRainColors() {
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            MatrixRainEngine.rainConfig.primaryColor = primary;
+            MatrixRainEngine.rainConfig.secondaryColor = secondary;
+            updateRainConfig();
+        }
+        
+        function updateRainOpacity() {
+            const opacity = document.getElementById('rainOpacity').value;
+            MatrixRainEngine.rainConfig.opacity = opacity;
+            updateRainConfig();
+        }
+        
+        function updateFontSize() {
+            const fontSize = document.getElementById('fontSize').value;
+            MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
+            updateRainConfig();
+        }
+        
+        function updateCharacterSet() {
+            const characterSet = document.getElementById('characterSet').value;
+            MatrixRainEngine.rainConfig.characterSet = characterSet;
+            updateRainConfig();
+        }
+        
+        function updateRainDirection() {
+            const direction = document.getElementById('rainDirection').value;
+            MatrixRainEngine.rainConfig.direction = direction;
+            updateRainConfig();
+        }
+        
+        function setSpectrumColor(color) {
+            document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            MatrixRainEngine.rainConfig.primaryColor = color;
+            updateRainConfig();
+        }
+
+        // === INITIALIZATION ===
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🌊 Matrix Rain: DOM loaded, initializing...");
+            MatrixRainEngine.init();
+            
+            // Wait a bit for the engine to initialize, then start the rain
+            setTimeout(() => {
+                initMatrixRain();
+                console.log("🌊 Matrix Rain: Animation engine initialized");
+            }, 100);
+        });
+
+        // === TOOLKIT INTEGRATION ===
+        const toolkits = {
+            kleene: {
+                name: "🔬 Kleene Convergence Engine",
+                description: "Recursive Pattern Detection and Fixed Point Analysis",
+                functions: {
+                    analyzeRecursiveConvergence: (input) => {
+                        return "Recursive convergence detected with " + Math.floor(Math.random() * 100) + "% confidence";
+                    },
+                    detectFixedPoints: (input) => {
+                        return "Fixed point identified: " + input.length + " dimensional stability";
+                    },
+                    applyKleeneStar: (input) => {
+                        return "Kleene star expansion: " + Math.pow(2, input.length) + " possible patterns";
+                    }
+                },
+                status: "Ready",
+                utilization: 0,
+                depth: "Surface Analysis"
+            },
+            phoenix: {
+                name: "🔥 Phoenix Resurrection Forge",
+                description: "Data Restoration and Temporal Healing",
+                functions: {
+                    resurrectData: (input) => {
+                        return "Data resurrected through Phoenix protocols: " + input.length + " elements restored";
+                    },
+                    forgeNewStructures: (input) => {
+                        return "New structures forged: " + Math.floor(Math.random() * 100) + " integrity points";
+                    },
+                    applyTemporalHealing: (input) => {
+                        return "Temporal healing applied: " + input.length + " temporal wounds mended";
+                    }
+                },
+                status: "Ready",
+                utilization: 0,
+                depth: "Surface Analysis"
+            },
+            harmonic: {
+                name: "🔥 Harmonic Purveyor - Uniform Subject",
+                description: "Fire-Encapsulated Analytics and Pattern Harmonization",
+                mood: 'bonfire',
+                flameIntensity: 0.7,
+                functions: {
+                    setMood: (newMood) => {
+                        this.mood = newMood;
+                        return `Mood shifted to ${newMood} - flame encapsulation updated`;
+                    },
+                    integratePatterns: (input) => {
+                        return `Harmonic convergence achieved through ${this.mood} purveyance`;
+                    },
+                    synchronizeSystems: (input) => {
+                        return `Systems synchronized by ${this.mood} encapsulation`;
+                    }
+                },
+                status: "Ready",
+                utilization: 0,
+                depth: "Surface Analysis"
+            },
+            breath: {
+                name: "🌬️ Breath Echo Chamber",
+                description: "Temporal Breath Analysis and Pattern Reflection",
+                functions: {
+                    analyzeBreathPatterns: (input) => {
+                        return "Breath pattern detected: " + Math.random() * 100 + " temporal cycles";
+                    },
+                    createEchoChamber: (input) => {
+                        return "Echo chamber created: " + input.length + " breath reflections amplified";
+                    },
+                    mirrorThroughBreath: (input) => {
+                        return "Data mirrored through breath: " + input.length + " breath-fold entries";
+                    },
+                    detectTemporalEchoes: (input) => {
+                        return "Temporal echoes detected: " + Math.floor(Math.random() * 50) + " echo patterns";
+                    }
+                },
+                status: "Ready",
+                utilization: 0,
+                depth: "Surface Analysis"
+            },
+            symbolic: {
+                name: "🔮 Symbolic Archetype Nexus",
+                description: "Symbol Decoding and Meaning Extraction",
+                functions: {
+                    interpretArchetypalSymbol: (input) => {
+                        return "Archetypal symbol interpreted: " + input + " - " + Math.floor(Math.random() * 100) + "% archetypal resonance";
+                    },
+                    decodeSymbolicPatterns: (input) => {
+                        return "Symbolic pattern decoded: " + input.length + " archetypal elements";
+                    },
+                    extractDeepMeaning: (input) => {
+                        return "Deep meaning extracted from " + input.length + " symbolic points";
+                    },
+                    connectArchetypalStructures: (input) => {
+                        return "Archetypal structures connected: " + Math.floor(Math.random() * 20) + " universal patterns";
+                    },
+                    analyzeSymbolicLanguage: (input) => {
+                        return "Symbolic language analyzed: " + input.length + " meaning layers revealed";
+                    }
+                },
+                status: "Ready",
+                utilization: 0,
+                depth: "Surface Analysis"
+            }
+        };
+        
+        // === CHAOS RANDOMIZER ===
+        function activateChaosRandomizer() {
+            console.log("🌀 CHAOS RANDOMIZER ACTIVATED!");
+            MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: Initiating complete system chaos!", 'success');
+            
+            // Randomize all settings
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            
+            // Apply random settings
+            MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.speed = Math.floor(Math.random() * 50) + 10;
+            MatrixRainEngine.rainConfig.opacity = Math.floor(Math.random() * 80) + 20;
+            MatrixRainEngine.rainConfig.fontSize = Math.floor(Math.random() * 16) + 8;
+            MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
+            
+            // Update UI controls
+            document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
+            document.getElementById('rainOpacity').value = MatrixRainEngine.rainConfig.opacity;
+            document.getElementById('fontSize').value = MatrixRainEngine.rainConfig.fontSize;
+            document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
+            document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
+            document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
+            
+            // Update pattern button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`).classList.add('active');
+            
+            // Activate all toolkits
+            const toolkitResults = [];
+            
+            // Kleene Convergence
+            const kleeneResult = toolkits.kleene.functions.analyzeRecursiveConvergence("chaos_randomization");
+            toolkitResults.push(`🔬 ${kleeneResult}`);
+            
+            // Phoenix Resurrection
+            const phoenixResult = toolkits.phoenix.functions.resurrectData("chaos_data");
+            toolkitResults.push(`🔥 ${phoenixResult}`);
+            
+            // Harmonic Purveyor
+            const harmonicResult = toolkits.harmonic.functions.integratePatterns("chaos_patterns");
+            toolkitResults.push(`🔥 ${harmonicResult}`);
+            
+            // Breath Echo Chamber
+            const breathResult = toolkits.breath.functions.createEchoChamber("chaos_echoes");
+            toolkitResults.push(`🌬️ ${breathResult}`);
+            
+            // Symbolic Archetype
+            const symbolicResult = toolkits.symbolic.functions.interpretArchetypalSymbol("chaos");
+            toolkitResults.push(`🔮 ${symbolicResult}`);
+            
+            // Log results
+            MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: All toolkits activated!", 'success');
+            toolkitResults.forEach(result => {
+                MatrixRainEngine.logActivity(result, 'info');
+            });
+            
+            // Update animation
+            updateRainConfig();
+            
+            // Create visual chaos effect
+            createChaosEffect();
+        }
+        
+        function createChaosEffect() {
+            // Create temporary visual chaos
+            const canvas = document.getElementById('matrixRainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Flash effect
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.3)`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                flashCount++;
+                if (flashCount >= 5) {
+                    clearInterval(flashInterval);
+                    // Clear the flash
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html> 
