@@ -2,6 +2,8 @@
 
 A dynamic, configurable Matrix rain effect with 6 visual patterns, real-time controls, autonomous orchestration, and **intelligent audio-reactive mode** featuring real-time synesthesia.
 
+**🌐 [LIVE DEMO](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** - Try it now!
+
 ## Features
 
 - **6 Visual Patterns**: Classic, Rainbow, Pentad, Chaos, Harmonic, Particles
