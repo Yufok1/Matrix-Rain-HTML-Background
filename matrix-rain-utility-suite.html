@@ -35,6 +35,19 @@
             box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
         }
 
+        .matrix-modal.minimized {
+            top: 20px !important;
+            left: auto !important;
+            right: 20px !important;
+            transform: none !important;
+            width: 350px !important;
+            height: 48px !important;
+            min-width: 200px;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 12px rgba(0,255,65,0.15);
+            overflow: hidden;
+        }
+
         .modal-header {
             background: linear-gradient(90deg, #00ff41, #00cc33);
             color: #000;
@@ -397,7 +410,7 @@
     <!-- Matrix Rain Canvas -->
     <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: transparent;"></canvas>
 
-    <div class="matrix-modal scrollbar">
+    <div class="matrix-modal scrollbar minimized">
         <div class="modal-header">
             <div>
                 🌊 Matrix Rain - Advanced Visual Control Unit
