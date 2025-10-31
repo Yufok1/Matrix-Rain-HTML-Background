@@ -450,9 +450,24 @@
                         <button class="btn btn-danger" onclick="emergencyStop()" style="margin-left: 10px;">
                             🛑 Emergency Stop
                         </button>
-                        <button class="btn" onclick="activateChaosRandomizer()" style="background: #ff00ff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
-                            🌀 CHAOS RANDOMIZER
+                        <button class="btn" id="reverseFlowBtn" onclick="toggleReverseFlow()" style="background: #ffaa00; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            ⏪ REVERSE FLOW
                         </button>
+                    </div>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" onclick="activateChaosRandomizer()" style="background: #ff00ff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🌀 CHAOS ONCE
+                        </button>
+                        <button class="btn" id="autoOrchestratorBtn" onclick="toggleAutoOrchestrator()" style="background: #0080ff; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            🎭 AUTO ORCHESTRATOR
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🎵 AUDIO REACTIVE MODE
+                        </button>
+                        <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
+                        <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
                     </div>
                     <div class="pattern-grid">
                         <button class="pattern-btn active" onclick="setRainPattern('classic')">Classic Matrix</button>
@@ -460,6 +475,7 @@
                         <button class="pattern-btn" onclick="setRainPattern('pentad')">Pentad Prism</button>
                         <button class="pattern-btn" onclick="setRainPattern('chaos')">Chaos Flow</button>
                         <button class="pattern-btn" onclick="setRainPattern('harmonic')">Harmonic Waves</button>
+                        <button class="pattern-btn" onclick="setRainPattern('particles')">💫 Particles</button>
                     </div>
                 </div>
 
@@ -515,10 +531,6 @@
                         <div class="control-group">
                             <h4>Pattern Settings</h4>
                             <div class="control-item">
-                                <label>Font Size</label>
-                                <input type="range" id="fontSize" min="8" max="24" value="10" onchange="updateFontSize()">
-                            </div>
-                            <div class="control-item">
                                 <label>Character Set</label>
                                 <select id="characterSet" onchange="updateCharacterSet()">
                                     <option value="matrix">Matrix (A-Z, 0-9, @#$)</option>
@@ -543,164 +555,13 @@
                 </div>
             </div>
 
-            <!-- Right Column -->
-            <div>
-                <!-- Toolkit Integration -->
-                <div class="section">
-                    <h3>🛠️ Toolkit Integration</h3>
-                    <div class="toolkit-grid">
-                        <div class="toolkit-card">
-                            <div class="toolkit-header">
-                                <span class="toolkit-icon">🔬</span>
-                                <span class="toolkit-name">Kleene Convergence</span>
-                                <span class="toolkit-status">Ready</span>
-                            </div>
-                            <ul class="function-list">
-                                <li>• analyzeRecursiveConvergence</li>
-                                <li>• detectFixedPoints</li>
-                                <li>• applyKleeneStar</li>
-                            </ul>
-                            <div class="sample-analysis" id="kleene-result">
-                                Recursive convergence detected with 85% confidence
-                            </div>
-                            <button class="btn" onclick="activatePatternAnalysis()" style="margin-top: 10px; width: 100%;">🔬 Activate Analysis</button>
-                        </div>
-
-                        <div class="toolkit-card">
-                            <div class="toolkit-header">
-                                <span class="toolkit-icon">🔥</span>
-                                <span class="toolkit-name">Phoenix Resurrection</span>
-                                <span class="toolkit-status">Ready</span>
-                            </div>
-                            <ul class="function-list">
-                                <li>• resurrectData</li>
-                                <li>• forgeNewStructures</li>
-                                <li>• applyTemporalHealing</li>
-                            </ul>
-                            <div class="sample-analysis" id="phoenix-result">
-                                Data resurrected through Phoenix protocols: 11 elements restored
-                            </div>
-                            <button class="btn" onclick="resurrectVisualData()" style="margin-top: 10px; width: 100%;">🔥 Resurrect Data</button>
-                        </div>
-
-                        <div class="toolkit-card">
-                            <div class="toolkit-header">
-                                <span class="toolkit-icon">🔥</span>
-                                <span class="toolkit-name">Harmonic Purveyor</span>
-                                <span class="toolkit-status">Ready</span>
-                            </div>
-                            <ul class="function-list">
-                                <li>• setMood</li>
-                                <li>• integratePatterns</li>
-                                <li>• synchronizeSystems</li>
-                            </ul>
-                            <div class="sample-analysis" id="harmonic-result">
-                                Mood shifted to bonfire - flame encapsulation updated
-                            </div>
-                            <button class="btn" onclick="harmonizePatterns()" style="margin-top: 10px; width: 100%;">🔥 Harmonize</button>
-                        </div>
-
-                        <div class="toolkit-card">
-                            <div class="toolkit-header">
-                                <span class="toolkit-icon">🌬️</span>
-                                <span class="toolkit-name">Breath Echo Chamber</span>
-                                <span class="toolkit-status">Ready</span>
-                            </div>
-                            <ul class="function-list">
-                                <li>• analyzeBreathPatterns</li>
-                                <li>• createEchoChamber</li>
-                                <li>• detectTemporalEchoes</li>
-                            </ul>
-                            <div class="sample-analysis" id="breath-result">
-                                Breath pattern detected: 73.2 temporal cycles
-                            </div>
-                            <button class="btn" onclick="createEchoChamber()" style="margin-top: 10px; width: 100%;">🌬️ Create Echo</button>
-                        </div>
-
-                        <div class="toolkit-card">
-                            <div class="toolkit-header">
-                                <span class="toolkit-icon">🔮</span>
-                                <span class="toolkit-name">Symbolic Archetype</span>
-                                <span class="toolkit-status">Ready</span>
-                            </div>
-                            <ul class="function-list">
-                                <li>• interpretArchetypalSymbol</li>
-                                <li>• decodeSymbolicPatterns</li>
-                                <li>• extractDeepMeaning</li>
-                            </ul>
-                            <div class="sample-analysis" id="symbolic-result">
-                                Archetypal symbol interpreted: matrix - 67% archetypal resonance
-                            </div>
-                            <button class="btn" onclick="interpretSymbols()" style="margin-top: 10px; width: 100%;">🔮 Interpret</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Advanced Controls -->
-                <div class="section">
-                    <h3>🎛️ Advanced Controls</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
-                        <button class="btn" onclick="activatePatternAnalysis()">🔬 Pattern Analysis</button>
-                        <button class="btn" onclick="resurrectVisualData()">🔥 Resurrect Data</button>
-                        <button class="btn" onclick="harmonizePatterns()">🔥 Harmonize</button>
-                        <button class="btn" onclick="createEchoChamber()">🌬️ Echo Chamber</button>
-                        <button class="btn" onclick="interpretSymbols()">🔮 Interpret</button>
-                        <button class="btn" onclick="optimizeFlow()">⚡ Optimize Flow</button>
-                        <button class="btn" onclick="backupVisualState()">💾 Backup State</button>
-                        <button class="btn" onclick="restoreVisualState()">🔄 Restore</button>
-                        <button class="btn btn-warning" onclick="emergencyStop()">🚨 Emergency Stop</button>
-                    </div>
-                </div>
-
-                <!-- Real-time Activity Feed -->
-                <div class="section">
-                    <h3>📊 Real-time Activity Feed</h3>
-                    <div class="activity-feed">
-                        <div class="activity-item">🌊 Matrix rain pattern initialized</div>
-                        <div class="activity-item">🔬 Pattern analysis in progress</div>
-                        <div class="activity-item">🔥 Visual data harmonization active</div>
-                        <div class="activity-item">🌬️ Echo chamber patterns detected</div>
-                        <div class="activity-item">🔮 Symbolic interpretation complete</div>
-                        <div class="activity-item">⚡ Flow optimization applied</div>
-                        <div class="activity-item">💾 Visual state backup created</div>
-                        <div class="activity-item">🔄 Pattern restoration successful</div>
-                        <div class="activity-item">🎨 Color spectrum updated</div>
-                        <div class="activity-item">🌧️ Rain intensity adjusted</div>
-                    </div>
-                </div>
-
-                <!-- Audit Canvas -->
-                <div class="section">
-                    <h3>🛡️ 🌊 Matrix Rain Auditing Canvas</h3>
-                    <div class="audit-canvas">
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🔬 Kleene engine: Recursive pattern analysis for visual flows
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🔥 Phoenix forge: Visual data resurrection protocols
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🔥 Harmonic purveyor: Pattern harmonization and synchronization
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🌬️ Breath echo: Temporal visual pattern analysis
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🔮 Symbolic nexus: Visual archetype interpretation
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 📊 Data correlation: Cross-pattern visual analysis
-                        </div>
-                        <div class="audit-entry">
-                            [🌊 Matrix Rain] 🛡️ Meta-audit: Visual integrity verification
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
+        // === REVERSE FLOW CONTROL ===
+        let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
+        
         // === MATRIX RAIN ADVANCED VISUAL CONTROL ENGINE ===
         const MatrixRainEngine = {
             // Rain configuration
@@ -711,7 +572,7 @@
                 density: 50,
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
-                opacity: 30,
+                opacity: 100,
                 fontSize: 10,
                 characterSet: 'matrix',
                 direction: 'down',
@@ -1137,9 +998,13 @@
             const fontSize = MatrixRainEngine.rainConfig.fontSize;
             const columns = Math.floor(matrixCanvas.width / fontSize);
             matrixDrops = [];
+            window.dropSpeeds = []; // Per-column speed variation
             
             for (let i = 0; i < columns; i++) {
-                matrixDrops[i] = Math.random() * -100;
+                // Highly randomized starting positions - spread across entire visible + off-screen area
+                matrixDrops[i] = (Math.random() * matrixCanvas.height / fontSize) - (Math.random() * 50);
+                // Random speed variation (0.7 to 1.3x normal speed)
+                window.dropSpeeds[i] = 0.7 + Math.random() * 0.6;
             }
             
             console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
@@ -1171,8 +1036,9 @@
                 console.log(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
             }
             
-            // Clear canvas with fade effect
-            matrixCtx.fillStyle = `rgba(0, 0, 0, ${0.05})`;
+            
+            // Clear canvas with fade effect (creates nice trails, no afterimages)
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -1191,7 +1057,9 @@
             }
             
             // Draw rain based on pattern
-            if (config.pattern === 'rainbow') {
+            if (config.pattern === 'particles') {
+                drawParticleField(characters, fontSize, opacity);
+            } else if (config.pattern === 'rainbow') {
                 drawRainbowRain(characters, fontSize, opacity);
             } else if (config.pattern === 'pentad') {
                 drawPentadRain(characters, fontSize, opacity);
@@ -1204,151 +1072,339 @@
             }
         }
         
+        // Track animation state for all patterns
+        if (!window.geometricState) {
+            window.geometricState = {
+                time: 0,
+                rotation: 0,
+                pulsePhase: 0,
+                selectedPattern: 0
+            };
+        }
+        
+        // Particle system state
+        if (!window.particles) {
+            window.particles = [];
+        }
+        
         function drawClassicRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const direction = config.direction || 'down';
             
             // Debug: Log drawing info for first few frames
             if (window.drawCount <= 3) {
-                console.log(`🌊 Matrix Rain: Drawing ${columns} columns, color: ${config.primaryColor}, opacity: ${opacity}`);
+                console.log(`🌊 Matrix Rain: Direction ${direction}, color: ${config.primaryColor}`);
             }
             
-            for (let i = 0; i < columns; i++) {
-                // Random character
+            if (direction === 'left' || direction === 'right') {
+                // HORIZONTAL rain (left/right)
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
-                
-                // Position
-                const x = i * fontSize;
-                const y = matrixDrops[i] * fontSize;
-                
-                // Color based on pattern
-                let color = config.primaryColor;
-                if (config.pattern === 'reverse') {
-                    color = config.secondaryColor;
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    
+                    matrixCtx.fillStyle = config.primaryColor;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    // Update horizontal position
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
                 }
-                
-                // Draw character
-                matrixCtx.fillStyle = color;
+            } else if (direction === 'diagonal') {
+                // DIAGONAL rain
+                const streams = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < streams; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const progress = matrixDrops[i];
+                    const x = i * fontSize + progress * fontSize * 0.5;
+                    const y = progress * fontSize;
+                    
+                    if (x < matrixCanvas.width && y < matrixCanvas.height) {
+                        matrixCtx.fillStyle = config.primaryColor;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
-                
-                // Update drop position
-                if (config.pattern === 'reverse') {
-                    matrixDrops[i] -= 1;
-                    if (matrixDrops[i] * fontSize < 0) {
-                        matrixDrops[i] = matrixCanvas.height / fontSize;
+                    }
+                    
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxDiag = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxDiag + 10;
+                    while (matrixDrops[i] > maxDiag) matrixDrops[i] -= maxDiag + 10;
                     }
                 } else {
-                    matrixDrops[i] += 1;
-                    if (matrixDrops[i] * fontSize > matrixCanvas.height) {
-                        matrixDrops[i] = 0;
-                    }
+                // VERTICAL rain (up/down)
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const x = i * fontSize;
+                    const y = matrixDrops[i] * fontSize;
+                    
+                    matrixCtx.fillStyle = config.primaryColor;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    // Update vertical position
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
                 }
             }
         }
         
         function drawRainbowRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const direction = config.direction || 'down';
             const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
             
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
+                    
+                    matrixCtx.fillStyle = colors[colorIndex];
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
-                
-                // Rainbow color cycling
                 const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
-                const color = colors[colorIndex];
                 
-                matrixCtx.fillStyle = color;
+                    matrixCtx.fillStyle = colors[colorIndex];
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
                 
-                matrixDrops[i] += 1;
-                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
-                    matrixDrops[i] = 0;
+                    matrixDrops[i] += (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
                 }
             }
         }
         
         function drawPentadRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const direction = config.direction || 'down';
+            const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
             
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const color = pentadColors[i % 5];
+                    
+                    matrixCtx.fillStyle = color;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
-                
-                // Pentad prism effect - 5 different colors
-                const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
-                const colorIndex = i % 5;
-                const color = pentadColors[colorIndex];
+                    const color = pentadColors[i % 5];
                 
                 matrixCtx.fillStyle = color;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
                 
-                // Add some variation to speed
-                matrixDrops[i] += 0.5 + Math.random() * 0.5;
-                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
-                    matrixDrops[i] = 0;
+                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
                 }
             }
         }
         
         function drawChaosRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const direction = config.direction || 'down';
             
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize + (Math.random() - 0.5) * 10;
+                    const x = matrixDrops[i] * fontSize;
+                    const hue = (Date.now() + i * 50) % 360;
+                    
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
-                const x = i * fontSize + (Math.random() - 0.5) * 10; // Random x offset
+                    const x = i * fontSize + (Math.random() - 0.5) * 10;
                 const y = matrixDrops[i] * fontSize;
-                
-                // Chaotic color changes
                 const hue = (Date.now() + i * 50) % 360;
-                const color = `hsl(${hue}, 100%, 50%)`;
                 
-                matrixCtx.fillStyle = color;
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
                 
-                // Chaotic speed
-                matrixDrops[i] += 0.2 + Math.random() * 1.5;
-                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
-                    matrixDrops[i] = Math.random() * -50;
+                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
                 }
             }
         }
         
         function drawHarmonicRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const direction = config.direction || 'down';
             
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
+                    const harmonicX = x + wave;
+                    const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
+                    
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, harmonicX, y);
+                    
+                    matrixDrops[i] += 0.8 * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
-                
-                // Harmonic wave effect
                 const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
                 const harmonicY = y + wave;
-                
-                // Harmonic color
                 const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
-                const color = `hsl(${hue}, 100%, 50%)`;
                 
-                matrixCtx.fillStyle = color;
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, harmonicY);
                 
-                matrixDrops[i] += 0.8;
-                if (matrixDrops[i] * fontSize > matrixCanvas.height) {
-                    matrixDrops[i] = 0;
+                    matrixDrops[i] += 0.8 * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
                 }
             }
+        }
+        // === PARTICLE FIELD ===
+        function drawParticleField(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const numParticles = Math.floor(config.intensity * 3);
+            
+            if (window.particles.length === 0) {
+                for (let i = 0; i < numParticles; i++) {
+                    window.particles.push({
+                        x: Math.random() * matrixCanvas.width,
+                        y: Math.random() * matrixCanvas.height,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        char: characters[Math.floor(Math.random() * characters.length)],
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            const speedFactor = config.speed / 50;
+            const centerX = matrixCanvas.width / 2;
+            const centerY = matrixCanvas.height / 2;
+            
+            for (let i = 0; i < Math.min(window.particles.length, numParticles); i++) {
+                const p = window.particles[i];
+                
+                const dx = centerX - p.x;
+                const dy = centerY - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const force = (dist / 500) * 0.5;
+                
+                p.vx += (dy / dist) * force * speedFactor * reverseFlowMultiplier;
+                p.vy += (-dx / dist) * force * speedFactor * reverseFlowMultiplier;
+                
+                p.x += p.vx * reverseFlowMultiplier;
+                p.y += p.vy * reverseFlowMultiplier;
+                
+                p.vx *= 0.99;
+                p.vy *= 0.99;
+                
+                if (p.x < 0) p.x = matrixCanvas.width;
+                if (p.x > matrixCanvas.width) p.x = 0;
+                if (p.y < 0) p.y = matrixCanvas.height;
+                if (p.y > matrixCanvas.height) p.y = 0;
+                
+                p.phase += 0.05 * reverseFlowMultiplier;
+                const pulse = Math.sin(p.phase) * 0.3 + 0.7;
+                const size = fontSize * pulse;
+                const hue = (i * 10 + window.geometricState.time * 20) % 360;
+                
+                matrixCtx.font = `${size}px monospace`;
+                matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(p.char, p.x, p.y);
+            }
+            
+            window.geometricState.time += 0.02 * reverseFlowMultiplier;
         }
         
         // === CONTROL FUNCTIONS ===
@@ -1463,173 +1519,57 @@
                 initMatrixRain();
                 console.log("🌊 Matrix Rain: Animation engine initialized");
             }, 100);
+            
+            // Add keyboard shortcut: Press 'M' to toggle settings modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'm' || e.key === 'M') {
+                    const modal = document.querySelector('.matrix-modal');
+                    if (modal.style.display === 'none') {
+                        modal.style.display = 'flex';
+                        MatrixRainEngine.logActivity('⌨️ Settings opened (M key)', 'info');
+                    } else {
+                        modal.style.display = 'none';
+                        MatrixRainEngine.logActivity('⌨️ Settings closed (M key)', 'info');
+                    }
+                }
+            });
         });
-
-        // === TOOLKIT INTEGRATION ===
-        const toolkits = {
-            kleene: {
-                name: "🔬 Kleene Convergence Engine",
-                description: "Recursive Pattern Detection and Fixed Point Analysis",
-                functions: {
-                    analyzeRecursiveConvergence: (input) => {
-                        return "Recursive convergence detected with " + Math.floor(Math.random() * 100) + "% confidence";
-                    },
-                    detectFixedPoints: (input) => {
-                        return "Fixed point identified: " + input.length + " dimensional stability";
-                    },
-                    applyKleeneStar: (input) => {
-                        return "Kleene star expansion: " + Math.pow(2, input.length) + " possible patterns";
-                    }
-                },
-                status: "Ready",
-                utilization: 0,
-                depth: "Surface Analysis"
-            },
-            phoenix: {
-                name: "🔥 Phoenix Resurrection Forge",
-                description: "Data Restoration and Temporal Healing",
-                functions: {
-                    resurrectData: (input) => {
-                        return "Data resurrected through Phoenix protocols: " + input.length + " elements restored";
-                    },
-                    forgeNewStructures: (input) => {
-                        return "New structures forged: " + Math.floor(Math.random() * 100) + " integrity points";
-                    },
-                    applyTemporalHealing: (input) => {
-                        return "Temporal healing applied: " + input.length + " temporal wounds mended";
-                    }
-                },
-                status: "Ready",
-                utilization: 0,
-                depth: "Surface Analysis"
-            },
-            harmonic: {
-                name: "🔥 Harmonic Purveyor - Uniform Subject",
-                description: "Fire-Encapsulated Analytics and Pattern Harmonization",
-                mood: 'bonfire',
-                flameIntensity: 0.7,
-                functions: {
-                    setMood: (newMood) => {
-                        this.mood = newMood;
-                        return `Mood shifted to ${newMood} - flame encapsulation updated`;
-                    },
-                    integratePatterns: (input) => {
-                        return `Harmonic convergence achieved through ${this.mood} purveyance`;
-                    },
-                    synchronizeSystems: (input) => {
-                        return `Systems synchronized by ${this.mood} encapsulation`;
-                    }
-                },
-                status: "Ready",
-                utilization: 0,
-                depth: "Surface Analysis"
-            },
-            breath: {
-                name: "🌬️ Breath Echo Chamber",
-                description: "Temporal Breath Analysis and Pattern Reflection",
-                functions: {
-                    analyzeBreathPatterns: (input) => {
-                        return "Breath pattern detected: " + Math.random() * 100 + " temporal cycles";
-                    },
-                    createEchoChamber: (input) => {
-                        return "Echo chamber created: " + input.length + " breath reflections amplified";
-                    },
-                    mirrorThroughBreath: (input) => {
-                        return "Data mirrored through breath: " + input.length + " breath-fold entries";
-                    },
-                    detectTemporalEchoes: (input) => {
-                        return "Temporal echoes detected: " + Math.floor(Math.random() * 50) + " echo patterns";
-                    }
-                },
-                status: "Ready",
-                utilization: 0,
-                depth: "Surface Analysis"
-            },
-            symbolic: {
-                name: "🔮 Symbolic Archetype Nexus",
-                description: "Symbol Decoding and Meaning Extraction",
-                functions: {
-                    interpretArchetypalSymbol: (input) => {
-                        return "Archetypal symbol interpreted: " + input + " - " + Math.floor(Math.random() * 100) + "% archetypal resonance";
-                    },
-                    decodeSymbolicPatterns: (input) => {
-                        return "Symbolic pattern decoded: " + input.length + " archetypal elements";
-                    },
-                    extractDeepMeaning: (input) => {
-                        return "Deep meaning extracted from " + input.length + " symbolic points";
-                    },
-                    connectArchetypalStructures: (input) => {
-                        return "Archetypal structures connected: " + Math.floor(Math.random() * 20) + " universal patterns";
-                    },
-                    analyzeSymbolicLanguage: (input) => {
-                        return "Symbolic language analyzed: " + input.length + " meaning layers revealed";
-                    }
-                },
-                status: "Ready",
-                utilization: 0,
-                depth: "Surface Analysis"
-            }
-        };
         
         // === CHAOS RANDOMIZER ===
         function activateChaosRandomizer() {
             console.log("🌀 CHAOS RANDOMIZER ACTIVATED!");
             MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: Initiating complete system chaos!", 'success');
             
-            // Randomize all settings
-            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
+            // Randomize all settings with all available patterns!
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
             
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
             MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
             MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
             MatrixRainEngine.rainConfig.speed = Math.floor(Math.random() * 50) + 10;
-            MatrixRainEngine.rainConfig.opacity = Math.floor(Math.random() * 80) + 20;
-            MatrixRainEngine.rainConfig.fontSize = Math.floor(Math.random() * 16) + 8;
+            MatrixRainEngine.rainConfig.opacity = 100; // Always 100%
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
-            
+            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+
             // Update UI controls
             document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
-            document.getElementById('rainOpacity').value = MatrixRainEngine.rainConfig.opacity;
-            document.getElementById('fontSize').value = MatrixRainEngine.rainConfig.fontSize;
+            document.getElementById('rainOpacity').value = 100; // Always show 100%
             document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
             document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
             document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
+            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
             
             // Update pattern button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`).classList.add('active');
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
+            if (patternBtn) patternBtn.classList.add('active');
             
-            // Activate all toolkits
-            const toolkitResults = [];
-            
-            // Kleene Convergence
-            const kleeneResult = toolkits.kleene.functions.analyzeRecursiveConvergence("chaos_randomization");
-            toolkitResults.push(`🔬 ${kleeneResult}`);
-            
-            // Phoenix Resurrection
-            const phoenixResult = toolkits.phoenix.functions.resurrectData("chaos_data");
-            toolkitResults.push(`🔥 ${phoenixResult}`);
-            
-            // Harmonic Purveyor
-            const harmonicResult = toolkits.harmonic.functions.integratePatterns("chaos_patterns");
-            toolkitResults.push(`🔥 ${harmonicResult}`);
-            
-            // Breath Echo Chamber
-            const breathResult = toolkits.breath.functions.createEchoChamber("chaos_echoes");
-            toolkitResults.push(`🌬️ ${breathResult}`);
-            
-            // Symbolic Archetype
-            const symbolicResult = toolkits.symbolic.functions.interpretArchetypalSymbol("chaos");
-            toolkitResults.push(`🔮 ${symbolicResult}`);
-            
-            // Log results
-            MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: All toolkits activated!", 'success');
-            toolkitResults.forEach(result => {
-                MatrixRainEngine.logActivity(result, 'info');
-            });
+            // Log chaos results
+            MatrixRainEngine.logActivity(`🌀 CHAOS: Pattern=${MatrixRainEngine.rainConfig.pattern}, Speed=${MatrixRainEngine.rainConfig.speed}, CharSet=${MatrixRainEngine.rainConfig.characterSet}`, 'success');
             
             // Update animation
             updateRainConfig();
@@ -1652,11 +1592,527 @@
                 flashCount++;
                 if (flashCount >= 5) {
                     clearInterval(flashInterval);
-                    // Clear the flash
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }, 100);
+        }
+        
+        // === AUTO ORCHESTRATOR - Simple RNG automation ===
+        let autoOrchestratorInterval = null;
+        let autoOrchestratorActive = false;
+        
+        function toggleAutoOrchestrator() {
+            autoOrchestratorActive = !autoOrchestratorActive;
+            const btn = document.getElementById('autoOrchestratorBtn');
+            
+            if (autoOrchestratorActive) {
+                btn.textContent = '⏸️ STOP AUTO';
+                btn.style.background = '#ff4444';
+                startAutoOrchestrator();
+                MatrixRainEngine.logActivity('🎭 Auto Orchestrator STARTED - continuous random evolution!', 'success');
+            } else {
+                btn.textContent = '🎭 AUTO ORCHESTRATOR';
+                btn.style.background = '#0080ff';
+                stopAutoOrchestrator();
+                MatrixRainEngine.logActivity('🎭 Auto Orchestrator STOPPED', 'info');
+            }
+        }
+        
+        function startAutoOrchestrator() {
+            // Run first change immediately
+            orchestrateRandomChange();
+            
+            // Then schedule recurring changes
+            scheduleNextChange();
+        }
+        
+        function scheduleNextChange() {
+            if (!autoOrchestratorActive) return;
+            
+            // Random interval: 8-15 seconds (longer to enjoy each scene)
+            const interval = 8000 + Math.floor(Math.random() * 7000);
+            const seconds = Math.round(interval / 1000);
+            
+            console.log(`⏱️ Next orchestrator change in ${seconds} seconds...`);
+            MatrixRainEngine.logActivity(`⏱️ Next change in ${seconds}s`, 'info');
+            
+            autoOrchestratorInterval = setTimeout(() => {
+                orchestrateRandomChange();
+                scheduleNextChange(); // Schedule next one
+            }, interval);
+        }
+        
+        function orchestrateRandomChange() {
+            if (!autoOrchestratorActive) return;
+            
+            console.log('🎭 ORCHESTRATOR: Running change cycle...');
+            
+            // Store previous pattern to detect changes
+            const previousPattern = MatrixRainEngine.rainConfig.pattern;
+            const previousDirection = MatrixRainEngine.rainConfig.direction;
+            
+            // All available patterns
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+            
+            // Randomize EVERYTHING
+            const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            const patternChanged = newPattern !== previousPattern;
+            MatrixRainEngine.rainConfig.pattern = newPattern;
+            MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.speed = 20 + Math.floor(Math.random() * 70); // 20-90
+            MatrixRainEngine.rainConfig.opacity = 100; // Always 100%
+            MatrixRainEngine.rainConfig.intensity = 40 + Math.floor(Math.random() * 60); // 40-100
+            MatrixRainEngine.rainConfig.density = 30 + Math.floor(Math.random() * 70); // 30-100
+            MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
+            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+
+            // 60% chance to toggle reverse flow for dynamic reversals!
+            if (Math.random() < 0.6) {
+                reverseFlowMultiplier *= -1;
+                const flowStatus = reverseFlowMultiplier === -1 ? '⏪ REVERSED' : '⏩ FORWARD';
+                MatrixRainEngine.logActivity(`🔄 Flow reversal: ${flowStatus}`, 'success');
+
+                // Update reverse flow button UI
+                const btn = document.getElementById('reverseFlowBtn');
+                if (btn) {
+                    if (reverseFlowMultiplier === -1) {
+                        btn.textContent = '⏩ FORWARD FLOW';
+                        btn.style.background = '#00ff88';
+                    } else {
+                        btn.textContent = '⏪ REVERSE FLOW';
+                        btn.style.background = '#ffaa00';
+                    }
+                }
+            }
+
+            // Update UI to reflect changes
+            document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
+            document.getElementById('rainOpacity').value = MatrixRainEngine.rainConfig.opacity;
+            document.getElementById('rainIntensity').value = MatrixRainEngine.rainConfig.intensity;
+            document.getElementById('rainDensity').value = MatrixRainEngine.rainConfig.density;
+            document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
+            document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
+            document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
+            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
+            
+            // Update active pattern button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
+            if (patternBtn) patternBtn.classList.add('active');
+            
+            // Log the changes with CLEAR visibility
+            const directionChanged = MatrixRainEngine.rainConfig.direction !== previousDirection;
+            console.log(`\n========================================`);
+            console.log(`🎭 ORCHESTRATOR CHANGE:`);
+            console.log(`   Pattern: ${previousPattern} → ${MatrixRainEngine.rainConfig.pattern}`);
+            console.log(`   Direction: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`);
+            console.log(`   Reverse Flow: ${reverseFlowMultiplier === -1 ? '⏪ REWINDING' : '⏩ FORWARD'}`);
+            console.log(`========================================\n`);
+            
+            // Show direction change notification
+            if (directionChanged) {
+                MatrixRainEngine.logActivity(`↗️ DIRECTION CHANGED: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`, 'success');
+            }
+            
+            if (patternChanged) {
+                MatrixRainEngine.logActivity(`🎭 NEW Pattern: ${MatrixRainEngine.rainConfig.pattern} | Dir: ${MatrixRainEngine.rainConfig.direction} | ${MatrixRainEngine.rainConfig.characterSet}`, 'success');
+            } else {
+                MatrixRainEngine.logActivity(`🔄 Settings update | Dir: ${MatrixRainEngine.rainConfig.direction} | Rev: ${reverseFlowMultiplier === -1 ? 'YES' : 'NO'}`, 'info');
+            }
+            
+            // Always just update config - smooth transitions, no resets!
+            updateRainConfig();
+        }
+        
+        function stopAutoOrchestrator() {
+            if (autoOrchestratorInterval) {
+                clearTimeout(autoOrchestratorInterval);
+                autoOrchestratorInterval = null;
+            }
+        }
+        
+        // === REVERSE FLOW TOGGLE ===
+        function toggleReverseFlow() {
+            reverseFlowMultiplier *= -1; // Flip between 1 and -1
+            const btn = document.getElementById('reverseFlowBtn');
+
+            if (reverseFlowMultiplier === -1) {
+                btn.textContent = '⏩ FORWARD FLOW';
+                btn.style.background = '#00ff88';
+                MatrixRainEngine.logActivity('⏪ REVERSE FLOW ACTIVATED - Everything is rewinding!', 'success');
+            } else {
+                btn.textContent = '⏪ REVERSE FLOW';
+                btn.style.background = '#ffaa00';
+                MatrixRainEngine.logActivity('⏩ Forward flow restored', 'info');
+            }
+        }
+
+        // === AUDIO REACTIVE SYSTEM ===
+        let audioContext = null;
+        let audioAnalyser = null;
+        let audioDataArray = null;
+        let audioBufferLength = 0;
+        let audioReactiveActive = false;
+        let audioAnimationFrame = null;
+        let audioStream = null;
+
+        // Syllable detection state (for reversals)
+        let syllableDetector = {
+            threshold: 1.08,        // Balanced sensitivity
+            minVolume: 0.06,        // Low but not too low
+            lastSyllableTime: 0,
+            syllableCooldown: 120,  // 120ms = ~8 syllables/sec (prevents double-reversals)
+            volumeHistory: [],
+            historyLength: 12,      // Balanced history
+            avgVolume: 0
+        };
+
+        // Beat detection state (for color changes AND reversal backup)
+        let beatDetector = {
+            threshold: 1.4,         // Higher threshold for just strong beats
+            minBass: 140,          // Only trigger on significant bass
+            lastBeatTime: 0,
+            beatCooldown: 150,      // Allow more frequent beat reactions
+            bassHistory: [],
+            historyLength: 15,
+            avgBass: 0
+        };
+
+        // Track when last syllable was detected (for beat reversal backup)
+        let lastSyllableOrBeatReversalTime = 0;
+
+        // Rhythm detection and direction bursts removed
+        // Music now controls everything continuously
+
+        async function toggleAudioReactive() {
+            audioReactiveActive = !audioReactiveActive;
+            const btn = document.getElementById('audioReactiveBtn');
+            const status = document.getElementById('audioStatus');
+
+            if (audioReactiveActive) {
+                btn.textContent = '⏸️ STOP AUDIO MODE';
+                btn.style.background = '#ff4444';
+                status.textContent = '🎤 Requesting audio access...';
+
+                try {
+                    // Request desktop/tab audio capture
+                    audioStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: true,
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+
+                    // Set up Web Audio API
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioAnalyser = audioContext.createAnalyser();
+                    audioAnalyser.fftSize = 2048;
+                    audioAnalyser.smoothingTimeConstant = 0.8;
+
+                    const source = audioContext.createMediaStreamSource(audioStream);
+                    source.connect(audioAnalyser);
+
+                    audioBufferLength = audioAnalyser.frequencyBinCount;
+                    audioDataArray = new Uint8Array(audioBufferLength);
+
+                    status.textContent = '🎵 AUDIO REACTIVE - Syncing with sound!';
+                    MatrixRainEngine.logActivity('🎵 Audio Reactive Mode ACTIVATED - Rain synced to audio!', 'success');
+
+                    // Start audio analysis loop
+                    analyzeAudio();
+
+                } catch (error) {
+                    console.error('Audio capture error:', error);
+                    status.textContent = '❌ Audio access denied. Try sharing a tab with audio.';
+                    audioReactiveActive = false;
+                    btn.textContent = '🎵 AUDIO REACTIVE MODE';
+                    btn.style.background = '#ff1493';
+                }
+
+            } else {
+                btn.textContent = '🎵 AUDIO REACTIVE MODE';
+                btn.style.background = '#ff1493';
+                status.textContent = '';
+                stopAudioReactive();
+                MatrixRainEngine.logActivity('🎵 Audio Reactive Mode STOPPED', 'info');
+            }
+        }
+
+        function stopAudioReactive() {
+            if (audioAnimationFrame) {
+                cancelAnimationFrame(audioAnimationFrame);
+                audioAnimationFrame = null;
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            audioAnalyser = null;
+            audioDataArray = null;
+        }
+
+        function analyzeAudio() {
+            if (!audioReactiveActive || !audioAnalyser) return;
+
+            audioAnimationFrame = requestAnimationFrame(analyzeAudio);
+
+            // Get frequency data
+            audioAnalyser.getByteFrequencyData(audioDataArray);
+
+            // Calculate different frequency ranges
+            const bass = getAverageFrequency(0, 80);      // 0-80: Bass/kick
+            const lowMid = getAverageFrequency(80, 200);  // 80-200: Low-mid (music body)
+            const mid = getAverageFrequency(200, 600);    // 200-600: Mid (vocals)
+            const high = getAverageFrequency(600, 1024);  // 600+: High frequencies (consonants)
+
+            // Overall volume
+            const volume = (bass + lowMid + mid + high) / 4 / 255;
+
+            // SYLLABLES = REVERSALS ONLY
+            detectSyllables(volume, mid, high);
+
+            // MUSIC = EVERYTHING ELSE (continuous background control)
+            reactToAudio(bass, lowMid, mid, high, volume);
+
+            // Draw visualizer
+            drawAudioVisualizer(bass, lowMid, mid, high);
+        }
+
+        function getAverageFrequency(startBin, endBin) {
+            let sum = 0;
+            let count = 0;
+            for (let i = startBin; i < endBin && i < audioBufferLength; i++) {
+                sum += audioDataArray[i];
+                count++;
+            }
+            return count > 0 ? sum / count : 0;
+        }
+
+        function detectSyllables(volume, mid, high) {
+            const now = Date.now();
+
+            // Update volume history
+            syllableDetector.volumeHistory.push(volume);
+            if (syllableDetector.volumeHistory.length > syllableDetector.historyLength) {
+                syllableDetector.volumeHistory.shift();
+            }
+
+            // Calculate average volume
+            syllableDetector.avgVolume = syllableDetector.volumeHistory.reduce((a, b) => a + b, 0) / syllableDetector.volumeHistory.length;
+
+            // Detect syllables - HYPER SENSITIVE to catch EVERYTHING
+            const isSyllable = volume > syllableDetector.avgVolume * syllableDetector.threshold
+                            && volume > syllableDetector.minVolume
+                            && mid > 40  // VERY low threshold - catches almost any vocal
+                            && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            // Also catch consonant pops (high frequency spikes) - LOWER threshold
+            const isConsonant = high > 100
+                             && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            // ALSO catch any significant mid-frequency activity (vocals)
+            const isVocal = mid > 120
+                         && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            if (isSyllable || isConsonant || isVocal) {
+                syllableDetector.lastSyllableTime = now;
+                onSyllableDetected();
+            }
+        }
+
+        function detectBeats(bass) {
+            const now = Date.now();
+
+            // Update bass history
+            beatDetector.bassHistory.push(bass);
+            if (beatDetector.bassHistory.length > beatDetector.historyLength) {
+                beatDetector.bassHistory.shift();
+            }
+
+            // Calculate average bass
+            beatDetector.avgBass = beatDetector.bassHistory.reduce((a, b) => a + b, 0) / beatDetector.bassHistory.length;
+
+            // Detect bass beats - focus on low frequencies only
+            const isBeat = bass > beatDetector.avgBass * beatDetector.threshold
+                        && bass > beatDetector.minBass
+                        && (now - beatDetector.lastBeatTime) > beatDetector.beatCooldown;
+
+            if (isBeat) {
+                beatDetector.lastBeatTime = now;
+                onBeatDetected(bass);
+            }
+        }
+
+        // Rhythm change detection removed - music now controls everything continuously
+
+        function onSyllableDetected() {
+            // REVERSE FLOW on EVERY syllable!
+            reverseFlowMultiplier *= -1;
+            lastSyllableOrBeatReversalTime = Date.now(); // Track this reversal
+            const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
+
+            // Update button UI
+            const btn = document.getElementById('reverseFlowBtn');
+            if (btn) {
+                if (reverseFlowMultiplier === -1) {
+                    btn.textContent = '⏩ FORWARD FLOW';
+                    btn.style.background = '#00ff88';
+                } else {
+                    btn.textContent = '⏪ REVERSE FLOW';
+                    btn.style.background = '#ffaa00';
+                }
+            }
+
+            // Log only occasionally to avoid spam
+            if (Math.random() < 0.05) { // 5% logged
+                MatrixRainEngine.logActivity(`${flowStatus} syllable`, 'info');
+            }
+        }
+
+        function onBeatDetected(bass) {
+            const now = Date.now();
+            const timeSinceLastReversal = now - lastSyllableOrBeatReversalTime;
+
+            // If no syllable in last 500ms, use BEAT for reversal (backup mode)
+            if (timeSinceLastReversal > 500) {
+                reverseFlowMultiplier *= -1;
+                lastSyllableOrBeatReversalTime = now;
+                const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
+
+                // Update button UI
+                const btn = document.getElementById('reverseFlowBtn');
+                if (btn) {
+                    if (reverseFlowMultiplier === -1) {
+                        btn.textContent = '⏩ FORWARD FLOW';
+                        btn.style.background = '#00ff88';
+                    } else {
+                        btn.textContent = '⏪ REVERSE FLOW';
+                        btn.style.background = '#ffaa00';
+                    }
+                }
+
+                // Log occasionally
+                if (Math.random() < 0.1) {
+                    MatrixRainEngine.logActivity(`${flowStatus} beat (backup)`, 'info');
+                }
+            }
+            // Note: Color is now controlled continuously by reactToAudio (lowMid frequency)
+            // No more beat-triggered color flashes - smoother color evolution
+        }
+
+        function onRhythmChange(bass, lowMid, mid, high, changeAmount) {
+            // This function is now REMOVED from active use
+            // Music drives everything continuously via reactToAudio()
+        }
+
+        // Helper function to convert HSL to HEX for color pickers
+        function hslToHex(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        function reactToAudio(bass, lowMid, mid, high, volume) {
+            const config = MatrixRainEngine.rainConfig;
+
+            // === INTELLIGENT AUDIO-TO-VISUAL MAPPING ===
+            // Each audio frequency controls ONE specific visual parameter
+
+            // FORCE CLASSIC PATTERN (only one that shows color changes properly)
+            config.pattern = 'classic';
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            const classicBtn = document.querySelector(`[onclick="setRainPattern('classic')"]`);
+            if (classicBtn) classicBtn.classList.add('active');
+
+            // BASS → SPEED (more bass = faster rain)
+            const bassNormalized = bass / 255;
+            config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
+
+            // LOW-MID → COLOR HUE (music body controls color wheel position)
+            const hue = Math.floor((lowMid / 255) * 360);
+            config.primaryColor = `hsl(${hue}, 100%, 50%)`;
+            const compHue = (hue + 180) % 360;
+            config.secondaryColor = `hsl(${compHue}, 100%, 50%)`;
+
+            // Update color pickers
+            const primaryHex = hslToHex(hue, 100, 50);
+            const secondaryHex = hslToHex(compHue, 100, 50);
+            document.getElementById('primaryColor').value = primaryHex;
+            document.getElementById('secondaryColor').value = secondaryHex;
+
+            // MID → DENSITY (vocal/melody range controls how much rain)
+            const midNormalized = mid / 255;
+            config.density = 20 + Math.floor(midNormalized * 80); // 20-100
+
+            // HIGH → CHARACTER SET (high frequencies pick character complexity)
+            const highNormalized = high / 255;
+            const charIndex = Math.floor(highNormalized * 4); // 0-3
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            config.characterSet = characterSets[Math.min(charIndex, 3)];
+            document.getElementById('characterSet').value = config.characterSet;
+
+            // OVERALL VOLUME → INTENSITY (loudness = brightness)
+            config.intensity = 30 + Math.floor(volume * 70); // 30-100
+
+            // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
+            // Very low threshold to catch musical moments!
+            const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
+            if (directionTrigger) {
+                const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+                // Use combined audio energy to pick direction
+                const dirValue = (bass + high + lowMid) / 3;
+                const dirIndex = Math.floor((dirValue / 255) * directions.length);
+                config.direction = directions[Math.min(dirIndex, 4)];
+                document.getElementById('rainDirection').value = config.direction;
+            }
+
+            // Opacity always maxed
+            config.opacity = 100;
+
+            // Update UI sliders
+            document.getElementById('rainSpeed').value = 101 - config.speed;
+            document.getElementById('rainDensity').value = config.density;
+            document.getElementById('rainOpacity').value = 100;
+            document.getElementById('rainIntensity').value = config.intensity;
+        }
+
+        function drawAudioVisualizer(bass, lowMid, mid, high) {
+            const visualizer = document.getElementById('audioVisualizer');
+            if (!visualizer) return;
+
+            // Create frequency bars
+            const bassHeight = (bass / 255) * 100;
+            const lowMidHeight = (lowMid / 255) * 100;
+            const midHeight = (mid / 255) * 100;
+            const highHeight = (high / 255) * 100;
+
+            visualizer.innerHTML = `
+                <div style="position: absolute; bottom: 0; left: 10%; width: 15%; height: ${bassHeight}%; background: linear-gradient(to top, #ff0000, #ff6060); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 30%; width: 15%; height: ${lowMidHeight}%; background: linear-gradient(to top, #ff8000, #ffaa60); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 50%; width: 15%; height: ${midHeight}%; background: linear-gradient(to top, #00ff00, #60ff60); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 70%; width: 15%; height: ${highHeight}%; background: linear-gradient(to top, #0080ff, #60a0ff); transition: height 0.05s;"></div>
+                <div style="position: absolute; top: 5px; left: 10%; font-size: 10px; color: #ff6060;">BASS</div>
+                <div style="position: absolute; top: 5px; left: 30%; font-size: 10px; color: #ffaa60;">LOW</div>
+                <div style="position: absolute; top: 5px; left: 50%; font-size: 10px; color: #60ff60;">MID</div>
+                <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH</div>
+            `;
         }
     </script>
 </body>
