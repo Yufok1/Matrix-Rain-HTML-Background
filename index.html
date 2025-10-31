@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌊 Matrix Rain - Advanced Visual Control Unit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff41;
+            overflow-x: hidden;
+        }
+
+        .matrix-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95vw;
+            height: 90vh;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid #00ff41;
+            border-radius: 15px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
+        }
+
+        .matrix-modal.minimized {
+            top: 20px !important;
+            left: auto !important;
+            right: 20px !important;
+            transform: none !important;
+            width: 350px !important;
+            height: 48px !important;
+            min-width: 200px;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 12px rgba(0,255,65,0.15);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: linear-gradient(90deg, #00ff41, #00cc33);
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .minimize-btn {
+            background: #ffaa00;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .matrix-modal.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .matrix-modal.minimized .modal-content {
+            display: none;
+        }
+
+        .modal-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected { background: #00ff41; }
+        .status-warning { background: #ffaa00; }
+        .status-error { background: #ff4444; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .rain-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .control-group h4 {
+            color: #00ff41;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .control-item {
+            margin-bottom: 10px;
+        }
+
+        .control-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+            background: #333;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .control-item input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .control-item select {
+            width: 100%;
+            background: #333;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pattern-btn {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            color: #00ff41;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pattern-btn:hover {
+            background: rgba(0, 255, 65, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .pattern-btn.active {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .rainbow-spectrum {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .spectrum-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .spectrum-color:hover {
+            transform: scale(1.2);
+        }
+
+        .spectrum-color.active {
+            border-color: #fff;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .activity-feed {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .activity-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            font-size: 12px;
+        }
+
+        .audit-canvas {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 150px;
+        }
+
+        .audit-entry {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .btn {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #00cc33;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffaa00;
+            color: #000;
+        }
+
+        .toolkit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .toolkit-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .toolkit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .toolkit-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toolkit-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .toolkit-name {
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .toolkit-status {
+            font-size: 12px;
+            color: #00ff41;
+            margin-left: auto;
+        }
+
+        .function-list {
+            list-style: none;
+            margin: 10px 0;
+        }
+
+        .function-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            font-size: 12px;
+        }
+
+        .sample-analysis {
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Rain Canvas -->
+    <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: transparent;"></canvas>
+
+    <div class="matrix-modal scrollbar minimized">
+        <div class="modal-header">
+            <div>
+                🌊 Matrix Rain - Advanced Visual Control Unit
+                <span class="status-indicator status-connected"></span>
+                <span style="font-size: 14px; color: #000;">Connected</span>
+            </div>
+            <div>
+                <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
+                <button class="close-btn" onclick="closeMatrixModal()">×</button>
+            </div>
+        </div>
+
+        <div class="modal-content scrollbar">
+            <!-- Left Column -->
+            <div>
+                <!-- Core Intelligence Analysis -->
+                <div class="section">
+                    <h3>🌊 Core Intelligence Analysis</h3>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Core Function:</strong> Advanced data pattern analysis and information flow management with temporal synchronization
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>System Status:</strong>
+                        <span class="status-indicator status-connected"></span>
+                        <span>Connected | Last Ping: 1s ago | Connections: 5</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">99.2%</div>
+                            <div class="metric-label">Pattern Integrity</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">7.43</div>
+                            <div class="metric-label">TB/s Flow Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">5</div>
+                            <div class="metric-label">Active Patterns</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rain Pattern Controls -->
+                <div class="section">
+                    <h3>🌧️ Rain Pattern Controls</h3>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" onclick="toggleMatrixRain()" style="background: #00ff41; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🌊 Toggle Matrix Rain
+                        </button>
+                        <button class="btn btn-danger" onclick="emergencyStop()" style="margin-left: 10px;">
+                            🛑 Emergency Stop
+                        </button>
+                        <button class="btn" id="reverseFlowBtn" onclick="toggleReverseFlow()" style="background: #ffaa00; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            ⏪ REVERSE FLOW
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" onclick="activateChaosRandomizer()" style="background: #ff00ff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🌀 CHAOS ONCE
+                        </button>
+                        <button class="btn" id="autoOrchestratorBtn" onclick="toggleAutoOrchestrator()" style="background: #0080ff; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            🎭 AUTO ORCHESTRATOR
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 15px; text-align: center;">
+                        <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
+                            🎵 AUDIO REACTIVE MODE
+                        </button>
+                        <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
+                        <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
+                    </div>
+                    <div class="pattern-grid">
+                        <button class="pattern-btn active" onclick="setRainPattern('classic')">Classic Matrix</button>
+                        <button class="pattern-btn" onclick="setRainPattern('rainbow')">Rainbow Spectrum</button>
+                        <button class="pattern-btn" onclick="setRainPattern('pentad')">Pentad Prism</button>
+                        <button class="pattern-btn" onclick="setRainPattern('chaos')">Chaos Flow</button>
+                        <button class="pattern-btn" onclick="setRainPattern('harmonic')">Harmonic Waves</button>
+                        <button class="pattern-btn" onclick="setRainPattern('particles')">💫 Particles</button>
+                    </div>
+                </div>
+
+                <!-- Visual Controls -->
+                <div class="section">
+                    <h3>🎨 Visual Controls</h3>
+                    <div class="rain-controls">
+                        <div class="control-group">
+                            <h4>Speed & Intensity</h4>
+                            <div class="control-item">
+                                <label>Rain Speed</label>
+                                <input type="range" id="rainSpeed" min="1" max="100" value="35" onchange="updateRainSpeed()">
+                            </div>
+                            <div class="control-item">
+                                <label>Intensity</label>
+                                <input type="range" id="rainIntensity" min="1" max="100" value="70" onchange="updateRainIntensity()">
+                            </div>
+                            <div class="control-item">
+                                <label>Density</label>
+                                <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Colors & Effects</h4>
+                            <div class="control-item">
+                                <label>Primary Color</label>
+                                <input type="color" id="primaryColor" value="#00ff41" onchange="updateRainColors()">
+                            </div>
+                            <div class="control-item">
+                                <label>Secondary Color</label>
+                                <input type="color" id="secondaryColor" value="#00cc33" onchange="updateRainColors()">
+                            </div>
+                            <div class="control-item">
+                                <label>Opacity</label>
+                                <input type="range" id="rainOpacity" min="0" max="100" value="30" onchange="updateRainOpacity()">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Rainbow Spectrum</h4>
+                            <div class="rainbow-spectrum">
+                                <div class="spectrum-color active" style="background: #ff0000;" onclick="setSpectrumColor('#ff0000')"></div>
+                                <div class="spectrum-color" style="background: #ff8000;" onclick="setSpectrumColor('#ff8000')"></div>
+                                <div class="spectrum-color" style="background: #ffff00;" onclick="setSpectrumColor('#ffff00')"></div>
+                                <div class="spectrum-color" style="background: #00ff00;" onclick="setSpectrumColor('#00ff00')"></div>
+                                <div class="spectrum-color" style="background: #0080ff;" onclick="setSpectrumColor('#0080ff')"></div>
+                                <div class="spectrum-color" style="background: #8000ff;" onclick="setSpectrumColor('#8000ff')"></div>
+                                <div class="spectrum-color" style="background: #ff0080;" onclick="setSpectrumColor('#ff0080')"></div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h4>Pattern Settings</h4>
+                            <div class="control-item">
+                                <label>Character Set</label>
+                                <select id="characterSet" onchange="updateCharacterSet()">
+                                    <option value="matrix">Matrix (A-Z, 0-9, @#$)</option>
+                                    <option value="binary">Binary (01)</option>
+                                    <option value="hex">Hexadecimal (0-F)</option>
+                                    <option value="symbols">Symbols (@#$%^&*)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label>Direction</label>
+                                <select id="rainDirection" onchange="updateRainDirection()">
+                                    <option value="down">Down</option>
+                                    <option value="up">Up</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                    <option value="diagonal">Diagonal</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // === REVERSE FLOW CONTROL ===
+        let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
+        
+        // === MATRIX RAIN ADVANCED VISUAL CONTROL ENGINE ===
+        const MatrixRainEngine = {
+            // Rain configuration
+            rainConfig: {
+                pattern: 'classic',
+                speed: 35,
+                intensity: 70,
+                density: 50,
+                primaryColor: '#00ff41',
+                secondaryColor: '#00cc33',
+                opacity: 100,
+                fontSize: 10,
+                characterSet: 'matrix',
+                direction: 'down',
+                spectrumColor: '#ff0000'
+            },
+            
+            // Pattern definitions
+            patterns: {
+                classic: {
+                    name: 'Classic Matrix',
+                    description: 'Traditional matrix rain effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down'
+                },
+                reverse: {
+                    name: 'Reverse Flow',
+                    description: 'Matrix rain flowing upward',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'up'
+                },
+                sideways: {
+                    name: 'Sideways Flow',
+                    description: 'Matrix rain flowing horizontally',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'left'
+                },
+                bidirectional: {
+                    name: 'Bidirectional',
+                    description: 'Matrix rain flowing in two directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'bidirectional'
+                },
+                quadirectional: {
+                    name: 'Quadirectional',
+                    description: 'Matrix rain flowing in four directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'quadirectional'
+                },
+                interdimensional: {
+                    name: 'Interdimensional',
+                    description: 'Multi-dimensional matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'interdimensional'
+                },
+                rainbow: {
+                    name: 'Rainbow Spectrum',
+                    description: 'Rainbow-colored matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down',
+                    colors: ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080']
+                },
+                pentad: {
+                    name: 'Pentad Prism',
+                    description: 'Five-dimensional prism effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'pentad'
+                },
+                chaos: {
+                    name: 'Chaos Flow',
+                    description: 'Chaotic matrix rain patterns',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'chaos'
+                },
+                harmonic: {
+                    name: 'Harmonic Waves',
+                    description: 'Harmonically synchronized rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'harmonic'
+                }
+            },
+            
+            // === LOGGING FUNCTIONS ===
+            logActivity(message, type = 'info') {
+                console.log(`🌊 Matrix Rain: ${message}`);
+                try {
+                    this.addActivity(message, type === 'success');
+                    this.addAuditEntry(`[🌊 Matrix Rain] ${message}`);
+                } catch (error) {
+                    console.log(`🌊 Matrix Rain: ${message} (UI elements not ready)`);
+                }
+            },
+
+            // === PATTERN CONTROL FUNCTIONS ===
+            setRainPattern(pattern) {
+                console.log(`🌊 Matrix Rain: Setting pattern to ${pattern}`);
+                
+                // Update active button
+                document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                this.rainConfig.pattern = pattern;
+                const patternData = this.patterns[pattern];
+                
+                this.addActivity(`🌧️ Rain pattern changed to: ${patternData.name}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Pattern changed: ${patternData.name} - ${patternData.description}`);
+                
+                // Apply pattern-specific settings
+                this.applyPatternSettings(pattern);
+                
+                return `Pattern set to: ${patternData.name}`;
+            },
+
+            applyPatternSettings(pattern) {
+                const patternData = this.patterns[pattern];
+                
+                // Update character set
+                if (patternData.characters) {
+                    this.rainConfig.characterSet = patternData.characters;
+                    document.getElementById('characterSet').value = 'custom';
+                }
+                
+                // Update direction
+                if (patternData.direction) {
+                    this.rainConfig.direction = patternData.direction;
+                    document.getElementById('rainDirection').value = patternData.direction;
+                }
+                
+                // Apply special effects
+                if (pattern === 'rainbow') {
+                    this.applyRainbowEffect();
+                } else if (pattern === 'pentad') {
+                    this.applyPentadEffect();
+                } else if (pattern === 'chaos') {
+                    this.applyChaosEffect();
+                } else if (pattern === 'harmonic') {
+                    this.applyHarmonicEffect();
+                }
+            },
+
+            applyRainbowEffect() {
+                console.log("🌈 Applying rainbow spectrum effect...");
+                this.addActivity("🌈 Rainbow spectrum effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌈 Rainbow spectrum effect activated");
+            },
+
+            applyPentadEffect() {
+                console.log("🔮 Applying pentad prism effect...");
+                this.addActivity("🔮 Pentad prism effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🔮 Pentad prism effect activated");
+            },
+
+            applyChaosEffect() {
+                console.log("🌀 Applying chaos flow effect...");
+                this.addActivity("🌀 Chaos flow effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌀 Chaos flow effect activated");
+            },
+
+            applyHarmonicEffect() {
+                console.log("🎵 Applying harmonic wave effect...");
+                this.addActivity("🎵 Harmonic wave effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🎵 Harmonic wave effect activated");
+            },
+
+            // === VISUAL CONTROL FUNCTIONS ===
+            updateRainSpeed() {
+                const speed = document.getElementById('rainSpeed').value;
+                this.rainConfig.speed = parseInt(speed);
+                this.addActivity(`⚡ Rain speed updated to: ${speed}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Speed updated: ${speed}`);
+            },
+
+            updateRainIntensity() {
+                const intensity = document.getElementById('rainIntensity').value;
+                this.rainConfig.intensity = parseInt(intensity);
+                this.addActivity(`🔥 Rain intensity updated to: ${intensity}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔥 Intensity updated: ${intensity}%`);
+            },
+
+            updateRainDensity() {
+                const density = document.getElementById('rainDensity').value;
+                this.rainConfig.density = parseInt(density);
+                this.addActivity(`🌧️ Rain density updated to: ${density}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Density updated: ${density}%`);
+            },
+
+            updateRainColors() {
+                const primary = document.getElementById('primaryColor').value;
+                const secondary = document.getElementById('secondaryColor').value;
+                this.rainConfig.primaryColor = primary;
+                this.rainConfig.secondaryColor = secondary;
+                this.addActivity(`🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`);
+            },
+
+            updateRainOpacity() {
+                const opacity = document.getElementById('rainOpacity').value;
+                this.rainConfig.opacity = parseInt(opacity);
+                this.addActivity(`👁️ Opacity updated to: ${opacity}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 👁️ Opacity updated: ${opacity}%`);
+            },
+
+            updateFontSize() {
+                const fontSize = document.getElementById('fontSize').value;
+                this.rainConfig.fontSize = parseInt(fontSize);
+                this.addActivity(`📝 Font size updated to: ${fontSize}px`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 📝 Font size updated: ${fontSize}px`);
+            },
+
+            updateCharacterSet() {
+                const characterSet = document.getElementById('characterSet').value;
+                this.rainConfig.characterSet = characterSet;
+                this.addActivity(`🔤 Character set updated to: ${characterSet}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔤 Character set updated: ${characterSet}`);
+            },
+
+            updateRainDirection() {
+                const direction = document.getElementById('rainDirection').value;
+                this.rainConfig.direction = direction;
+                this.addActivity(`➡️ Rain direction updated to: ${direction}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ➡️ Direction updated: ${direction}`);
+            },
+
+            setSpectrumColor(color) {
+                document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                this.rainConfig.primaryColor = color;
+                this.rainConfig.secondaryColor = color;
+                this.addActivity(`🌈 Spectrum color set to: ${color}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌈 Spectrum color: ${color}`);
+            },
+
+            // === TOOLKIT INTEGRATION FUNCTIONS ===
+            activatePatternAnalysis() {
+                const result = toolkits.kleene.functions.analyzeRecursiveConvergence("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('kleene-result').textContent = result;
+            },
+
+            resurrectVisualData() {
+                const result = toolkits.phoenix.functions.resurrectData("visual_data");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('phoenix-result').textContent = result;
+            },
+
+            harmonizePatterns() {
+                const result = toolkits.harmonic.functions.integratePatterns("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('harmonic-result').textContent = result;
+            },
+
+            createEchoChamber() {
+                const result = toolkits.breath.functions.createEchoChamber("matrix_echoes");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('breath-result').textContent = result;
+            },
+
+            interpretSymbols() {
+                const result = toolkits.symbolic.functions.interpretArchetypalSymbol("matrix");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('symbolic-result').textContent = result;
+            },
+
+            optimizeFlow() {
+                console.log("⚡ Matrix Rain: Optimizing flow...");
+                
+                const optimization = Math.floor(Math.random() * 20) + 80;
+                const efficiency = Math.floor(Math.random() * 15) + 85;
+                
+                this.addActivity(`⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`);
+                
+                return `Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`;
+            },
+
+            backupVisualState() {
+                console.log("💾 Matrix Rain: Backing up visual state...");
+                
+                const backupSize = Math.floor(Math.random() * 1000) + 100;
+                const redundancy = Math.floor(Math.random() * 100);
+                
+                this.addActivity(`💾 Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 💾 Visual backup: ${backupSize}MB, ${redundancy}% redundancy`);
+                
+                return `Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`;
+            },
+
+            restoreVisualState() {
+                console.log("🔄 Matrix Rain: Restoring visual state...");
+                
+                const restoreTime = Math.floor(Math.random() * 3000) + 1000;
+                
+                this.addActivity(`🔄 Visual state restore initiated (${restoreTime}ms)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔄 Visual restore initiated: ${restoreTime}ms`);
+                
+                setTimeout(() => {
+                    this.addActivity('🔄 Visual state restore completed', true);
+                    this.addAuditEntry('[🌊 Matrix Rain] 🔄 Visual restore completed');
+                }, restoreTime);
+                
+                return `Visual state restore initiated (${restoreTime}ms)`;
+            },
+
+            emergencyStop() {
+                console.log("🚨 Matrix Rain: Emergency stop initiated...");
+                
+                this.addActivity('🚨 EMERGENCY STOP INITIATED!', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🚨 Emergency stop protocol executed');
+                
+                setTimeout(() => {
+                    alert('Emergency stop completed. All visual patterns safely halted.');
+                }, 2000);
+                
+                return 'Emergency stop initiated';
+            },
+
+            // === UTILITY FUNCTIONS ===
+            addActivity(message, isRecent = false) {
+                const activityFeed = document.querySelector('.activity-feed');
+                if (!activityFeed) {
+                    console.log(`🌊 Matrix Rain: ${message} (activity feed not found)`);
+                    return;
+                }
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+                activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+                if (activityFeed.children.length > 20) {
+                    activityFeed.removeChild(activityFeed.lastChild);
+                }
+                if (isRecent) {
+                    setTimeout(() => {
+                        activityItem.classList.remove('recent');
+                    }, 5000);
+                }
+            },
+
+            addAuditEntry(message) {
+                const auditCanvas = document.querySelector('.audit-canvas');
+                if (!auditCanvas) {
+                    console.log(`🌊 Matrix Rain: ${message} (audit canvas not found)`);
+                    return;
+                }
+                const auditEntry = document.createElement('div');
+                auditEntry.className = 'audit-entry';
+                auditEntry.textContent = message;
+                auditCanvas.insertBefore(auditEntry, auditCanvas.firstChild);
+                if (auditCanvas.children.length > 15) {
+                    auditCanvas.removeChild(auditCanvas.lastChild);
+                }
+            },
+
+            // === INITIALIZATION ===
+            init() {
+                this.addActivity('🌊 Matrix Rain Advanced Visual Control Unit initialized', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🌊 Advanced Visual Control Unit initialized');
+                console.log("🌊 Matrix Rain Advanced Visual Control Unit initialized");
+            }
+        };
+
+        // === GLOBAL FUNCTIONS FOR BUTTON INTERACTIONS ===
+        function setRainPattern(pattern) { MatrixRainEngine.setRainPattern(pattern); }
+        function updateRainSpeed() { MatrixRainEngine.updateRainSpeed(); }
+        function updateRainIntensity() { MatrixRainEngine.updateRainIntensity(); }
+        function updateRainDensity() { MatrixRainEngine.updateRainDensity(); }
+        function updateRainColors() { MatrixRainEngine.updateRainColors(); }
+        function updateRainOpacity() { MatrixRainEngine.updateRainOpacity(); }
+        function updateFontSize() { MatrixRainEngine.updateFontSize(); }
+        function updateCharacterSet() { MatrixRainEngine.updateCharacterSet(); }
+        function updateRainDirection() { MatrixRainEngine.updateRainDirection(); }
+        function setSpectrumColor(color) { MatrixRainEngine.setSpectrumColor(color); }
+        function activatePatternAnalysis() { MatrixRainEngine.activatePatternAnalysis(); }
+        function resurrectVisualData() { MatrixRainEngine.resurrectVisualData(); }
+        function harmonizePatterns() { MatrixRainEngine.harmonizePatterns(); }
+        function createEchoChamber() { MatrixRainEngine.createEchoChamber(); }
+        function interpretSymbols() { MatrixRainEngine.interpretSymbols(); }
+        function optimizeFlow() { MatrixRainEngine.optimizeFlow(); }
+        function backupVisualState() { MatrixRainEngine.backupVisualState(); }
+        function restoreVisualState() { MatrixRainEngine.restoreVisualState(); }
+        function emergencyStop() { MatrixRainEngine.emergencyStop(); }
+
+        function closeMatrixModal() {
+            const modal = document.querySelector('.matrix-modal');
+            modal.style.display = 'none';
+        }
+
+        function toggleMatrixModal() {
+            const modal = document.querySelector('.matrix-modal');
+            const minimizeBtn = document.getElementById('minimizeBtn');
+            
+            if (modal.classList.contains('minimized')) {
+                modal.classList.remove('minimized');
+                minimizeBtn.textContent = '−';
+                minimizeBtn.title = 'Minimize utilities to see matrix rain';
+            } else {
+                modal.classList.add('minimized');
+                minimizeBtn.textContent = '+';
+                minimizeBtn.title = 'Maximize utilities panel';
+            }
+        }
+
+        // === MATRIX RAIN ANIMATION ENGINE ===
+        let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
+        
+        function initMatrixRain() {
+            console.log("🌊 Matrix Rain: Initializing animation...");
+            matrixCanvas = document.getElementById('matrixRainCanvas');
+            if (!matrixCanvas) {
+                console.error("🌊 Matrix Rain: Canvas element not found!");
+                return;
+            }
+            matrixCtx = matrixCanvas.getContext('2d');
+            if (!matrixCtx) {
+                console.error("🌊 Matrix Rain: Could not get canvas context!");
+                return;
+            }
+            console.log("🌊 Matrix Rain: Canvas initialized successfully");
+            
+            // Ensure canvas is visible
+            matrixCanvas.style.display = 'block';
+            matrixCanvas.style.opacity = '0.8';
+            console.log("🌊 Matrix Rain: Canvas visibility set to:", matrixCanvas.style.display, "opacity:", matrixCanvas.style.opacity);
+            
+            // Set canvas size
+            function resizeCanvas() {
+                matrixCanvas.width = window.innerWidth;
+                matrixCanvas.height = window.innerHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Initialize drops
+            const fontSize = MatrixRainEngine.rainConfig.fontSize;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            matrixDrops = [];
+            window.dropSpeeds = []; // Per-column speed variation
+            
+            for (let i = 0; i < columns; i++) {
+                // Highly randomized starting positions - spread across entire visible + off-screen area
+                matrixDrops[i] = (Math.random() * matrixCanvas.height / fontSize) - (Math.random() * 50);
+                // Random speed variation (0.7 to 1.3x normal speed)
+                window.dropSpeeds[i] = 0.7 + Math.random() * 0.6;
+            }
+            
+            console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
+            
+            // Start animation
+            startMatrixAnimation();
+        }
+        
+        function startMatrixAnimation() {
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+            }
+            
+            const speed = MatrixRainEngine.rainConfig.speed;
+            console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
+            matrixInterval = setInterval(drawMatrixRain, speed);
+            console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
+        }
+        
+        function drawMatrixRain() {
+            const config = MatrixRainEngine.rainConfig;
+            const fontSize = config.fontSize;
+            const opacity = config.opacity / 100;
+            
+            // Debug: Log first few calls
+            if (!window.drawCount) window.drawCount = 0;
+            window.drawCount++;
+            if (window.drawCount <= 5) {
+                console.log(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
+            }
+            
+            
+            // Clear canvas with fade effect (creates nice trails, no afterimages)
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            
+            // Set font
+            matrixCtx.font = `${fontSize}px monospace`;
+            
+            // Get character set
+            let characters = config.characterSet;
+            if (characters === 'matrix') {
+                characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}';
+            } else if (characters === 'binary') {
+                characters = '01';
+            } else if (characters === 'hex') {
+                characters = '0123456789ABCDEF';
+            } else if (characters === 'symbols') {
+                characters = '@#$%^&*()_+-=[]{}|;:,.<>?';
+            }
+            
+            // Draw rain based on pattern
+            if (config.pattern === 'particles') {
+                drawParticleField(characters, fontSize, opacity);
+            } else if (config.pattern === 'rainbow') {
+                drawRainbowRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'pentad') {
+                drawPentadRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'chaos') {
+                drawChaosRain(characters, fontSize, opacity);
+            } else if (config.pattern === 'harmonic') {
+                drawHarmonicRain(characters, fontSize, opacity);
+            } else {
+                drawClassicRain(characters, fontSize, opacity);
+            }
+        }
+        
+        // Track animation state for all patterns
+        if (!window.geometricState) {
+            window.geometricState = {
+                time: 0,
+                rotation: 0,
+                pulsePhase: 0,
+                selectedPattern: 0
+            };
+        }
+        
+        // Particle system state
+        if (!window.particles) {
+            window.particles = [];
+        }
+        
+        function drawClassicRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const direction = config.direction || 'down';
+            
+            // Debug: Log drawing info for first few frames
+            if (window.drawCount <= 3) {
+                console.log(`🌊 Matrix Rain: Direction ${direction}, color: ${config.primaryColor}`);
+            }
+            
+            if (direction === 'left' || direction === 'right') {
+                // HORIZONTAL rain (left/right)
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    
+                    matrixCtx.fillStyle = config.primaryColor;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    // Update horizontal position
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else if (direction === 'diagonal') {
+                // DIAGONAL rain
+                const streams = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < streams; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const progress = matrixDrops[i];
+                    const x = i * fontSize + progress * fontSize * 0.5;
+                    const y = progress * fontSize;
+                    
+                    if (x < matrixCanvas.width && y < matrixCanvas.height) {
+                        matrixCtx.fillStyle = config.primaryColor;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                    }
+                    
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxDiag = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxDiag + 10;
+                    while (matrixDrops[i] > maxDiag) matrixDrops[i] -= maxDiag + 10;
+                    }
+                } else {
+                // VERTICAL rain (up/down)
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const x = i * fontSize;
+                    const y = matrixDrops[i] * fontSize;
+                    
+                    matrixCtx.fillStyle = config.primaryColor;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    // Update vertical position
+                    const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
+                    matrixDrops[i] += dropSpeed * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                }
+            }
+        }
+        
+        function drawRainbowRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const direction = config.direction || 'down';
+            const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
+            
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
+                    
+                    matrixCtx.fillStyle = colors[colorIndex];
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
+                
+                    matrixCtx.fillStyle = colors[colorIndex];
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                    matrixDrops[i] += (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                }
+            }
+        }
+        
+        function drawPentadRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const direction = config.direction || 'down';
+            const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+            
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const color = pentadColors[i % 5];
+                    
+                    matrixCtx.fillStyle = color;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                    const color = pentadColors[i % 5];
+                
+                matrixCtx.fillStyle = color;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                }
+            }
+        }
+        
+        function drawChaosRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const direction = config.direction || 'down';
+            
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize + (Math.random() - 0.5) * 10;
+                    const x = matrixDrops[i] * fontSize;
+                    const hue = (Date.now() + i * 50) % 360;
+                    
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, x, y);
+                    
+                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                    const x = i * fontSize + (Math.random() - 0.5) * 10;
+                const y = matrixDrops[i] * fontSize;
+                const hue = (Date.now() + i * 50) % 360;
+                
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, y);
+                
+                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                }
+            }
+        }
+        
+        function drawHarmonicRain(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const direction = config.direction || 'down';
+            
+            if (direction === 'left' || direction === 'right') {
+                const rows = Math.floor(matrixCanvas.height / fontSize);
+                for (let i = 0; i < rows; i++) {
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const y = i * fontSize;
+                    const x = matrixDrops[i] * fontSize;
+                    const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
+                    const harmonicX = x + wave;
+                    const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
+                    
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    matrixCtx.globalAlpha = opacity;
+                    matrixCtx.fillText(char, harmonicX, y);
+                    
+                    matrixDrops[i] += 0.8 * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxCols = matrixCanvas.width / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
+                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                }
+            } else {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+            for (let i = 0; i < columns; i++) {
+                const char = characters[Math.floor(Math.random() * characters.length)];
+                const x = i * fontSize;
+                const y = matrixDrops[i] * fontSize;
+                const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
+                const harmonicY = y + wave;
+                const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
+                
+                    matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(char, x, harmonicY);
+                
+                    matrixDrops[i] += 0.8 * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
+                    
+                    // Simple wrap around - bulletproof
+                    const maxRows = matrixCanvas.height / fontSize;
+                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
+                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                }
+            }
+        }
+        // === PARTICLE FIELD ===
+        function drawParticleField(characters, fontSize, opacity) {
+            const config = MatrixRainEngine.rainConfig;
+            const numParticles = Math.floor(config.intensity * 3);
+            
+            if (window.particles.length === 0) {
+                for (let i = 0; i < numParticles; i++) {
+                    window.particles.push({
+                        x: Math.random() * matrixCanvas.width,
+                        y: Math.random() * matrixCanvas.height,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        char: characters[Math.floor(Math.random() * characters.length)],
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            const speedFactor = config.speed / 50;
+            const centerX = matrixCanvas.width / 2;
+            const centerY = matrixCanvas.height / 2;
+            
+            for (let i = 0; i < Math.min(window.particles.length, numParticles); i++) {
+                const p = window.particles[i];
+                
+                const dx = centerX - p.x;
+                const dy = centerY - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const force = (dist / 500) * 0.5;
+                
+                p.vx += (dy / dist) * force * speedFactor * reverseFlowMultiplier;
+                p.vy += (-dx / dist) * force * speedFactor * reverseFlowMultiplier;
+                
+                p.x += p.vx * reverseFlowMultiplier;
+                p.y += p.vy * reverseFlowMultiplier;
+                
+                p.vx *= 0.99;
+                p.vy *= 0.99;
+                
+                if (p.x < 0) p.x = matrixCanvas.width;
+                if (p.x > matrixCanvas.width) p.x = 0;
+                if (p.y < 0) p.y = matrixCanvas.height;
+                if (p.y > matrixCanvas.height) p.y = 0;
+                
+                p.phase += 0.05 * reverseFlowMultiplier;
+                const pulse = Math.sin(p.phase) * 0.3 + 0.7;
+                const size = fontSize * pulse;
+                const hue = (i * 10 + window.geometricState.time * 20) % 360;
+                
+                matrixCtx.font = `${size}px monospace`;
+                matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                matrixCtx.globalAlpha = opacity;
+                matrixCtx.fillText(p.char, p.x, p.y);
+            }
+            
+            window.geometricState.time += 0.02 * reverseFlowMultiplier;
+        }
+        
+        // === CONTROL FUNCTIONS ===
+        function updateRainConfig() {
+            const config = MatrixRainEngine.rainConfig;
+            console.log('Matrix Rain Config Updated:', config);
+            MatrixRainEngine.logActivity('Configuration updated', 'info');
+            
+            // Update animation with new settings
+            if (matrixInterval) {
+                startMatrixAnimation();
+            }
+        }
+        
+        function toggleMatrixRain() {
+            const canvas = document.getElementById('matrixRainCanvas');
+            if (canvas.style.display === 'none') {
+                canvas.style.display = 'block';
+                startMatrixAnimation();
+                MatrixRainEngine.logActivity('Matrix rain activated', 'success');
+            } else {
+                canvas.style.display = 'none';
+                if (matrixInterval) {
+                    clearInterval(matrixInterval);
+                }
+                MatrixRainEngine.logActivity('Matrix rain deactivated', 'warning');
+            }
+        }
+        
+        function emergencyStop() {
+            const canvas = document.getElementById('matrixRainCanvas');
+            canvas.style.display = 'none';
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+            }
+            MatrixRainEngine.logActivity('EMERGENCY STOP: Matrix rain terminated', 'error');
+        }
+        
+        function setRainPattern(pattern) {
+            MatrixRainEngine.rainConfig.pattern = pattern;
+            updateRainConfig();
+            
+            // Update active button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function updateRainSpeed() {
+            const speed = document.getElementById('rainSpeed').value;
+            MatrixRainEngine.rainConfig.speed = 101 - speed; // Invert for intuitive control
+            updateRainConfig();
+        }
+        
+        function updateRainIntensity() {
+            const intensity = document.getElementById('rainIntensity').value;
+            MatrixRainEngine.rainConfig.intensity = intensity;
+            updateRainConfig();
+        }
+        
+        function updateRainDensity() {
+            const density = document.getElementById('rainDensity').value;
+            MatrixRainEngine.rainConfig.density = density;
+            updateRainConfig();
+        }
+        
+        function updateRainColors() {
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            MatrixRainEngine.rainConfig.primaryColor = primary;
+            MatrixRainEngine.rainConfig.secondaryColor = secondary;
+            updateRainConfig();
+        }
+        
+        function updateRainOpacity() {
+            const opacity = document.getElementById('rainOpacity').value;
+            MatrixRainEngine.rainConfig.opacity = opacity;
+            updateRainConfig();
+        }
+        
+        function updateFontSize() {
+            const fontSize = document.getElementById('fontSize').value;
+            MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
+            updateRainConfig();
+        }
+        
+        function updateCharacterSet() {
+            const characterSet = document.getElementById('characterSet').value;
+            MatrixRainEngine.rainConfig.characterSet = characterSet;
+            updateRainConfig();
+        }
+        
+        function updateRainDirection() {
+            const direction = document.getElementById('rainDirection').value;
+            MatrixRainEngine.rainConfig.direction = direction;
+            updateRainConfig();
+        }
+        
+        function setSpectrumColor(color) {
+            document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            MatrixRainEngine.rainConfig.primaryColor = color;
+            updateRainConfig();
+        }
+
+        // === INITIALIZATION ===
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🌊 Matrix Rain: DOM loaded, initializing...");
+            MatrixRainEngine.init();
+            
+            // Wait a bit for the engine to initialize, then start the rain
+            setTimeout(() => {
+                initMatrixRain();
+                console.log("🌊 Matrix Rain: Animation engine initialized");
+            }, 100);
+            
+            // Add keyboard shortcut: Press 'M' to toggle settings modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'm' || e.key === 'M') {
+                    const modal = document.querySelector('.matrix-modal');
+                    if (modal.style.display === 'none') {
+                        modal.style.display = 'flex';
+                        MatrixRainEngine.logActivity('⌨️ Settings opened (M key)', 'info');
+                    } else {
+                        modal.style.display = 'none';
+                        MatrixRainEngine.logActivity('⌨️ Settings closed (M key)', 'info');
+                    }
+                }
+            });
+        });
+        
+        // === CHAOS RANDOMIZER ===
+        function activateChaosRandomizer() {
+            console.log("🌀 CHAOS RANDOMIZER ACTIVATED!");
+            MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: Initiating complete system chaos!", 'success');
+            
+            // Randomize all settings with all available patterns!
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+            
+            // Apply random settings
+            MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.speed = Math.floor(Math.random() * 50) + 10;
+            MatrixRainEngine.rainConfig.opacity = 100; // Always 100%
+            MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
+            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+
+            // Update UI controls
+            document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
+            document.getElementById('rainOpacity').value = 100; // Always show 100%
+            document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
+            document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
+            document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
+            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
+            
+            // Update pattern button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
+            if (patternBtn) patternBtn.classList.add('active');
+            
+            // Log chaos results
+            MatrixRainEngine.logActivity(`🌀 CHAOS: Pattern=${MatrixRainEngine.rainConfig.pattern}, Speed=${MatrixRainEngine.rainConfig.speed}, CharSet=${MatrixRainEngine.rainConfig.characterSet}`, 'success');
+            
+            // Update animation
+            updateRainConfig();
+            
+            // Create visual chaos effect
+            createChaosEffect();
+        }
+        
+        function createChaosEffect() {
+            // Create temporary visual chaos
+            const canvas = document.getElementById('matrixRainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Flash effect
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.3)`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                flashCount++;
+                if (flashCount >= 5) {
+                    clearInterval(flashInterval);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            }, 100);
+        }
+        
+        // === AUTO ORCHESTRATOR - Simple RNG automation ===
+        let autoOrchestratorInterval = null;
+        let autoOrchestratorActive = false;
+        
+        function toggleAutoOrchestrator() {
+            autoOrchestratorActive = !autoOrchestratorActive;
+            const btn = document.getElementById('autoOrchestratorBtn');
+            
+            if (autoOrchestratorActive) {
+                btn.textContent = '⏸️ STOP AUTO';
+                btn.style.background = '#ff4444';
+                startAutoOrchestrator();
+                MatrixRainEngine.logActivity('🎭 Auto Orchestrator STARTED - continuous random evolution!', 'success');
+            } else {
+                btn.textContent = '🎭 AUTO ORCHESTRATOR';
+                btn.style.background = '#0080ff';
+                stopAutoOrchestrator();
+                MatrixRainEngine.logActivity('🎭 Auto Orchestrator STOPPED', 'info');
+            }
+        }
+        
+        function startAutoOrchestrator() {
+            // Run first change immediately
+            orchestrateRandomChange();
+            
+            // Then schedule recurring changes
+            scheduleNextChange();
+        }
+        
+        function scheduleNextChange() {
+            if (!autoOrchestratorActive) return;
+            
+            // Random interval: 8-15 seconds (longer to enjoy each scene)
+            const interval = 8000 + Math.floor(Math.random() * 7000);
+            const seconds = Math.round(interval / 1000);
+            
+            console.log(`⏱️ Next orchestrator change in ${seconds} seconds...`);
+            MatrixRainEngine.logActivity(`⏱️ Next change in ${seconds}s`, 'info');
+            
+            autoOrchestratorInterval = setTimeout(() => {
+                orchestrateRandomChange();
+                scheduleNextChange(); // Schedule next one
+            }, interval);
+        }
+        
+        function orchestrateRandomChange() {
+            if (!autoOrchestratorActive) return;
+            
+            console.log('🎭 ORCHESTRATOR: Running change cycle...');
+            
+            // Store previous pattern to detect changes
+            const previousPattern = MatrixRainEngine.rainConfig.pattern;
+            const previousDirection = MatrixRainEngine.rainConfig.direction;
+            
+            // All available patterns
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+            
+            // Randomize EVERYTHING
+            const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            const patternChanged = newPattern !== previousPattern;
+            MatrixRainEngine.rainConfig.pattern = newPattern;
+            MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
+            MatrixRainEngine.rainConfig.speed = 20 + Math.floor(Math.random() * 70); // 20-90
+            MatrixRainEngine.rainConfig.opacity = 100; // Always 100%
+            MatrixRainEngine.rainConfig.intensity = 40 + Math.floor(Math.random() * 60); // 40-100
+            MatrixRainEngine.rainConfig.density = 30 + Math.floor(Math.random() * 70); // 30-100
+            MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
+            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+
+            // 60% chance to toggle reverse flow for dynamic reversals!
+            if (Math.random() < 0.6) {
+                reverseFlowMultiplier *= -1;
+                const flowStatus = reverseFlowMultiplier === -1 ? '⏪ REVERSED' : '⏩ FORWARD';
+                MatrixRainEngine.logActivity(`🔄 Flow reversal: ${flowStatus}`, 'success');
+
+                // Update reverse flow button UI
+                const btn = document.getElementById('reverseFlowBtn');
+                if (btn) {
+                    if (reverseFlowMultiplier === -1) {
+                        btn.textContent = '⏩ FORWARD FLOW';
+                        btn.style.background = '#00ff88';
+                    } else {
+                        btn.textContent = '⏪ REVERSE FLOW';
+                        btn.style.background = '#ffaa00';
+                    }
+                }
+            }
+
+            // Update UI to reflect changes
+            document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
+            document.getElementById('rainOpacity').value = MatrixRainEngine.rainConfig.opacity;
+            document.getElementById('rainIntensity').value = MatrixRainEngine.rainConfig.intensity;
+            document.getElementById('rainDensity').value = MatrixRainEngine.rainConfig.density;
+            document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
+            document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
+            document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
+            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
+            
+            // Update active pattern button
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
+            if (patternBtn) patternBtn.classList.add('active');
+            
+            // Log the changes with CLEAR visibility
+            const directionChanged = MatrixRainEngine.rainConfig.direction !== previousDirection;
+            console.log(`\n========================================`);
+            console.log(`🎭 ORCHESTRATOR CHANGE:`);
+            console.log(`   Pattern: ${previousPattern} → ${MatrixRainEngine.rainConfig.pattern}`);
+            console.log(`   Direction: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`);
+            console.log(`   Reverse Flow: ${reverseFlowMultiplier === -1 ? '⏪ REWINDING' : '⏩ FORWARD'}`);
+            console.log(`========================================\n`);
+            
+            // Show direction change notification
+            if (directionChanged) {
+                MatrixRainEngine.logActivity(`↗️ DIRECTION CHANGED: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`, 'success');
+            }
+            
+            if (patternChanged) {
+                MatrixRainEngine.logActivity(`🎭 NEW Pattern: ${MatrixRainEngine.rainConfig.pattern} | Dir: ${MatrixRainEngine.rainConfig.direction} | ${MatrixRainEngine.rainConfig.characterSet}`, 'success');
+            } else {
+                MatrixRainEngine.logActivity(`🔄 Settings update | Dir: ${MatrixRainEngine.rainConfig.direction} | Rev: ${reverseFlowMultiplier === -1 ? 'YES' : 'NO'}`, 'info');
+            }
+            
+            // Always just update config - smooth transitions, no resets!
+            updateRainConfig();
+        }
+        
+        function stopAutoOrchestrator() {
+            if (autoOrchestratorInterval) {
+                clearTimeout(autoOrchestratorInterval);
+                autoOrchestratorInterval = null;
+            }
+        }
+        
+        // === REVERSE FLOW TOGGLE ===
+        function toggleReverseFlow() {
+            reverseFlowMultiplier *= -1; // Flip between 1 and -1
+            const btn = document.getElementById('reverseFlowBtn');
+
+            if (reverseFlowMultiplier === -1) {
+                btn.textContent = '⏩ FORWARD FLOW';
+                btn.style.background = '#00ff88';
+                MatrixRainEngine.logActivity('⏪ REVERSE FLOW ACTIVATED - Everything is rewinding!', 'success');
+            } else {
+                btn.textContent = '⏪ REVERSE FLOW';
+                btn.style.background = '#ffaa00';
+                MatrixRainEngine.logActivity('⏩ Forward flow restored', 'info');
+            }
+        }
+
+        // === AUDIO REACTIVE SYSTEM ===
+        let audioContext = null;
+        let audioAnalyser = null;
+        let audioDataArray = null;
+        let audioBufferLength = 0;
+        let audioReactiveActive = false;
+        let audioAnimationFrame = null;
+        let audioStream = null;
+
+        // Syllable detection state (for reversals)
+        let syllableDetector = {
+            threshold: 1.08,        // Balanced sensitivity
+            minVolume: 0.06,        // Low but not too low
+            lastSyllableTime: 0,
+            syllableCooldown: 120,  // 120ms = ~8 syllables/sec (prevents double-reversals)
+            volumeHistory: [],
+            historyLength: 12,      // Balanced history
+            avgVolume: 0
+        };
+
+        // Beat detection state (for color changes AND reversal backup)
+        let beatDetector = {
+            threshold: 1.4,         // Higher threshold for just strong beats
+            minBass: 140,          // Only trigger on significant bass
+            lastBeatTime: 0,
+            beatCooldown: 150,      // Allow more frequent beat reactions
+            bassHistory: [],
+            historyLength: 15,
+            avgBass: 0
+        };
+
+        // Track when last syllable was detected (for beat reversal backup)
+        let lastSyllableOrBeatReversalTime = 0;
+
+        // Rhythm detection and direction bursts removed
+        // Music now controls everything continuously
+
+        async function toggleAudioReactive() {
+            audioReactiveActive = !audioReactiveActive;
+            const btn = document.getElementById('audioReactiveBtn');
+            const status = document.getElementById('audioStatus');
+
+            if (audioReactiveActive) {
+                btn.textContent = '⏸️ STOP AUDIO MODE';
+                btn.style.background = '#ff4444';
+                status.textContent = '🎤 Requesting audio access...';
+
+                try {
+                    // Request desktop/tab audio capture
+                    audioStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: true,
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+
+                    // Set up Web Audio API
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioAnalyser = audioContext.createAnalyser();
+                    audioAnalyser.fftSize = 2048;
+                    audioAnalyser.smoothingTimeConstant = 0.8;
+
+                    const source = audioContext.createMediaStreamSource(audioStream);
+                    source.connect(audioAnalyser);
+
+                    audioBufferLength = audioAnalyser.frequencyBinCount;
+                    audioDataArray = new Uint8Array(audioBufferLength);
+
+                    status.textContent = '🎵 AUDIO REACTIVE - Syncing with sound!';
+                    MatrixRainEngine.logActivity('🎵 Audio Reactive Mode ACTIVATED - Rain synced to audio!', 'success');
+
+                    // Start audio analysis loop
+                    analyzeAudio();
+
+                } catch (error) {
+                    console.error('Audio capture error:', error);
+                    status.textContent = '❌ Audio access denied. Try sharing a tab with audio.';
+                    audioReactiveActive = false;
+                    btn.textContent = '🎵 AUDIO REACTIVE MODE';
+                    btn.style.background = '#ff1493';
+                }
+
+            } else {
+                btn.textContent = '🎵 AUDIO REACTIVE MODE';
+                btn.style.background = '#ff1493';
+                status.textContent = '';
+                stopAudioReactive();
+                MatrixRainEngine.logActivity('🎵 Audio Reactive Mode STOPPED', 'info');
+            }
+        }
+
+        function stopAudioReactive() {
+            if (audioAnimationFrame) {
+                cancelAnimationFrame(audioAnimationFrame);
+                audioAnimationFrame = null;
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            audioAnalyser = null;
+            audioDataArray = null;
+        }
+
+        function analyzeAudio() {
+            if (!audioReactiveActive || !audioAnalyser) return;
+
+            audioAnimationFrame = requestAnimationFrame(analyzeAudio);
+
+            // Get frequency data
+            audioAnalyser.getByteFrequencyData(audioDataArray);
+
+            // Calculate different frequency ranges
+            const bass = getAverageFrequency(0, 80);      // 0-80: Bass/kick
+            const lowMid = getAverageFrequency(80, 200);  // 80-200: Low-mid (music body)
+            const mid = getAverageFrequency(200, 600);    // 200-600: Mid (vocals)
+            const high = getAverageFrequency(600, 1024);  // 600+: High frequencies (consonants)
+
+            // Overall volume
+            const volume = (bass + lowMid + mid + high) / 4 / 255;
+
+            // SYLLABLES = REVERSALS ONLY
+            detectSyllables(volume, mid, high);
+
+            // MUSIC = EVERYTHING ELSE (continuous background control)
+            reactToAudio(bass, lowMid, mid, high, volume);
+
+            // Draw visualizer
+            drawAudioVisualizer(bass, lowMid, mid, high);
+        }
+
+        function getAverageFrequency(startBin, endBin) {
+            let sum = 0;
+            let count = 0;
+            for (let i = startBin; i < endBin && i < audioBufferLength; i++) {
+                sum += audioDataArray[i];
+                count++;
+            }
+            return count > 0 ? sum / count : 0;
+        }
+
+        function detectSyllables(volume, mid, high) {
+            const now = Date.now();
+
+            // Update volume history
+            syllableDetector.volumeHistory.push(volume);
+            if (syllableDetector.volumeHistory.length > syllableDetector.historyLength) {
+                syllableDetector.volumeHistory.shift();
+            }
+
+            // Calculate average volume
+            syllableDetector.avgVolume = syllableDetector.volumeHistory.reduce((a, b) => a + b, 0) / syllableDetector.volumeHistory.length;
+
+            // Detect syllables - HYPER SENSITIVE to catch EVERYTHING
+            const isSyllable = volume > syllableDetector.avgVolume * syllableDetector.threshold
+                            && volume > syllableDetector.minVolume
+                            && mid > 40  // VERY low threshold - catches almost any vocal
+                            && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            // Also catch consonant pops (high frequency spikes) - LOWER threshold
+            const isConsonant = high > 100
+                             && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            // ALSO catch any significant mid-frequency activity (vocals)
+            const isVocal = mid > 120
+                         && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
+
+            if (isSyllable || isConsonant || isVocal) {
+                syllableDetector.lastSyllableTime = now;
+                onSyllableDetected();
+            }
+        }
+
+        function detectBeats(bass) {
+            const now = Date.now();
+
+            // Update bass history
+            beatDetector.bassHistory.push(bass);
+            if (beatDetector.bassHistory.length > beatDetector.historyLength) {
+                beatDetector.bassHistory.shift();
+            }
+
+            // Calculate average bass
+            beatDetector.avgBass = beatDetector.bassHistory.reduce((a, b) => a + b, 0) / beatDetector.bassHistory.length;
+
+            // Detect bass beats - focus on low frequencies only
+            const isBeat = bass > beatDetector.avgBass * beatDetector.threshold
+                        && bass > beatDetector.minBass
+                        && (now - beatDetector.lastBeatTime) > beatDetector.beatCooldown;
+
+            if (isBeat) {
+                beatDetector.lastBeatTime = now;
+                onBeatDetected(bass);
+            }
+        }
+
+        // Rhythm change detection removed - music now controls everything continuously
+
+        function onSyllableDetected() {
+            // REVERSE FLOW on EVERY syllable!
+            reverseFlowMultiplier *= -1;
+            lastSyllableOrBeatReversalTime = Date.now(); // Track this reversal
+            const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
+
+            // Update button UI
+            const btn = document.getElementById('reverseFlowBtn');
+            if (btn) {
+                if (reverseFlowMultiplier === -1) {
+                    btn.textContent = '⏩ FORWARD FLOW';
+                    btn.style.background = '#00ff88';
+                } else {
+                    btn.textContent = '⏪ REVERSE FLOW';
+                    btn.style.background = '#ffaa00';
+                }
+            }
+
+            // Log only occasionally to avoid spam
+            if (Math.random() < 0.05) { // 5% logged
+                MatrixRainEngine.logActivity(`${flowStatus} syllable`, 'info');
+            }
+        }
+
+        function onBeatDetected(bass) {
+            const now = Date.now();
+            const timeSinceLastReversal = now - lastSyllableOrBeatReversalTime;
+
+            // If no syllable in last 500ms, use BEAT for reversal (backup mode)
+            if (timeSinceLastReversal > 500) {
+                reverseFlowMultiplier *= -1;
+                lastSyllableOrBeatReversalTime = now;
+                const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
+
+                // Update button UI
+                const btn = document.getElementById('reverseFlowBtn');
+                if (btn) {
+                    if (reverseFlowMultiplier === -1) {
+                        btn.textContent = '⏩ FORWARD FLOW';
+                        btn.style.background = '#00ff88';
+                    } else {
+                        btn.textContent = '⏪ REVERSE FLOW';
+                        btn.style.background = '#ffaa00';
+                    }
+                }
+
+                // Log occasionally
+                if (Math.random() < 0.1) {
+                    MatrixRainEngine.logActivity(`${flowStatus} beat (backup)`, 'info');
+                }
+            }
+            // Note: Color is now controlled continuously by reactToAudio (lowMid frequency)
+            // No more beat-triggered color flashes - smoother color evolution
+        }
+
+        function onRhythmChange(bass, lowMid, mid, high, changeAmount) {
+            // This function is now REMOVED from active use
+            // Music drives everything continuously via reactToAudio()
+        }
+
+        // Helper function to convert HSL to HEX for color pickers
+        function hslToHex(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        function reactToAudio(bass, lowMid, mid, high, volume) {
+            const config = MatrixRainEngine.rainConfig;
+
+            // === INTELLIGENT AUDIO-TO-VISUAL MAPPING ===
+            // Each audio frequency controls ONE specific visual parameter
+
+            // FORCE CLASSIC PATTERN (only one that shows color changes properly)
+            config.pattern = 'classic';
+            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+            const classicBtn = document.querySelector(`[onclick="setRainPattern('classic')"]`);
+            if (classicBtn) classicBtn.classList.add('active');
+
+            // BASS → SPEED (more bass = faster rain)
+            const bassNormalized = bass / 255;
+            config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
+
+            // LOW-MID → COLOR HUE (music body controls color wheel position)
+            const hue = Math.floor((lowMid / 255) * 360);
+            config.primaryColor = `hsl(${hue}, 100%, 50%)`;
+            const compHue = (hue + 180) % 360;
+            config.secondaryColor = `hsl(${compHue}, 100%, 50%)`;
+
+            // Update color pickers
+            const primaryHex = hslToHex(hue, 100, 50);
+            const secondaryHex = hslToHex(compHue, 100, 50);
+            document.getElementById('primaryColor').value = primaryHex;
+            document.getElementById('secondaryColor').value = secondaryHex;
+
+            // MID → DENSITY (vocal/melody range controls how much rain)
+            const midNormalized = mid / 255;
+            config.density = 20 + Math.floor(midNormalized * 80); // 20-100
+
+            // HIGH → CHARACTER SET (high frequencies pick character complexity)
+            const highNormalized = high / 255;
+            const charIndex = Math.floor(highNormalized * 4); // 0-3
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            config.characterSet = characterSets[Math.min(charIndex, 3)];
+            document.getElementById('characterSet').value = config.characterSet;
+
+            // OVERALL VOLUME → INTENSITY (loudness = brightness)
+            config.intensity = 30 + Math.floor(volume * 70); // 30-100
+
+            // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
+            // Very low threshold to catch musical moments!
+            const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
+            if (directionTrigger) {
+                const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+                // Use combined audio energy to pick direction
+                const dirValue = (bass + high + lowMid) / 3;
+                const dirIndex = Math.floor((dirValue / 255) * directions.length);
+                config.direction = directions[Math.min(dirIndex, 4)];
+                document.getElementById('rainDirection').value = config.direction;
+            }
+
+            // Opacity always maxed
+            config.opacity = 100;
+
+            // Update UI sliders
+            document.getElementById('rainSpeed').value = 101 - config.speed;
+            document.getElementById('rainDensity').value = config.density;
+            document.getElementById('rainOpacity').value = 100;
+            document.getElementById('rainIntensity').value = config.intensity;
+        }
+
+        function drawAudioVisualizer(bass, lowMid, mid, high) {
+            const visualizer = document.getElementById('audioVisualizer');
+            if (!visualizer) return;
+
+            // Create frequency bars
+            const bassHeight = (bass / 255) * 100;
+            const lowMidHeight = (lowMid / 255) * 100;
+            const midHeight = (mid / 255) * 100;
+            const highHeight = (high / 255) * 100;
+
+            visualizer.innerHTML = `
+                <div style="position: absolute; bottom: 0; left: 10%; width: 15%; height: ${bassHeight}%; background: linear-gradient(to top, #ff0000, #ff6060); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 30%; width: 15%; height: ${lowMidHeight}%; background: linear-gradient(to top, #ff8000, #ffaa60); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 50%; width: 15%; height: ${midHeight}%; background: linear-gradient(to top, #00ff00, #60ff60); transition: height 0.05s;"></div>
+                <div style="position: absolute; bottom: 0; left: 70%; width: 15%; height: ${highHeight}%; background: linear-gradient(to top, #0080ff, #60a0ff); transition: height 0.05s;"></div>
+                <div style="position: absolute; top: 5px; left: 10%; font-size: 10px; color: #ff6060;">BASS</div>
+                <div style="position: absolute; top: 5px; left: 30%; font-size: 10px; color: #ffaa60;">LOW</div>
+                <div style="position: absolute; top: 5px; left: 50%; font-size: 10px; color: #60ff60;">MID</div>
+                <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH</div>
+            `;
+        }
+    </script>
+</body>
+</html> 
