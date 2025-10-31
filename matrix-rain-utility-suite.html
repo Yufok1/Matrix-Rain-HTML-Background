@@ -416,6 +416,7 @@
                 🌊 Matrix Rain - Advanced Visual Control Unit
                 <span class="status-indicator status-connected"></span>
                 <span style="font-size: 14px; color: #000;">Connected</span>
+                <span style="font-size: 12px; color: #000; margin-left: 15px; padding: 3px 8px; background: rgba(0,0,0,0.15); border-radius: 4px; font-weight: bold;" id="keyboardHint">⌨️ Press M to toggle</span>
             </div>
             <div>
                 <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
@@ -561,6 +562,7 @@
                                     <option value="left">Left</option>
                                     <option value="right">Right</option>
                                     <option value="diagonal">Diagonal</option>
+                                    <option value="toward">🚇 Toward Camera (3D)</option>
                                 </select>
                             </div>
                         </div>
@@ -964,15 +966,15 @@
         function toggleMatrixModal() {
             const modal = document.querySelector('.matrix-modal');
             const minimizeBtn = document.getElementById('minimizeBtn');
-            
+
             if (modal.classList.contains('minimized')) {
                 modal.classList.remove('minimized');
                 minimizeBtn.textContent = '−';
                 minimizeBtn.title = 'Minimize utilities to see matrix rain';
             } else {
                 modal.classList.add('minimized');
-                minimizeBtn.textContent = '+';
-                minimizeBtn.title = 'Maximize utilities panel';
+                minimizeBtn.textContent = 'M +';
+                minimizeBtn.title = 'Press M or click to maximize';
             }
         }
 
@@ -1049,9 +1051,66 @@
                 console.log(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
             }
             
-            
-            // Clear canvas with fade effect (creates nice trails, no afterimages)
-            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+
+            // === AUTO-CONTRAST BACKGROUND ===
+            // Calculate complementary color based on current character colors
+            function hexToHSL_bg(hex) {
+                hex = hex.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16) / 255;
+                const g = parseInt(hex.substr(2, 2), 16) / 255;
+                const b = parseInt(hex.substr(4, 2), 16) / 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                        case g: h = ((b - r) / d + 2) / 6; break;
+                        case b: h = ((r - g) / d + 4) / 6; break;
+                    }
+                }
+                return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+            }
+
+            // Get average hue from primary and secondary colors
+            let avgHue = 0;
+            let primaryHSL, secondaryHSL;
+
+            if (config.primaryColor) {
+                if (config.primaryColor.includes('#')) {
+                    primaryHSL = hexToHSL_bg(config.primaryColor);
+                } else if (config.primaryColor.includes('hsl')) {
+                    const match = config.primaryColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                    if (match) primaryHSL = { h: parseInt(match[1]), s: parseInt(match[2]), l: parseInt(match[3]) };
+                }
+            }
+
+            if (config.secondaryColor) {
+                if (config.secondaryColor.includes('#')) {
+                    secondaryHSL = hexToHSL_bg(config.secondaryColor);
+                } else if (config.secondaryColor.includes('hsl')) {
+                    const match = config.secondaryColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                    if (match) secondaryHSL = { h: parseInt(match[1]), s: parseInt(match[2]), l: parseInt(match[3]) };
+                }
+            }
+
+            // Calculate average hue
+            if (primaryHSL && secondaryHSL) {
+                avgHue = (primaryHSL.h + secondaryHSL.h) / 2;
+            } else if (primaryHSL) {
+                avgHue = primaryHSL.h;
+            } else {
+                avgHue = 120; // Default green
+            }
+
+            // Complementary color (opposite on color wheel)
+            const complementHue = (avgHue + 180) % 360;
+
+            // Clear canvas with auto-contrast background (dark complementary color)
+            matrixCtx.fillStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -1069,19 +1128,27 @@
                 characters = '@#$%^&*()_+-=[]{}|;:,.<>?';
             }
             
-            // Draw rain based on pattern
-            if (config.pattern === 'particles') {
-                drawParticleField(characters, fontSize, opacity);
-            } else if (config.pattern === 'rainbow') {
-                drawRainbowRain(characters, fontSize, opacity);
-            } else if (config.pattern === 'pentad') {
-                drawPentadRain(characters, fontSize, opacity);
-            } else if (config.pattern === 'chaos') {
-                drawChaosRain(characters, fontSize, opacity);
-            } else if (config.pattern === 'harmonic') {
-                drawHarmonicRain(characters, fontSize, opacity);
+            // Draw rain based on DIRECTION first, then pattern
+            const direction = config.direction;
+
+            if (direction === 'toward') {
+                // 3D toward camera mode - uses special positioning with any pattern
+                draw3DTowardCamera(characters, fontSize, opacity, config.pattern);
             } else {
-                drawClassicRain(characters, fontSize, opacity);
+                // Traditional 2D directional rain
+                if (config.pattern === 'particles') {
+                    drawParticleField(characters, fontSize, opacity);
+                } else if (config.pattern === 'rainbow') {
+                    drawRainbowRain(characters, fontSize, opacity);
+                } else if (config.pattern === 'pentad') {
+                    drawPentadRain(characters, fontSize, opacity);
+                } else if (config.pattern === 'chaos') {
+                    drawChaosRain(characters, fontSize, opacity);
+                } else if (config.pattern === 'harmonic') {
+                    drawHarmonicRain(characters, fontSize, opacity);
+                } else {
+                    drawClassicRain(characters, fontSize, opacity);
+                }
             }
         }
         
@@ -1419,7 +1486,197 @@
             
             window.geometricState.time += 0.02 * reverseFlowMultiplier;
         }
-        
+
+        // === 3D TUNNEL EFFECT (Hackers Gibson Scene) ===
+        // Initialize tunnel characters
+        if (!window.tunnelChars) {
+            window.tunnelChars = [];
+        }
+
+        function draw3DTowardCamera(characters, fontSize, opacity, pattern) {
+            const config = MatrixRainEngine.rainConfig;
+            const speedFactor = config.speed / 50;
+
+            const numChars = Math.floor(config.intensity * 1.5); // Reduced density - less busy
+
+            // Initialize tunnel characters if needed (or adjust count)
+            if (window.tunnelChars.length === 0 || window.tunnelChars.length !== numChars) {
+                window.tunnelChars = []; // Clear and reinitialize
+                for (let i = 0; i < numChars; i++) {
+                    // Random starting position across ENTIRE screen area
+                    // Use normalized coordinates (0-1) that work at any depth
+                    const startX = Math.random(); // 0-1 across width
+                    const startY = Math.random(); // 0-1 across height
+
+                    window.tunnelChars.push({
+                        char: characters[Math.floor(Math.random() * characters.length)],
+                        zDepth: Math.random(), // 0 = far away, 1 = at camera
+                        startX: startX, // Normalized X position (0-1)
+                        startY: startY, // Normalized Y position (0-1)
+                        speedMultiplier: 0.5 + Math.random() * 1.5 // Each character moves at different speed
+                    });
+                }
+            }
+
+            // Sort by Z-depth so far ones draw first (painter's algorithm)
+            window.tunnelChars.sort((a, b) => a.zDepth - b.zDepth);
+
+            // Draw each character
+            for (let i = 0; i < window.tunnelChars.length; i++) {
+                const tc = window.tunnelChars[i];
+
+                // Move toward camera with individual speed variation
+                tc.zDepth += speedFactor * 0.02 * reverseFlowMultiplier * tc.speedMultiplier;
+
+                // Cycle character randomly (creates animated ripple effect like classic rain)
+                if (!tc.cycleCounter) tc.cycleCounter = 0;
+                tc.cycleCounter++;
+                if (tc.cycleCounter > 3) { // Change character every 3-4 frames
+                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.cycleCounter = 0;
+                }
+
+                // Reset when reaching camera (or going backward past vanishing point)
+                if (tc.zDepth > 1) {
+                    tc.zDepth = 0;
+                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
+                    tc.startX = Math.random(); // New random position
+                    tc.startY = Math.random();
+                } else if (tc.zDepth < 0) {
+                    tc.zDepth = 1;
+                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
+                    tc.startX = Math.random(); // New random position
+                    tc.startY = Math.random();
+                }
+
+                // Calculate position - characters grow straight at you from their position
+                // Parallax effect: things further away (low zDepth) appear closer to center
+                const centerX = matrixCanvas.width / 2;
+                const centerY = matrixCanvas.height / 2;
+
+                // Start position in pixels
+                const baseX = tc.startX * matrixCanvas.width;
+                const baseY = tc.startY * matrixCanvas.height;
+
+                // Parallax: far things converge toward center, near things spread out
+                // At zDepth=0 (far): position is 70% toward center
+                // At zDepth=1 (near): position is at full baseX/baseY (or beyond)
+                const parallaxFactor = 0.3 + tc.zDepth * 1.2; // 0.3 to 1.5
+                const x = centerX + (baseX - centerX) * parallaxFactor;
+                const y = centerY + (baseY - centerY) * parallaxFactor;
+
+                // AGGRESSIVE SCALING - creates that "rushing toward camera" effect
+                // Characters at vanishing point are tiny, at camera are HUGE
+                const scale = 0.1 + (tc.zDepth * 3.5); // 0.1x → 3.6x (aggressive!)
+                const charSize = fontSize * scale;
+
+                // Opacity: fade in as approaching camera
+                const charOpacity = Math.min(opacity, tc.zDepth * 0.9 + 0.1);
+
+                // === DANCING COLORS BETWEEN PRIMARY AND SECONDARY ===
+                const time = window.geometricState.time * 0.001;
+
+                // Helper function to convert hex to HSL
+                function hexToHSL(hex) {
+                    // Remove # if present
+                    hex = hex.replace('#', '');
+
+                    // Parse RGB
+                    const r = parseInt(hex.substr(0, 2), 16) / 255;
+                    const g = parseInt(hex.substr(2, 2), 16) / 255;
+                    const b = parseInt(hex.substr(4, 2), 16) / 255;
+
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    let h, s, l = (max + min) / 2;
+
+                    if (max === min) {
+                        h = s = 0; // achromatic
+                    } else {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                        switch (max) {
+                            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                            case g: h = ((b - r) / d + 2) / 6; break;
+                            case b: h = ((r - g) / d + 4) / 6; break;
+                        }
+                    }
+
+                    return {
+                        h: Math.round(h * 360),
+                        s: Math.round(s * 100),
+                        l: Math.round(l * 100)
+                    };
+                }
+
+                // Parse primary color (supports both hex and hsl)
+                let primaryHue = 120, primarySat = 100;
+                if (config.primaryColor) {
+                    if (config.primaryColor.includes('hsl')) {
+                        const match = config.primaryColor.match(/hsl\((\d+),\s*(\d+)%/);
+                        if (match) {
+                            primaryHue = parseInt(match[1]);
+                            primarySat = parseInt(match[2]);
+                        }
+                    } else if (config.primaryColor.includes('#')) {
+                        const hsl = hexToHSL(config.primaryColor);
+                        primaryHue = hsl.h;
+                        primarySat = hsl.s;
+                    }
+                }
+
+                // Parse secondary color (supports both hex and hsl)
+                let secondaryHue = 180, secondarySat = 100;
+                if (config.secondaryColor) {
+                    if (config.secondaryColor.includes('hsl')) {
+                        const match = config.secondaryColor.match(/hsl\((\d+),\s*(\d+)%/);
+                        if (match) {
+                            secondaryHue = parseInt(match[1]);
+                            secondarySat = parseInt(match[2]);
+                        }
+                    } else if (config.secondaryColor.includes('#')) {
+                        const hsl = hexToHSL(config.secondaryColor);
+                        secondaryHue = hsl.h;
+                        secondarySat = hsl.s;
+                    }
+                }
+
+                // === WAVE EFFECTS ===
+                // Color waves moving through tunnel depth (oscillates between 0 and 1)
+                const depthWave = (Math.sin(tc.zDepth * 8 - time * 2) + 1) / 2;
+
+                // Spatial color wave based on position
+                const spatialWave = (Math.sin(tc.startX * 10 + tc.startY * 8 + tc.zDepth * 5 + time * 1.5) + 1) / 2;
+
+                // Combine waves
+                const colorMix = (depthWave * 0.6 + spatialWave * 0.4);
+
+                // Lerp between primary and secondary colors
+                const finalHue = primaryHue + (secondaryHue - primaryHue) * colorMix;
+                const finalSat = primarySat + (secondarySat - primarySat) * colorMix;
+
+                // Brightness modulation
+                const brightnessWave = Math.sin(tc.zDepth * 15 - time * 3);
+                const lightness = 50 + brightnessWave * 15;
+
+                // Draw the character - oscillating between two colors
+                matrixCtx.font = `${charSize}px monospace`;
+                matrixCtx.fillStyle = `hsl(${finalHue}, ${finalSat}%, ${lightness}%)`;
+                matrixCtx.globalAlpha = charOpacity;
+
+                // No motion blur - clean crisp characters
+                matrixCtx.shadowBlur = 0;
+
+                matrixCtx.fillText(tc.char, x, y);
+            }
+
+            // Reset shadow
+            matrixCtx.shadowBlur = 0;
+        }
+
         // === CONTROL FUNCTIONS ===
         function updateRainConfig() {
             const config = MatrixRainEngine.rainConfig;
@@ -1526,7 +1783,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log("🌊 Matrix Rain: DOM loaded, initializing...");
             MatrixRainEngine.init();
-            
+
+            // Set initial minimize button state (starts minimized)
+            const minimizeBtn = document.getElementById('minimizeBtn');
+            minimizeBtn.textContent = 'M +';
+            minimizeBtn.title = 'Press M or click to maximize';
+
             // Wait a bit for the engine to initialize, then start the rain
             setTimeout(() => {
                 initMatrixRain();
@@ -1557,7 +1819,7 @@
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
-            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -1669,7 +1931,7 @@
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
-            const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Randomize EVERYTHING
             const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -2088,7 +2350,7 @@
             // Very low threshold to catch musical moments!
             const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
             if (directionTrigger) {
-                const directions = ['down', 'up', 'left', 'right', 'diagonal'];
+                const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
                 // Use combined audio energy to pick direction
                 const dirValue = (bass + high + lowMid) / 3;
                 const dirIndex = Math.floor((dirValue / 255) * directions.length);

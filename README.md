@@ -7,13 +7,15 @@ A dynamic, configurable Matrix rain effect with 6 visual patterns, real-time con
 ## Features
 
 - **6 Visual Patterns**: Classic, Rainbow, Pentad, Chaos, Harmonic, Particles
+- **🚇 3D Toward Camera Mode**: Characters rush straight at you with parallax depth effect - works with ALL patterns!
+- **🎨 Auto-Contrast Background**: Dynamic background automatically contrasts character colors for perfect visibility
 - **🎵 Audio Reactive Mode**: Transform sound into visual art with intelligent frequency mapping
-- **🎭 Auto Orchestrator**: Autonomous RNG system that continuously evolves the scene every 8-15 seconds with 60% chance of flow reversals and smooth mid-trajectory direction changes
+- **🎭 Auto Orchestrator**: Autonomous RNG system that continuously evolves the scene every 8-15 seconds
 - **⏪ Reverse Flow**: Instantly reverse all animations mid-flow - like hitting rewind!
-- **Multi-Directional Rain**: Characters flow up, down, left, right, or diagonally
+- **Multi-Directional Rain**: Characters flow up, down, left, right, diagonally, or **toward camera in 3D**
 - **Real-time Controls**: Speed, opacity, colors, character sets, direction, intensity, density
 - **🌀 Chaos Randomizer**: One-time randomization of all parameters
-- **Modal Interface**: Press **M** to toggle settings
+- **⌨️ Keyboard Shortcut**: Press **M** to toggle settings (prominently displayed in UI)
 - **Activity Feed**: Real-time log of all parameter changes
 
 ## Audio Reactive Mode 🎵
@@ -82,6 +84,15 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 - **Chaos**: Turbulent multi-directional flow
 - **Harmonic**: Wave-based interference patterns
 - **Particles**: Floating particle field
+
+## Directions
+
+- **Down**: Traditional downward flow
+- **Up**: Upward cascade
+- **Left**: Horizontal left flow
+- **Right**: Horizontal right flow
+- **Diagonal**: Diagonal flow
+- **🚇 Toward Camera (3D)**: Characters rush straight at you with parallax depth effect, aggressive scaling (0.1x → 3.6x), individual speed variations, and animated character morphing. Works with ALL patterns!
 
 ## Technical Details
 
