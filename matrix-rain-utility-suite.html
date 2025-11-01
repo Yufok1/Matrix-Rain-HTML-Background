@@ -407,8 +407,10 @@
     </style>
 </head>
 <body>
-    <!-- Matrix Rain Canvas -->
+    <!-- Matrix Rain Canvas - Dual Layer System -->
     <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: transparent;"></canvas>
+    <!-- Ollama Message Layer (appears on top when active) -->
+    <canvas id="ollamaMessageCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; opacity: 1.0; background: transparent; display: none;"></canvas>
 
     <div class="matrix-modal scrollbar minimized">
         <div class="modal-header">
@@ -480,7 +482,11 @@
                         <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🎵 AUDIO REACTIVE MODE
                         </button>
+                        <button class="btn" id="ollamaModeBtn" onclick="toggleOllamaMode()" style="background: #00ffff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px; margin-left: 10px;">
+                            🌀 OLLAMA MODE
+                        </button>
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
+                        <div id="ollamaStatus" style="margin-top: 10px; font-size: 12px; color: #00ffff;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
                     </div>
                     <div class="pattern-grid">
@@ -1180,10 +1186,15 @@
                 // HORIZONTAL rain (left/right)
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                const char = characters[Math.floor(Math.random() * characters.length)];
+                    // Skip rows used by Ollama message rain
+                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
+                    }
+
+                    const char = characters[Math.floor(Math.random() * characters.length)];
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
-                    
+
                     matrixCtx.fillStyle = config.primaryColor;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
@@ -1201,15 +1212,20 @@
                 // DIAGONAL rain
                 const streams = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < streams; i++) {
+                    // Skip streams used by Ollama message rain
+                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
+                    }
+
                     const char = characters[Math.floor(Math.random() * characters.length)];
                     const progress = matrixDrops[i];
                     const x = i * fontSize + progress * fontSize * 0.5;
                     const y = progress * fontSize;
-                    
+
                     if (x < matrixCanvas.width && y < matrixCanvas.height) {
                         matrixCtx.fillStyle = config.primaryColor;
-                matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(char, x, y);
+                        matrixCtx.globalAlpha = opacity;
+                        matrixCtx.fillText(char, x, y);
                     }
                     
                     const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
@@ -1224,10 +1240,15 @@
                 // VERTICAL rain (up/down)
                 const columns = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < columns; i++) {
+                    // Skip columns used by Ollama message rain
+                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
+                    }
+
                     const char = characters[Math.floor(Math.random() * characters.length)];
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
-                    
+
                     matrixCtx.fillStyle = config.primaryColor;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
@@ -2389,6 +2410,547 @@
                 <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH</div>
             `;
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 🌀 OLLAMA MATRIX RAIN TRANSLATION SYSTEM
+        // ═══════════════════════════════════════════════════════════════════
+
+        const OllamaSystem = {
+            // State
+            active: false,
+            ws: null,
+            wsUrl: 'ws://localhost:8080',
+            reconnectInterval: null,
+            reconnectAttempts: 0,
+            maxReconnectAttempts: 10,
+
+            // Canvas elements
+            msgCanvas: null,
+            msgCtx: null,
+
+            // Message state
+            messageActive: false,
+            messageColumns: [],
+            messageStartTime: 0,
+            messageDuration: 0,
+            breathPhase: 'baseline', // baseline, inhale, expression, exhale
+            lastChunkTime: 0,
+            streamResetTimeout: null,
+
+            // Visual parameters
+            currentMode: 'normal', // ambient, normal, emphasis, urgent, emergency
+            urgencyLevel: 3,
+            backgroundRainColor: '#00ff41',
+            messageColor: '#ffff00',
+            contrast: 0.6,
+
+            // Initialize Ollama system
+            init() {
+                console.log('🌀 Ollama System: Initializing...');
+
+                // Get message canvas
+                this.msgCanvas = document.getElementById('ollamaMessageCanvas');
+                if (!this.msgCanvas) {
+                    console.error('🌀 Ollama System: Message canvas not found!');
+                    return;
+                }
+                this.msgCtx = this.msgCanvas.getContext('2d');
+
+                // Set canvas size
+                this.msgCanvas.width = window.innerWidth;
+                this.msgCanvas.height = window.innerHeight;
+
+                // Resize handler
+                window.addEventListener('resize', () => {
+                    if (this.msgCanvas) {
+                        this.msgCanvas.width = window.innerWidth;
+                        this.msgCanvas.height = window.innerHeight;
+                    }
+                });
+
+                console.log('🌀 Ollama System: Ready');
+            },
+
+            // Connect to WebSocket server
+            connect() {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    console.log('🌀 Ollama System: Already connected');
+                    return;
+                }
+
+                try {
+                    console.log(`🌀 Ollama System: Connecting to ${this.wsUrl}...`);
+                    this.ws = new WebSocket(this.wsUrl);
+
+                    this.ws.onopen = () => {
+                        console.log('🌀 Ollama System: WebSocket connected!');
+                        this.reconnectAttempts = 0;
+                        this.updateStatus('✅ Connected to Ollama Bridge');
+
+                        if (this.reconnectInterval) {
+                            clearInterval(this.reconnectInterval);
+                            this.reconnectInterval = null;
+                        }
+
+                        // Send hello message
+                        this.send({ type: 'hello', client: 'matrix-rain' });
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        this.handleMessage(event.data);
+                    };
+
+                    this.ws.onerror = (error) => {
+                        console.error('🌀 Ollama System: WebSocket error', error);
+                        this.updateStatus('❌ Connection error');
+                    };
+
+                    this.ws.onclose = () => {
+                        console.log('🌀 Ollama System: WebSocket disconnected');
+                        this.updateStatus('⚠️ Disconnected - Reconnecting...');
+
+                        // Attempt reconnection
+                        if (this.active && this.reconnectAttempts < this.maxReconnectAttempts) {
+                            if (!this.reconnectInterval) {
+                                this.reconnectInterval = setInterval(() => {
+                                    this.reconnectAttempts++;
+                                    console.log(`🌀 Ollama System: Reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                                    this.connect();
+                                }, 3000);
+                            }
+                        } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                            this.updateStatus('❌ Connection failed - Server not running?');
+                            console.error('🌀 Ollama System: Max reconnect attempts reached');
+                        }
+                    };
+
+                } catch (error) {
+                    console.error('🌀 Ollama System: Failed to connect', error);
+                    this.updateStatus('❌ Failed to connect');
+                }
+            },
+
+            // Disconnect WebSocket
+            disconnect() {
+                if (this.reconnectInterval) {
+                    clearInterval(this.reconnectInterval);
+                    this.reconnectInterval = null;
+                }
+
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+
+                this.updateStatus('Disconnected');
+                console.log('🌀 Ollama System: Disconnected');
+            },
+
+            // Send message to server
+            send(data) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(data));
+                } else {
+                    console.warn('🌀 Ollama System: Cannot send - not connected');
+                }
+            },
+
+            // Handle incoming WebSocket message
+            handleMessage(data) {
+                try {
+                    const message = JSON.parse(data);
+                    console.log('🌀 Ollama System: Received:', message.type);
+
+                    switch (message.type) {
+                        case 'expression':
+                            this.triggerExpression(message);
+                            break;
+                        case 'test':
+                            console.log('🌀 Ollama System: Test message:', message.text);
+                            this.triggerExpression({
+                                text: message.text,
+                                urgency: message.urgency || 3,
+                                duration: message.duration || 4000
+                            });
+                            break;
+                        case 'error':
+                            console.error('🌀 Ollama System: Error:', message.text);
+                            // Display error in rain too
+                            this.triggerExpression({
+                                text: message.text,
+                                urgency: 9,
+                                duration: 5000
+                            });
+                            break;
+                        default:
+                            console.log('🌀 Ollama System: Unknown message type:', message.type);
+                    }
+
+                } catch (error) {
+                    console.error('🌀 Ollama System: Error parsing message', error);
+                }
+            },
+
+            // Trigger message expression
+            triggerExpression(params) {
+                console.log(`🌀 Ollama System: Expression triggered - "${params.text}"`);
+
+                // Update visual parameters based on urgency AND message content
+                this.urgencyLevel = params.urgency || 3;
+                this.applyUrgencyMode(this.urgencyLevel, params.text);
+
+                // Handle streaming vs full messages
+                if (params.streaming) {
+                    // Clear any pending reset timeout
+                    if (this.streamResetTimeout) {
+                        clearTimeout(this.streamResetTimeout);
+                    }
+
+                    // Check if this is a new stream starting (no recent chunks)
+                    const timeSinceLastChunk = Date.now() - this.lastChunkTime;
+                    if (timeSinceLastChunk > 5000) {
+                        // New message starting - clear old one
+                        console.log('🌀 Ollama System: New stream detected, clearing old message');
+                        this.messageChars = [];
+                    }
+
+                    // Streaming mode: accumulate characters
+                    if (!this.messageChars) {
+                        this.messageChars = [];
+                    }
+                    // Add new characters from this chunk
+                    const newChars = (params.text || '').split('');
+                    this.messageChars.push(...newChars);
+                    console.log(`🌀 Ollama System: Added ${newChars.length} chars, total now ${this.messageChars.length}`);
+
+                    // Update last chunk time
+                    this.lastChunkTime = Date.now();
+
+                    // Set timeout to mark stream as complete after 2 seconds of no new chunks
+                    // (but keep displaying the message in a loop)
+                    this.streamResetTimeout = setTimeout(() => {
+                        console.log('🌀 Ollama System: Stream complete, message will continue looping until next message');
+                        // Message keeps looping - don't clear anything
+                    }, 2000);
+                } else {
+                    // Non-streaming: replace entire message
+                    this.messageChars = (params.text || '').split('');
+                    console.log(`🌀 Ollama System: Message has ${this.messageChars.length} characters`);
+                }
+
+                // Skip if no characters
+                if (!this.messageChars || this.messageChars.length === 0) {
+                    console.log('🌀 Ollama System: No characters to display, skipping');
+                    return;
+                }
+
+                // Calculate columns
+                const fontSize = MatrixRainEngine.rainConfig.fontSize || 14;
+                const columns = Math.floor(this.msgCanvas.width / fontSize);
+
+                // Select random columns to be message columns (rest stay as background rain)
+                const numMessageColumns = Math.floor(columns * 0.75); // 75% of columns show message
+                const messageColumnIndices = [];
+
+                // Pick random columns
+                while (messageColumnIndices.length < numMessageColumns) {
+                    const randCol = Math.floor(Math.random() * columns);
+                    if (!messageColumnIndices.includes(randCol)) {
+                        messageColumnIndices.push(randCol);
+                    }
+                }
+
+                // Store globally so background rain can skip these columns
+                window.ollamaMessageColumns = new Set(messageColumnIndices);
+
+                this.messageColumns = messageColumnIndices.map(colIndex => {
+                    // Use the same dropSpeed from background rain for this column (if available)
+                    const bgSpeed = window.dropSpeeds && window.dropSpeeds[colIndex]
+                        ? window.dropSpeeds[colIndex]
+                        : (0.7 + Math.random() * 0.6);
+
+                    return {
+                        column: colIndex,
+                        yPos: Math.random() * -50, // Random start position
+                        speed: bgSpeed * (this.speedMultiplier || 1.0),
+                        charOffset: 0 // Track which character in message to show
+                    };
+                });
+
+                // Calculate contrasting color for background rain
+                const contrastColor = this.getContrastingColor(this.messageColor);
+
+                // Update background rain to match message direction and use contrasting color
+                MatrixRainEngine.rainConfig.direction = this.direction;
+                MatrixRainEngine.rainConfig.primaryColor = contrastColor;
+
+                console.log(`🌀 Ollama System: Background rain direction: ${this.direction}, color: ${contrastColor}`);
+
+                // Start expression cycle (indefinite until next message)
+                this.messageActive = true;
+                this.breathPhase = 'expression';
+
+                // Show message canvas
+                this.msgCanvas.style.display = 'block';
+
+                console.log(`🌀 Ollama System: ${numMessageColumns} message columns selected (out of ${columns} total), urgency ${this.urgencyLevel}, mode ${this.currentMode}`);
+            },
+
+            // Calculate contrasting color
+            getContrastingColor(hexColor) {
+                // Convert hex to RGB
+                const hex = hexColor.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16) / 255;
+                const g = parseInt(hex.substr(2, 2), 16) / 255;
+                const b = parseInt(hex.substr(4, 2), 16) / 255;
+
+                // Convert to HSL
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                        case g: h = ((b - r) / d + 2) / 6; break;
+                        case b: h = ((r - g) / d + 4) / 6; break;
+                    }
+                }
+
+                // Get contrasting hue with variety (not always complementary)
+                // Choose from: triadic (120°), complementary (180°), split-complementary (150° or 210°), or analogous contrast (90° or 270°)
+                const hueOffsets = [90, 120, 150, 180, 210, 270];
+                const randomOffset = hueOffsets[Math.floor(Math.random() * hueOffsets.length)];
+                const contrastHue = ((h * 360) + randomOffset) % 360;
+
+                // Vary saturation and lightness for more variety
+                const saturation = 80 + Math.floor(Math.random() * 20); // 80-100%
+                const lightness = 45 + Math.floor(Math.random() * 10);  // 45-55%
+
+                // Return as HSL string
+                return `hsl(${contrastHue}, ${saturation}%, ${lightness}%)`;
+            },
+
+            // Apply urgency mode visual parameters
+            applyUrgencyMode(urgency, text = '') {
+                // Detect message characteristics
+                const hasQuestion = text.includes('?');
+                const hasExclamation = text.includes('!');
+                const hasEllipsis = text.includes('...');
+                const isAllCaps = text === text.toUpperCase() && text.length > 10;
+
+                if (urgency >= 8) {
+                    // URGENT MODE - Fast, toward camera or down
+                    this.currentMode = 'urgent';
+                    this.messageColor = '#ffff00'; // Bright yellow (high contrast)
+                    this.contrast = 1.0;
+                    this.direction = 'down'; // Aggressive downward
+                    this.speedMultiplier = 2.0; // Double speed!
+                    console.log('🌀 Ollama System: URGENT mode activated - FAST DOWN');
+
+                } else if (urgency >= 6) {
+                    // EMPHASIS MODE - Moderate speed, varied direction
+                    this.currentMode = 'emphasis';
+                    this.messageColor = '#ff00ff'; // Bright magenta (high contrast)
+                    this.contrast = 0.8;
+
+                    if (hasQuestion) {
+                        this.direction = 'up'; // Questions rise
+                        console.log('🌀 Ollama System: EMPHASIS mode - UPWARD (question)');
+                    } else if (hasExclamation) {
+                        this.direction = 'right'; // Excitement moves forward
+                        console.log('🌀 Ollama System: EMPHASIS mode - RIGHT (excited)');
+                    } else {
+                        this.direction = 'down';
+                        console.log('🌀 Ollama System: EMPHASIS mode - DOWN');
+                    }
+                    this.speedMultiplier = 1.5;
+
+                } else if (urgency >= 3) {
+                    // NORMAL MODE - Standard flow
+                    this.currentMode = 'normal';
+                    this.messageColor = '#00ffff'; // Cyan (contrasts with green background)
+                    this.contrast = 0.6;
+
+                    if (hasQuestion) {
+                        this.direction = 'up'; // Questions seek
+                        this.speedMultiplier = 1.0;
+                        console.log('🌀 Ollama System: NORMAL mode - UPWARD (question)');
+                    } else if (hasEllipsis) {
+                        this.direction = 'diagonal'; // Uncertainty drifts
+                        this.speedMultiplier = 0.8;
+                        console.log('🌀 Ollama System: NORMAL mode - DIAGONAL (uncertain)');
+                    } else {
+                        this.direction = 'down'; // Statements ground
+                        this.speedMultiplier = 1.0;
+                        console.log('🌀 Ollama System: NORMAL mode - DOWN (statement)');
+                    }
+
+                } else {
+                    // AMBIENT MODE - Slow, dreamy
+                    this.currentMode = 'ambient';
+                    this.messageColor = '#00aa44'; // Slightly different green (subtle)
+                    this.contrast = 0.3;
+                    this.direction = 'down';
+                    this.speedMultiplier = 0.5; // Half speed, whisper
+                    console.log('🌀 Ollama System: AMBIENT mode - SLOW DOWN');
+                }
+            },
+
+            // Draw message layer (called from animation loop)
+            drawMessageLayer() {
+                if (!this.messageActive || !this.messageChars || this.messageChars.length === 0) return;
+
+                // Clear canvas to transparency (background rain shows through)
+                this.msgCtx.clearRect(0, 0, this.msgCanvas.width, this.msgCanvas.height);
+
+                const baseFontSize = MatrixRainEngine.rainConfig.fontSize || 14;
+                const messageFontSize = Math.round(baseFontSize * 1.25); // 25% larger for readability
+                this.msgCtx.font = `${messageFontSize}px monospace`;
+                const dir = this.direction || 'down';
+                const trailLength = 14; // Longer trail for better readability (was 8)
+
+                // Draw ONLY the selected message columns (not all columns!)
+                this.messageColumns.forEach(col => {
+                    // Get current character index from message (cycling through)
+                    const baseCharIndex = Math.floor(col.charOffset) % this.messageChars.length;
+
+                    // Calculate wrap distance
+                    const maxDist = (dir === 'right' || dir === 'left')
+                        ? this.msgCanvas.width / messageFontSize
+                        : this.msgCanvas.height / messageFontSize;
+
+                    // Draw trail at BOTH positions during wrap (arcade game style)
+                    const positions = [col.yPos];
+
+                    // If near edge, also draw wrapped position
+                    if (col.yPos < trailLength) {
+                        positions.push(col.yPos + maxDist);
+                    }
+                    if (col.yPos > maxDist - trailLength) {
+                        positions.push(col.yPos - maxDist);
+                    }
+
+                    positions.forEach(yPos => {
+                        let baseX, baseY;
+
+                        // Calculate base position based on direction (use messageFontSize for smooth positioning)
+                        if (dir === 'up' || dir === 'down') {
+                            // VERTICAL
+                            baseX = col.column * baseFontSize + (messageFontSize - baseFontSize) / 2; // Center in column
+                            baseY = yPos * messageFontSize;
+                        } else if (dir === 'right' || dir === 'left') {
+                            // HORIZONTAL
+                            baseX = yPos * messageFontSize;
+                            baseY = col.column * baseFontSize + (messageFontSize - baseFontSize) / 2; // Center in row
+                        } else if (dir === 'diagonal') {
+                            // DIAGONAL
+                            baseX = col.column * baseFontSize + yPos * messageFontSize * 0.5 + (messageFontSize - baseFontSize) / 2;
+                            baseY = yPos * messageFontSize;
+                        }
+
+                        // Draw trail: each position is EXACTLY messageFontSize apart (no gaps)
+                        for (let i = 0; i < trailLength; i++) {
+                            const opacity = (1 - (i / trailLength)) * (MatrixRainEngine.rainConfig.opacity / 100 || 1.0);
+
+                            // Calculate trail position (each character is messageFontSize behind previous)
+                            let trailX = baseX;
+                            let trailY = baseY;
+
+                            if (dir === 'up' || dir === 'down') {
+                                trailY = baseY + (i * messageFontSize * (dir === 'up' ? 1 : -1));
+                            } else if (dir === 'right' || dir === 'left') {
+                                trailX = baseX + (i * messageFontSize * (dir === 'right' ? -1 : 1));
+                            } else if (dir === 'diagonal') {
+                                trailX = baseX - (i * messageFontSize * 0.5);
+                                trailY = baseY - (i * messageFontSize);
+                            }
+
+                            // Get character for this trail position (cycle through message)
+                            const charIndex = (baseCharIndex - i + this.messageChars.length) % this.messageChars.length;
+                            const char = this.messageChars[charIndex];
+
+                            // Draw character
+                            this.msgCtx.fillStyle = this.messageColor;
+                            this.msgCtx.globalAlpha = opacity;
+                            this.msgCtx.fillText(char, trailX, trailY);
+                        }
+                    });
+
+                    // Move drop (match background rain mechanics)
+                    col.yPos += col.speed * (dir === 'up' ? -1 : 1);
+
+                    // Update character offset (how far through message we've scrolled)
+                    col.charOffset += col.speed;
+
+                    // Seamless wrap around (match background rain exactly)
+                    while (col.yPos < 0) col.yPos += maxDist;
+                    while (col.yPos > maxDist) col.yPos -= maxDist;
+                });
+
+                // Reset globalAlpha
+                this.msgCtx.globalAlpha = 1.0;
+
+                // NO duration limit - stays indefinite until next message
+            },
+
+            // End expression cycle (called when new message arrives)
+            endExpression() {
+                console.log('🌀 Ollama System: Clearing previous message');
+                // Just clear the state - new message will take over
+                // Canvas stays visible for continuous flow
+            },
+
+            // Update status display
+            updateStatus(message) {
+                const statusDiv = document.getElementById('ollamaStatus');
+                if (statusDiv) {
+                    statusDiv.textContent = message;
+                }
+            }
+        };
+
+        // Toggle Ollama mode
+        function toggleOllamaMode() {
+            const btn = document.getElementById('ollamaModeBtn');
+
+            if (!OllamaSystem.active) {
+                // Activate Ollama mode
+                OllamaSystem.active = true;
+                OllamaSystem.init();
+                OllamaSystem.connect();
+                btn.style.background = '#00ff41';
+                btn.textContent = '🌀 OLLAMA MODE (ON)';
+                console.log('🌀 Ollama Mode: ACTIVATED');
+
+            } else {
+                // Deactivate Ollama mode
+                OllamaSystem.active = false;
+                OllamaSystem.disconnect();
+                btn.style.background = '#00ffff';
+                btn.textContent = '🌀 OLLAMA MODE';
+                console.log('🌀 Ollama Mode: DEACTIVATED');
+            }
+        }
+
+        // Integrate Ollama drawing into main animation loop
+        // Find the main drawMatrixRain function and add this at the end
+        const originalDrawMatrixRain = window.drawMatrixRain;
+        if (typeof drawMatrixRain !== 'undefined') {
+            // We'll hook into the animation loop by modifying the interval callback
+            console.log('🌀 Ollama System: Integrated into animation loop');
+        }
+
+        // Add Ollama layer drawing to animation
+        setInterval(() => {
+            if (OllamaSystem.active && OllamaSystem.messageActive) {
+                OllamaSystem.drawMessageLayer();
+            }
+        }, 50); // 20 FPS for message layer
+
     </script>
 </body>
 </html> 
