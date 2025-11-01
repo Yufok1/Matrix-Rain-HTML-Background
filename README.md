@@ -65,7 +65,7 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 ## Usage
 
 ### Basic Setup
-1. **Run `START.bat`** - Clears cache, kills old processes, launches server and browser
+1. **Open `matrix-rain-utility-suite.html`** - Just double-click the file in your browser
 2. **Press M** - Toggle settings modal on/off
 3. **Click pattern buttons** - Instantly switch between patterns
 
@@ -111,9 +111,7 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 
 ## Troubleshooting
 
-- **Page won't load?** Close all old tabs, run `START.bat` again
-- **Changes not appearing?** `START.bat` includes cache-busting - force refresh if needed
-- **Server issues?** Batch file kills old Python processes automatically
+- **Changes not appearing?** Do a hard refresh (Ctrl+F5 or Cmd+Shift+R)
 - **Audio not working?** Make sure you checked "Share audio" when selecting the tab
 - **No color changes in audio mode?** Verify Classic pattern is selected (forced in audio mode)
 
