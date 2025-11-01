@@ -557,6 +557,7 @@
                                     <option value="binary">Binary (01)</option>
                                     <option value="hex">Hexadecimal (0-F)</option>
                                     <option value="symbols">Symbols (@#$%^&*)</option>
+                                    <option value="katakana">Katakana (アイウエオ...)</option>
                                     <option value="custom">Custom</option>
                                 </select>
                             </div>
@@ -1045,11 +1046,26 @@
             console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
         }
         
+        // Helper function to get character from user message or random
+        function getNextCharacter(characters) {
+            // If user message exists, cycle through it
+            if (window.userMessageText && window.userMessageText.length > 0) {
+                const char = window.userMessageText[window.userMessageIndex];
+                window.userMessageIndex = (window.userMessageIndex + 1) % window.userMessageText.length;
+                return char;
+            }
+            // Otherwise, return random character
+            return characters[Math.floor(Math.random() * characters.length)];
+        }
+
         function drawMatrixRain() {
             const config = MatrixRainEngine.rainConfig;
             const fontSize = config.fontSize;
             const opacity = config.opacity / 100;
             
+            // Initialize user message index if needed
+            if (!window.userMessageIndex) window.userMessageIndex = 0;
+
             // Debug: Log first few calls
             if (!window.drawCount) window.drawCount = 0;
             window.drawCount++;
@@ -1132,8 +1148,10 @@
                 characters = '0123456789ABCDEF';
             } else if (characters === 'symbols') {
                 characters = '@#$%^&*()_+-=[]{}|;:,.<>?';
+            } else if (characters === 'katakana') {
+                characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ';
             }
-            
+
             // Draw rain based on DIRECTION first, then pattern
             const direction = config.direction;
 
@@ -1191,7 +1209,7 @@
                         continue;
                     }
 
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
 
@@ -1217,7 +1235,7 @@
                         continue;
                     }
 
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const progress = matrixDrops[i];
                     const x = i * fontSize + progress * fontSize * 0.5;
                     const y = progress * fontSize;
@@ -1245,7 +1263,7 @@
                         continue;
                     }
 
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
 
@@ -1273,7 +1291,7 @@
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
@@ -1292,7 +1310,7 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = characters[Math.floor(Math.random() * characters.length)];
+                const char = getNextCharacter(characters);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                 const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
@@ -1319,7 +1337,7 @@
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const color = pentadColors[i % 5];
@@ -1338,7 +1356,7 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = characters[Math.floor(Math.random() * characters.length)];
+                const char = getNextCharacter(characters);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                     const color = pentadColors[i % 5];
@@ -1364,7 +1382,7 @@
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const y = i * fontSize + (Math.random() - 0.5) * 10;
                     const x = matrixDrops[i] * fontSize;
                     const hue = (Date.now() + i * 50) % 360;
@@ -1383,7 +1401,7 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = characters[Math.floor(Math.random() * characters.length)];
+                const char = getNextCharacter(characters);
                     const x = i * fontSize + (Math.random() - 0.5) * 10;
                 const y = matrixDrops[i] * fontSize;
                 const hue = (Date.now() + i * 50) % 360;
@@ -1409,7 +1427,7 @@
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    const char = getNextCharacter(characters);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
@@ -1430,7 +1448,7 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = characters[Math.floor(Math.random() * characters.length)];
+                const char = getNextCharacter(characters);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                 const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
@@ -1462,7 +1480,7 @@
                         y: Math.random() * matrixCanvas.height,
                         vx: (Math.random() - 0.5) * 2,
                         vy: (Math.random() - 0.5) * 2,
-                        char: characters[Math.floor(Math.random() * characters.length)],
+                        char: getNextCharacter(characters),
                         phase: Math.random() * Math.PI * 2
                     });
                 }
@@ -1530,7 +1548,7 @@
                     const startY = Math.random(); // 0-1 across height
 
                     window.tunnelChars.push({
-                        char: characters[Math.floor(Math.random() * characters.length)],
+                        char: getNextCharacter(characters),
                         zDepth: Math.random(), // 0 = far away, 1 = at camera
                         startX: startX, // Normalized X position (0-1)
                         startY: startY, // Normalized Y position (0-1)
@@ -1553,20 +1571,20 @@
                 if (!tc.cycleCounter) tc.cycleCounter = 0;
                 tc.cycleCounter++;
                 if (tc.cycleCounter > 3) { // Change character every 3-4 frames
-                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.char = getNextCharacter(characters);
                     tc.cycleCounter = 0;
                 }
 
                 // Reset when reaching camera (or going backward past vanishing point)
                 if (tc.zDepth > 1) {
                     tc.zDepth = 0;
-                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.char = getNextCharacter(characters);
                     tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
                     tc.startX = Math.random(); // New random position
                     tc.startY = Math.random();
                 } else if (tc.zDepth < 0) {
                     tc.zDepth = 1;
-                    tc.char = characters[Math.floor(Math.random() * characters.length)];
+                    tc.char = getNextCharacter(characters);
                     tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
                     tc.startX = Math.random(); // New random position
                     tc.startY = Math.random();
@@ -1839,7 +1857,7 @@
             // Randomize all settings with all available patterns!
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Apply random settings
@@ -1951,7 +1969,7 @@
             // All available patterns
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Randomize EVERYTHING
@@ -2359,9 +2377,9 @@
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
             const highNormalized = high / 255;
-            const charIndex = Math.floor(highNormalized * 4); // 0-3
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
-            config.characterSet = characterSets[Math.min(charIndex, 3)];
+            const charIndex = Math.floor(highNormalized * 5); // 0-4
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
+            config.characterSet = characterSets[Math.min(charIndex, 4)];
             document.getElementById('characterSet').value = config.characterSet;
 
             // OVERALL VOLUME → INTENSITY (loudness = brightness)
@@ -2581,6 +2599,13 @@
                                 urgency: 9,
                                 duration: 5000
                             });
+                            break;
+                        case 'user_message':
+                            console.log('🌀 Ollama System: User message received:', message.text);
+                            // Store user message for background rain
+                            window.userMessageText = message.text;
+                            window.userMessageIndex = 0; // Reset character index
+                            console.log('💬 User message stored for background rain');
                             break;
                         default:
                             console.log('🌀 Ollama System: Unknown message type:', message.type);

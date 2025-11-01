@@ -176,6 +176,14 @@ async def handle_streaming_response(request, ollama_resp, request_body):
     # Detect urgency from user message
     urgency = detect_urgency(user_message)
 
+    # Send user message to browser for background rain
+    if user_message:
+        await broadcast_to_websockets({
+            'type': 'user_message',
+            'text': user_message
+        })
+        print(f"📤 Sent user message to matrix rain: {user_message[:50]}...")
+
     full_response = ""
 
     # Stream chunks
