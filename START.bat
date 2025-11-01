@@ -29,7 +29,15 @@ timeout /t 2 /nobreak > nul
 
 echo.
 echo Starting Ollama on port 11435...
-start "Ollama Server" cmd /k "set OLLAMA_HOST=127.0.0.1:11435 && set OLLAMA_MODELS=D:\ollama\models && ollama serve"
+REM Note: If your models are in a custom location, set OLLAMA_MODELS environment variable
+REM Example: setx OLLAMA_MODELS "D:\ollama\models" (run once in cmd, then restart)
+if defined OLLAMA_MODELS (
+    echo Using custom model path: %OLLAMA_MODELS%
+    start "Ollama Server" cmd /k "set OLLAMA_HOST=127.0.0.1:11435 && set OLLAMA_MODELS=%OLLAMA_MODELS% && ollama serve"
+) else (
+    echo Using default Ollama model path
+    start "Ollama Server" cmd /k "set OLLAMA_HOST=127.0.0.1:11435 && ollama serve"
+)
 
 REM Wait for Ollama to start
 timeout /t 3 /nobreak > nul

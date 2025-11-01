@@ -109,6 +109,15 @@ Turn your Matrix rain into a **visual dialogue system** where conversations with
 2. **Ollama** installed and running ([ollama.com](https://ollama.com))
 3. Python packages: `pip install -r requirements.txt`
 
+**Configuration (Optional)**:
+If your Ollama models are stored in a **custom location** (not the default C: drive):
+1. Open Command Prompt as Administrator
+2. Run: `setx OLLAMA_MODELS "D:\ollama\models"` (replace with your path)
+3. Restart your terminal/command prompt
+4. `START.bat` will automatically detect and use your custom path
+
+*Note: Most users can skip this - Ollama uses `C:\Users\<YourName>\.ollama\models` by default*
+
 **How to Use**:
 1. Run `START.bat` (launches everything automatically)
 2. Click **🌀 OLLAMA MODE** button in the interface
@@ -211,6 +220,11 @@ Turn your Matrix rain into a **visual dialogue system** where conversations with
 - **No color changes in audio mode?** Verify Classic pattern is selected (forced in audio mode)
 
 ### Ollama Integration
+- **Models not showing in dropdown / Can't load models?**
+  - Your models are likely in a custom location (not default C: drive)
+  - Set environment variable: `setx OLLAMA_MODELS "D:\ollama\models"` (use your path)
+  - Restart terminal and run `START.bat` again
+  - See "Configuration (Optional)" section above for details
 - **Ollama Mode button not working?**
   - Check Python dependencies: `pip install -r requirements.txt`
   - Verify Ollama is installed and running on port 11435
@@ -233,13 +247,14 @@ Turn your Matrix rain into a **visual dialogue system** where conversations with
 ## Project Files
 
 - **matrix-rain-utility-suite.html**: Main application with all features (Ollama, audio, patterns)
-- **index.html**: Simplified version for GitHub Pages (no Ollama integration)
 - **websocket_bridge.py**: Python WebSocket bridge server for Ollama integration
 - **test-interface.html**: Testing tool for sending manual messages to the Matrix rain
 - **START.bat**: Windows launcher script (kills old processes, starts servers, opens browser)
 - **requirements.txt**: Python dependencies (websockets, aiohttp)
 - **README.md**: This documentation
 - **LICENSE**: MIT License
+
+*Note: `index.html` (GitHub Pages version) exists only in the `main` branch, not in `main---OLLAMA` branch*
 
 ## Demo Videos
 
