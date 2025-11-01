@@ -2341,9 +2341,9 @@
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
             const highNormalized = high / 255;
-            const charIndex = Math.floor(highNormalized * 4); // 0-3
+            const charIndex = Math.floor(highNormalized * 5); // 0-4
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            config.characterSet = characterSets[Math.min(charIndex, 3)];
+            config.characterSet = characterSets[Math.min(charIndex, 4)];
             document.getElementById('characterSet').value = config.characterSet;
 
             // OVERALL VOLUME → INTENSITY (loudness = brightness)
