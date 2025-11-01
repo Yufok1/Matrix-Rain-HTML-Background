@@ -1046,10 +1046,10 @@
             console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
         }
         
-        // Helper function to get character from user message or random
-        function getNextCharacter(characters) {
-            // If user message exists, cycle through it
-            if (window.userMessageText && window.userMessageText.length > 0) {
+        // Helper function to get character (user message columns OR random)
+        function getNextCharacter(characters, columnIndex, isUserColumn) {
+            // If this is a user message column and we have a message, show it in order
+            if (isUserColumn && window.userMessageActive && window.userMessageText && window.userMessageText.length > 0) {
                 const char = window.userMessageText[window.userMessageIndex];
                 window.userMessageIndex = (window.userMessageIndex + 1) % window.userMessageText.length;
                 return char;
@@ -1062,9 +1062,6 @@
             const config = MatrixRainEngine.rainConfig;
             const fontSize = config.fontSize;
             const opacity = config.opacity / 100;
-            
-            // Initialize user message index if needed
-            if (!window.userMessageIndex) window.userMessageIndex = 0;
 
             // Debug: Log first few calls
             if (!window.drawCount) window.drawCount = 0;
@@ -1152,6 +1149,26 @@
                 characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ';
             }
 
+            // === USER MESSAGE COLUMNS SETUP ===
+            // Initialize user message columns (25% of columns show user message)
+            if (!window.userMessageColumns) {
+                const totalColumns = Math.floor(matrixCanvas.width / fontSize);
+                const numUserColumns = Math.floor(totalColumns * 0.25); // 25% for user message
+                window.userMessageColumns = new Set();
+
+                // Pick random columns for user message
+                while (window.userMessageColumns.size < numUserColumns) {
+                    const randCol = Math.floor(Math.random() * totalColumns);
+                    // Don't use columns reserved for Ollama AI messages
+                    if (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(randCol)) {
+                        window.userMessageColumns.add(randCol);
+                    }
+                }
+            }
+
+            // Initialize user message index if needed
+            if (!window.userMessageIndex) window.userMessageIndex = 0;
+
             // Draw rain based on DIRECTION first, then pattern
             const direction = config.direction;
 
@@ -1209,7 +1226,9 @@
                         continue;
                     }
 
-                    const char = getNextCharacter(characters);
+                    // Check if this is a user message row (for horizontal, rows map to columns visually)
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
 
@@ -1235,7 +1254,9 @@
                         continue;
                     }
 
-                    const char = getNextCharacter(characters);
+                    // Check if this is a user message column
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserColumn);
                     const progress = matrixDrops[i];
                     const x = i * fontSize + progress * fontSize * 0.5;
                     const y = progress * fontSize;
@@ -1263,7 +1284,9 @@
                         continue;
                     }
 
-                    const char = getNextCharacter(characters);
+                    // Check if this is a user message column
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserColumn);
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
 
@@ -1287,11 +1310,12 @@
             const config = MatrixRainEngine.rainConfig;
             const direction = config.direction || 'down';
             const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
-            
+
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = getNextCharacter(characters);
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
@@ -1310,7 +1334,8 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters);
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                const char = getNextCharacter(characters, i, isUserColumn);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                 const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
@@ -1333,11 +1358,12 @@
             const config = MatrixRainEngine.rainConfig;
             const direction = config.direction || 'down';
             const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
-            
+
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = getNextCharacter(characters);
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const color = pentadColors[i % 5];
@@ -1356,7 +1382,8 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters);
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                const char = getNextCharacter(characters, i, isUserColumn);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                     const color = pentadColors[i % 5];
@@ -1378,11 +1405,12 @@
         function drawChaosRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
             const direction = config.direction || 'down';
-            
+
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = getNextCharacter(characters);
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize + (Math.random() - 0.5) * 10;
                     const x = matrixDrops[i] * fontSize;
                     const hue = (Date.now() + i * 50) % 360;
@@ -1401,7 +1429,8 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters);
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                const char = getNextCharacter(characters, i, isUserColumn);
                     const x = i * fontSize + (Math.random() - 0.5) * 10;
                 const y = matrixDrops[i] * fontSize;
                 const hue = (Date.now() + i * 50) % 360;
@@ -1423,11 +1452,12 @@
         function drawHarmonicRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
             const direction = config.direction || 'down';
-            
+
             if (direction === 'left' || direction === 'right') {
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    const char = getNextCharacter(characters);
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+                    const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
@@ -1448,7 +1478,8 @@
             } else {
                 const columns = Math.floor(matrixCanvas.width / fontSize);
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters);
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                const char = getNextCharacter(characters, i, isUserColumn);
                 const x = i * fontSize;
                 const y = matrixDrops[i] * fontSize;
                 const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
@@ -1480,7 +1511,7 @@
                         y: Math.random() * matrixCanvas.height,
                         vx: (Math.random() - 0.5) * 2,
                         vy: (Math.random() - 0.5) * 2,
-                        char: getNextCharacter(characters),
+                        char: getNextCharacter(characters, i, false),
                         phase: Math.random() * Math.PI * 2
                     });
                 }
@@ -1548,7 +1579,7 @@
                     const startY = Math.random(); // 0-1 across height
 
                     window.tunnelChars.push({
-                        char: getNextCharacter(characters),
+                        char: getNextCharacter(characters, i, false),
                         zDepth: Math.random(), // 0 = far away, 1 = at camera
                         startX: startX, // Normalized X position (0-1)
                         startY: startY, // Normalized Y position (0-1)
@@ -1571,20 +1602,20 @@
                 if (!tc.cycleCounter) tc.cycleCounter = 0;
                 tc.cycleCounter++;
                 if (tc.cycleCounter > 3) { // Change character every 3-4 frames
-                    tc.char = getNextCharacter(characters);
+                    tc.char = getNextCharacter(characters, i, false);
                     tc.cycleCounter = 0;
                 }
 
                 // Reset when reaching camera (or going backward past vanishing point)
                 if (tc.zDepth > 1) {
                     tc.zDepth = 0;
-                    tc.char = getNextCharacter(characters);
+                    tc.char = getNextCharacter(characters, i, false);
                     tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
                     tc.startX = Math.random(); // New random position
                     tc.startY = Math.random();
                 } else if (tc.zDepth < 0) {
                     tc.zDepth = 1;
-                    tc.char = getNextCharacter(characters);
+                    tc.char = getNextCharacter(characters, i, false);
                     tc.speedMultiplier = 0.5 + Math.random() * 1.5; // New random speed
                     tc.startX = Math.random(); // New random position
                     tc.startY = Math.random();
@@ -2602,10 +2633,11 @@
                             break;
                         case 'user_message':
                             console.log('🌀 Ollama System: User message received:', message.text);
-                            // Store user message for background rain
+                            // Store user message for background rain COLUMNS (not scattered random chars)
                             window.userMessageText = message.text;
                             window.userMessageIndex = 0; // Reset character index
-                            console.log('💬 User message stored for background rain');
+                            window.userMessageActive = true; // Flag to enable user message columns
+                            console.log('💬 User message stored for background rain COLUMNS');
                             break;
                         default:
                             console.log('🌀 Ollama System: Unknown message type:', message.type);

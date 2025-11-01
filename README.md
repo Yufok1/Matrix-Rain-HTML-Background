@@ -87,8 +87,10 @@ Turn your Matrix rain into a **visual dialogue system** where conversations with
 ### How It Works
 
 **Dual-Layer Visual Conversation**:
-- **Background Rain** (minor portion): Your prompts/questions cycle through as random characters scattered everywhere
-- **Message Columns** (major portion): AI responses stream character-by-character in dedicated columns with urgency-based effects
+- **Background Rain Layer**: Your prompts display in dedicated columns (25% of screen)
+- **Message Canvas Layer**: AI responses stream in dedicated columns (75% of screen)
+- **BOTH layers visible simultaneously** - your words and AI responses flowing together
+- Equal visual quality: same column rendering, same character sizes, same directional flow
 
 **Urgency-Based Behavior**:
 - **Ambient (0-2)**: Slow downward flow, subtle appearance
@@ -124,9 +126,10 @@ If your Ollama models are stored in a **custom location** (not the default C: dr
 3. Open your native Ollama app or use the Ollama API
 4. Send a message to any model (llama2, mistral, etc.)
 5. Watch:
-   - Your prompt appears scattered in background rain
-   - AI response streams in dedicated columns
-   - Rain speeds up during streaming, then normalizes
+   - **Your prompt** appears in 25% of columns (background layer, readable text)
+   - **AI response** streams in 75% of columns (message layer, streaming text)
+   - **Both visible simultaneously** - dual-layer conversation
+   - Rain speeds up during AI streaming, then normalizes
 
 **Technical Architecture**:
 - `websocket_bridge.py` runs dual servers:
@@ -134,7 +137,7 @@ If your Ollama models are stored in a **custom location** (not the default C: dr
   - WebSocket Server (port 8080) → broadcasts to browser
 - Native Ollama runs on port 11435
 - Browser connects to WebSocket for real-time message display
-- Your prompts and AI responses both visible simultaneously
+- Your prompts and AI responses both rendered in high-quality dedicated columns with equal visual quality
 
 **Note**: The bridge is transparent - your native Ollama app works normally, the Matrix rain just "listens" and displays the conversation!
 
