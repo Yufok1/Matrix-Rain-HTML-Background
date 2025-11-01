@@ -551,6 +551,7 @@
                                     <option value="binary">Binary (01)</option>
                                     <option value="hex">Hexadecimal (0-F)</option>
                                     <option value="symbols">Symbols (@#$%^&*)</option>
+                                    <option value="katakana">Katakana (アイウエオ...)</option>
                                     <option value="custom">Custom</option>
                                 </select>
                             </div>
@@ -1126,6 +1127,8 @@
                 characters = '0123456789ABCDEF';
             } else if (characters === 'symbols') {
                 characters = '@#$%^&*()_+-=[]{}|;:,.<>?';
+            } else if (characters === 'katakana') {
+                characters = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ';
             }
             
             // Draw rain based on DIRECTION first, then pattern
@@ -1818,7 +1821,7 @@
             // Randomize all settings with all available patterns!
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Apply random settings
@@ -1930,7 +1933,7 @@
             // All available patterns
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Randomize EVERYTHING
@@ -2339,7 +2342,7 @@
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
             const highNormalized = high / 255;
             const charIndex = Math.floor(highNormalized * 4); // 0-3
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols'];
+            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             config.characterSet = characterSets[Math.min(charIndex, 3)];
             document.getElementById('characterSet').value = config.characterSet;
 
