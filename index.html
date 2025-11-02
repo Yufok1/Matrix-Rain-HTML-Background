@@ -404,6 +404,235 @@
         .scrollbar::-webkit-scrollbar-thumb:hover {
             background: #00cc33;
         }
+
+        /* === AUDIO PLAYER STYLES === */
+        .audio-player-container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-zone {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px dashed #00ff41;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-zone:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00cc33;
+        }
+
+        .file-upload-zone.dragover {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: #ffff00;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .playlist-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .playlist-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .playlist-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .playlist-item.playing {
+            background: rgba(0, 255, 65, 0.2);
+            border-left: 4px solid #00ff41;
+        }
+
+        .playlist-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .playlist-item-title {
+            color: #00ff41;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .playlist-item-duration {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .playlist-item-remove {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .playlist-item-remove:hover {
+            background: #cc0000;
+        }
+
+        .player-controls {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .now-playing {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .now-playing-title {
+            color: #00ff41;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .now-playing-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+            margin: 10px 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #00ff41;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .playback-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .player-btn {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .player-btn:hover {
+            background: #00cc33;
+            transform: scale(1.05);
+        }
+
+        .player-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .player-btn-primary {
+            background: #ff1493;
+            color: white;
+            font-size: 20px;
+            padding: 15px 30px;
+        }
+
+        .player-btn-primary:hover {
+            background: #ff006f;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .volume-icon {
+            font-size: 20px;
+            color: #00ff41;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+            border: none;
+        }
+
+        .playlist-stats {
+            text-align: center;
+            padding: 10px;
+            color: #999;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -427,33 +656,6 @@
         <div class="modal-content scrollbar">
             <!-- Left Column -->
             <div>
-                <!-- Core Intelligence Analysis -->
-                <div class="section">
-                    <h3>🌊 Core Intelligence Analysis</h3>
-                    <div style="margin-bottom: 15px;">
-                        <strong>Core Function:</strong> Advanced data pattern analysis and information flow management with temporal synchronization
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>System Status:</strong>
-                        <span class="status-indicator status-connected"></span>
-                        <span>Connected | Last Ping: 1s ago | Connections: 5</span>
-                    </div>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-value">99.2%</div>
-                            <div class="metric-label">Pattern Integrity</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-value">7.43</div>
-                            <div class="metric-label">TB/s Flow Rate</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-value">5</div>
-                            <div class="metric-label">Active Patterns</div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Rain Pattern Controls -->
                 <div class="section">
                     <h3>🌧️ Rain Pattern Controls</h3>
@@ -571,12 +773,101 @@
                 </div>
             </div>
 
+            <!-- Right Column - Audio File Player -->
+            <div>
+                <!-- Audio File Player -->
+                <div class="section audio-player-container">
+                    <h3>🎵 Audio File Player</h3>
+                    <p style="font-size: 12px; color: #999; margin-bottom: 15px;">Upload MP3/WAV files to sync visualizations without screen sharing. Works alongside tab sharing mode!</p>
+
+                    <!-- File Upload Zone -->
+                    <div class="file-upload-zone" id="fileUploadZone" onclick="document.getElementById('audioFileInput').click()">
+                        <div class="upload-icon">🎵</div>
+                        <div style="color: #00ff41; font-weight: bold; margin-bottom: 5px;">Click to Select Audio Files</div>
+                        <div style="color: #999; font-size: 12px;">Supports MP3, WAV, OGG, M4A</div>
+                    </div>
+                    <input type="file" id="audioFileInput" accept="audio/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+
+                    <!-- Playlist -->
+                    <div class="section">
+                        <h3 style="font-size: 14px; color: #00ff41; margin-bottom: 10px;">📋 Playlist</h3>
+                        <div class="playlist-container scrollbar" id="playlistContainer">
+                            <div class="playlist-stats" id="emptyPlaylist">
+                                No tracks loaded. Upload some audio files!
+                            </div>
+                        </div>
+                        <div class="playlist-stats" id="playlistStats" style="display: none;">
+                            <span id="playlistCount">0</span> tracks | <span id="playlistDuration">0:00</span> total
+                        </div>
+                    </div>
+
+                    <!-- Player Controls -->
+                    <div class="player-controls">
+                        <div class="now-playing" id="nowPlayingSection" style="display: none;">
+                            <div class="now-playing-title" id="nowPlayingTitle">No track playing</div>
+                            <div class="now-playing-time">
+                                <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                            </div>
+                            <div class="progress-bar-container" onclick="seekAudio(event)">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="playback-buttons">
+                            <button class="player-btn" onclick="previousTrack()" id="prevBtn" disabled>⏮️ Prev</button>
+                            <button class="player-btn player-btn-primary" onclick="togglePlayPause()" id="playPauseBtn" disabled>▶️ Play</button>
+                            <button class="player-btn" onclick="nextTrack()" id="nextBtn" disabled>⏭️ Next</button>
+                        </div>
+
+                        <div class="playback-buttons">
+                            <button class="player-btn" onclick="toggleShuffle()" id="shuffleBtn">🔀 Shuffle</button>
+                            <button class="player-btn" onclick="toggleRepeat()" id="repeatBtn">🔁 Repeat</button>
+                        </div>
+
+                        <div class="volume-control">
+                            <span class="volume-icon" id="volumeIcon">🔊</span>
+                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70" oninput="updateVolume()">
+                            <span style="color: #00ff41; font-size: 14px; min-width: 40px;" id="volumeDisplay">70%</span>
+                        </div>
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 255, 65, 0.3);">
+                            <button class="btn" id="fileAudioModeBtn" onclick="toggleFileAudioMode()" style="width: 100%; background: #ff1493; color: white; font-size: 16px; padding: 15px;" disabled>
+                                🎵 START AUDIO VISUALIZATION
+                            </button>
+                            <div style="text-align: center; margin-top: 10px; font-size: 11px; color: #999;">
+                                Start playing a track, then click to enable visualization mode
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Info Section -->
+                <div class="section">
+                    <h3>ℹ️ Audio Modes</h3>
+                    <div style="font-size: 12px; line-height: 1.6;">
+                        <div style="margin-bottom: 10px; padding: 10px; background: rgba(0, 255, 65, 0.1); border-radius: 5px;">
+                            <strong style="color: #00ff41;">🎵 File Player Mode</strong><br>
+                            <span style="color: #999;">Upload your own audio files for visualization. Great for music libraries or offline use.</span>
+                        </div>
+                        <div style="padding: 10px; background: rgba(0, 255, 65, 0.1); border-radius: 5px;">
+                            <strong style="color: #00ff41;">🖥️ Tab Sharing Mode</strong><br>
+                            <span style="color: #999;">Capture audio from any browser tab (movies, streams, etc.). Click "AUDIO REACTIVE MODE" button above.</span>
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 0, 0.1); border-radius: 5px; border: 1px solid rgba(255, 255, 0, 0.3);">
+                            <strong style="color: #ffff00;">⚠️ Note:</strong><br>
+                            <span style="color: #ccc;">Both modes work independently. Only one can be active at a time. Switch between them anytime!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
+        window._lastRestartTime = 0; // throttle animation restarts
         
         // === MATRIX RAIN ADVANCED VISUAL CONTROL ENGINE ===
         const MatrixRainEngine = {
@@ -677,7 +968,9 @@
                 
                 // Update active button
                 document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
+                if (typeof event !== 'undefined' && event && event.target) {
+                    event.target.classList.add('active');
+                }
                 
                 this.rainConfig.pattern = pattern;
                 const patternData = this.patterns[pattern];
@@ -803,7 +1096,9 @@
 
             setSpectrumColor(color) {
                 document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
+                if (typeof event !== 'undefined' && event && event.target) {
+                    event.target.classList.add('active');
+                }
                 this.rainConfig.primaryColor = color;
                 this.rainConfig.secondaryColor = color;
                 this.addActivity(`🌈 Spectrum color set to: ${color}`, true);
@@ -1110,8 +1405,16 @@
             // Complementary color (opposite on color wheel)
             const complementHue = (avgHue + 180) % 360;
 
-            // Clear canvas with auto-contrast background (dark complementary color)
-            matrixCtx.fillStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
+            // Clear canvas with auto-contrast background; allow pure white/black extremes
+            let bgStyle;
+            if (config.primaryColor === '#000000') {
+                bgStyle = 'rgba(255,255,255,0.12)';
+            } else if (config.primaryColor === '#ffffff') {
+                bgStyle = 'rgba(0,0,0,0.12)';
+            } else {
+                bgStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
+            }
+            matrixCtx.fillStyle = bgStyle;
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -1187,7 +1490,8 @@
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     
-                    matrixCtx.fillStyle = config.primaryColor;
+                    const useColor_h = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                    matrixCtx.fillStyle = useColor_h;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
                     
@@ -1210,7 +1514,8 @@
                     const y = progress * fontSize;
                     
                     if (x < matrixCanvas.width && y < matrixCanvas.height) {
-                        matrixCtx.fillStyle = config.primaryColor;
+                        const useColor_d = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                        matrixCtx.fillStyle = useColor_d;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
                     }
@@ -1231,7 +1536,8 @@
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
                     
-                    matrixCtx.fillStyle = config.primaryColor;
+                    const useColor_v = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                    matrixCtx.fillStyle = useColor_v;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
                     
@@ -1686,9 +1992,13 @@
             console.log('Matrix Rain Config Updated:', config);
             MatrixRainEngine.logActivity('Configuration updated', 'info');
             
-            // Update animation with new settings
-            if (matrixInterval) {
-                startMatrixAnimation();
+            // Throttle interval restarts to avoid freezes during rapid audio updates
+            const now = Date.now();
+            if (!window._lastRestartTime || (now - window._lastRestartTime) > 500) {
+                if (matrixInterval) {
+                    startMatrixAnimation();
+                }
+                window._lastRestartTime = now;
             }
         }
         
@@ -1722,24 +2032,31 @@
             
             // Update active button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (typeof event !== 'undefined' && event && event.target) {
+                event.target.classList.add('active');
+            }
         }
         
         function updateRainSpeed() {
-            const speed = document.getElementById('rainSpeed').value;
-            MatrixRainEngine.rainConfig.speed = 101 - speed; // Invert for intuitive control
+            const speed = parseInt(document.getElementById('rainSpeed').value, 10);
+            // Double sensitivity: stronger effect from slider movement, with sane bounds
+            let mapped = 101 - Math.floor(speed * 2);
+            mapped = Math.max(10, Math.min(mapped, 100)); // Clamp to avoid too-low intervals
+            MatrixRainEngine.rainConfig.speed = mapped;
             updateRainConfig();
         }
         
         function updateRainIntensity() {
-            const intensity = document.getElementById('rainIntensity').value;
-            MatrixRainEngine.rainConfig.intensity = intensity;
+            const intensity = parseInt(document.getElementById('rainIntensity').value, 10);
+            // Double sensitivity: brighter/more intense at the same slider position
+            MatrixRainEngine.rainConfig.intensity = Math.min(100, Math.floor(intensity * 2));
             updateRainConfig();
         }
         
         function updateRainDensity() {
-            const density = document.getElementById('rainDensity').value;
-            MatrixRainEngine.rainConfig.density = density;
+            const density = parseInt(document.getElementById('rainDensity').value, 10);
+            // Double sensitivity: denser rain at the same slider position
+            MatrixRainEngine.rainConfig.density = Math.min(100, Math.floor(density * 2));
             updateRainConfig();
         }
         
@@ -2092,7 +2409,7 @@
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     audioAnalyser = audioContext.createAnalyser();
                     audioAnalyser.fftSize = 2048;
-                    audioAnalyser.smoothingTimeConstant = 0.8;
+                    audioAnalyser.smoothingTimeConstant = 0.5;
 
                     const source = audioContext.createMediaStreamSource(audioStream);
                     source.connect(audioAnalyser);
@@ -2323,17 +2640,64 @@
             const bassNormalized = bass / 255;
             config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
 
-            // LOW-MID → COLOR HUE (music body controls color wheel position)
-            const hue = Math.floor((lowMid / 255) * 360);
-            config.primaryColor = `hsl(${hue}, 100%, 50%)`;
-            const compHue = (hue + 180) % 360;
-            config.secondaryColor = `hsl(${compHue}, 100%, 50%)`;
+            // LOW-MID → COLOR HUE (with micro-reactivity to small variations)
+            const baseHue = Math.floor((lowMid / 255) * 360);
+            if (!window.colorReactState) {
+                window.colorReactState = { avgLowMid: lowMid, prevLowMid: lowMid, sensitivity: 2.0 };
+            }
+            const rs = window.colorReactState;
+            // Quick-moving average to capture baseline while preserving details
+            rs.avgLowMid = rs.avgLowMid + (lowMid - rs.avgLowMid) * 0.2;
+            const delta = lowMid - rs.avgLowMid;
+            let deltaHue = (delta / 255) * 180 * rs.sensitivity; // amplify small changes
+            // Clamp to avoid wild jumps
+            deltaHue = Math.max(-90, Math.min(90, deltaHue));
+            const hue = (baseHue + deltaHue + 360) % 360;
 
-            // Update color pickers
-            const primaryHex = hslToHex(hue, 100, 50);
-            const secondaryHex = hslToHex(compHue, 100, 50);
+            let usePrimary = `hsl(${hue}, 100%, 50%)`;
+            let useSecondary = `hsl(${(hue + 180) % 360}, 100%, 50%)`;
+
+            // Allow monochrome extremes: black on white at low intensity, white on black at high energy
+            const lowIntensity = volume < 0.05;
+            const highEnergy = volume > 0.95 || (bass > 220 && high > 220);
+            if (lowIntensity) {
+                usePrimary = '#000000';
+                useSecondary = '#ffffff';
+            } else if (highEnergy) {
+                usePrimary = '#ffffff';
+                useSecondary = '#000000';
+            }
+
+            config.primaryColor = usePrimary;
+            config.secondaryColor = useSecondary;
+
+            // Update color pickers to reflect actual colors in use
+            let primaryHex, secondaryHex;
+            if (usePrimary.startsWith('#')) {
+                primaryHex = usePrimary;
+            } else {
+                primaryHex = hslToHex(hue, 100, 50);
+            }
+            const compHue = (hue + 180) % 360;
+            if (useSecondary.startsWith('#')) {
+                secondaryHex = useSecondary;
+            } else {
+                secondaryHex = hslToHex(compHue, 100, 50);
+            }
             document.getElementById('primaryColor').value = primaryHex;
             document.getElementById('secondaryColor').value = secondaryHex;
+
+            // Adjust canvas background for extreme monochrome cases
+            const canvasEl = document.getElementById('matrixRainCanvas');
+            if (canvasEl) {
+                if (usePrimary === '#000000') {
+                    canvasEl.style.background = '#ffffff';
+                } else if (usePrimary === '#ffffff') {
+                    canvasEl.style.background = '#000000';
+                } else {
+                    canvasEl.style.background = 'transparent';
+                }
+            }
 
             // MID → DENSITY (vocal/melody range controls how much rain)
             const midNormalized = mid / 255;
@@ -2392,6 +2756,453 @@
                 <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH</div>
             `;
         }
+
+        // === AUDIO FILE PLAYER SYSTEM ===
+        let audioPlayer = null;
+        let playlist = [];
+        let currentTrackIndex = -1;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        let fileAudioContext = null;
+        let fileAudioAnalyser = null;
+        let fileAudioSource = null;
+        let fileAudioDataArray = null;
+        let fileAudioModeActive = false;
+        let fileAudioAnimationFrame = null;
+
+        // Initialize audio player element
+        function initAudioPlayer() {
+            if (!audioPlayer) {
+                audioPlayer = new Audio();
+                audioPlayer.addEventListener('ended', handleTrackEnd);
+                audioPlayer.addEventListener('timeupdate', updateProgress);
+                audioPlayer.addEventListener('loadedmetadata', updateTrackInfo);
+                audioPlayer.volume = 0.7;
+            }
+        }
+
+        // File Upload Handling
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            addFilesToPlaylist(files);
+            event.target.value = ''; // Reset input
+        }
+
+        // Drag & Drop Disabled: prevent lag from accidental large drops
+        (function disableDragDrop() {
+            const uploadZone = document.getElementById('fileUploadZone');
+            if (uploadZone) {
+                // Remove any visual dragover state just in case
+                uploadZone.classList.remove('dragover');
+            }
+            // Block drag/drop globally
+            const stopAll = (e) => { e.preventDefault(); e.stopPropagation(); };
+            ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+                window.addEventListener(evt, stopAll, true);
+                document.addEventListener(evt, stopAll, true);
+            });
+        })();
+
+        function addFilesToPlaylist(files) {
+            initAudioPlayer();
+
+            files.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                const track = {
+                    id: Date.now() + index,
+                    name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
+                    url: url,
+                    file: file,
+                    duration: 0
+                };
+                playlist.push(track);
+
+                // Get duration
+                const tempAudio = new Audio(url);
+                tempAudio.addEventListener('loadedmetadata', () => {
+                    track.duration = tempAudio.duration;
+                    updatePlaylistDisplay();
+                });
+            });
+
+            updatePlaylistDisplay();
+            MatrixRainEngine.logActivity(`🎵 Added ${files.length} track(s) to playlist`, 'success');
+        }
+
+        function updatePlaylistDisplay() {
+            const container = document.getElementById('playlistContainer');
+            const stats = document.getElementById('playlistStats');
+
+            if (!container || !stats) return;
+
+            if (playlist.length === 0) {
+                container.innerHTML = '<div class="playlist-stats" id="emptyPlaylist">No tracks loaded. Upload some audio files!</div>';
+                stats.style.display = 'none';
+                return;
+            }
+
+            // Update stats
+            const playlistCount = document.getElementById('playlistCount');
+            const playlistDuration = document.getElementById('playlistDuration');
+
+            const totalDuration = playlist.reduce((sum, track) => sum + track.duration, 0);
+            if (playlistCount) playlistCount.textContent = playlist.length;
+            if (playlistDuration) playlistDuration.textContent = formatTime(totalDuration);
+
+            stats.style.display = 'block';
+
+            // Build playlist HTML
+            container.innerHTML = playlist.map((track, index) => `
+                <div class="playlist-item ${index === currentTrackIndex ? 'playing' : ''}" onclick="playTrack(${index})">
+                    <div class="playlist-item-info">
+                        <div class="playlist-item-title">
+                            ${index === currentTrackIndex && isPlaying ? '▶️ ' : ''}${track.name}
+                        </div>
+                        <div class="playlist-item-duration">${formatTime(track.duration)}</div>
+                    </div>
+                    <button class="playlist-item-remove" onclick="event.stopPropagation(); removeTrack(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeTrack(index) {
+            if (index === currentTrackIndex && isPlaying) {
+                stopPlayback();
+            }
+
+            URL.revokeObjectURL(playlist[index].url);
+            playlist.splice(index, 1);
+
+            if (currentTrackIndex > index) {
+                currentTrackIndex--;
+            } else if (currentTrackIndex === index) {
+                currentTrackIndex = -1;
+            }
+
+            updatePlaylistDisplay();
+            MatrixRainEngine.logActivity('🗑️ Track removed from playlist', 'info');
+        }
+
+        function playTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+
+            initAudioPlayer();
+            currentTrackIndex = index;
+            const track = playlist[index];
+
+            audioPlayer.src = track.url;
+            audioPlayer.play();
+            isPlaying = true;
+
+            updatePlaylistDisplay();
+            updateNowPlaying();
+            updatePlayPauseButton();
+            enableControls();
+
+            MatrixRainEngine.logActivity(`🎵 Now playing: ${track.name}`, 'success');
+        }
+
+        function togglePlayPause() {
+            if (!audioPlayer || playlist.length === 0) return;
+
+            if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                MatrixRainEngine.logActivity('⏸️ Playback paused', 'info');
+            } else {
+                if (currentTrackIndex === -1) {
+                    playTrack(0);
+                } else {
+                    audioPlayer.play();
+                    isPlaying = true;
+                    MatrixRainEngine.logActivity('▶️ Playback resumed', 'success');
+                }
+            }
+
+            updatePlayPauseButton();
+            updatePlaylistDisplay();
+        }
+
+        function previousTrack() {
+            if (playlist.length === 0) return;
+
+            let newIndex = currentTrackIndex - 1;
+            if (newIndex < 0) newIndex = playlist.length - 1;
+            playTrack(newIndex);
+        }
+
+        function nextTrack() {
+            if (playlist.length === 0) return;
+
+            let newIndex;
+            if (isShuffle) {
+                newIndex = Math.floor(Math.random() * playlist.length);
+            } else {
+                newIndex = currentTrackIndex + 1;
+                if (newIndex >= playlist.length) newIndex = 0;
+            }
+            playTrack(newIndex);
+        }
+
+        function handleTrackEnd() {
+            if (isRepeat) {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+            } else {
+                nextTrack();
+            }
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('shuffleBtn');
+            if (isShuffle) {
+                btn.style.background = '#00ff41';
+                btn.style.color = '#000';
+                MatrixRainEngine.logActivity('🔀 Shuffle enabled', 'success');
+            } else {
+                btn.style.background = '#333';
+                btn.style.color = '#00ff41';
+                MatrixRainEngine.logActivity('🔀 Shuffle disabled', 'info');
+            }
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            const btn = document.getElementById('repeatBtn');
+            if (isRepeat) {
+                btn.style.background = '#00ff41';
+                btn.style.color = '#000';
+                MatrixRainEngine.logActivity('🔁 Repeat enabled', 'success');
+            } else {
+                btn.style.background = '#333';
+                btn.style.color = '#00ff41';
+                MatrixRainEngine.logActivity('🔁 Repeat disabled', 'info');
+            }
+        }
+
+        function updateVolume() {
+            if (!audioPlayer) return;
+
+            const volume = document.getElementById('volumeSlider').value;
+            audioPlayer.volume = volume / 100;
+            document.getElementById('volumeDisplay').textContent = volume + '%';
+
+            // Update icon
+            const icon = document.getElementById('volumeIcon');
+            if (volume == 0) icon.textContent = '🔇';
+            else if (volume < 33) icon.textContent = '🔈';
+            else if (volume < 66) icon.textContent = '🔉';
+            else icon.textContent = '🔊';
+        }
+
+        function updateProgress() {
+            if (!audioPlayer) return;
+
+            const currentTime = audioPlayer.currentTime;
+            const duration = audioPlayer.duration || 0;
+            const progress = (currentTime / duration) * 100;
+
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('currentTime').textContent = formatTime(currentTime);
+        }
+
+        function seekAudio(event) {
+            if (!audioPlayer || !audioPlayer.duration) return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            audioPlayer.currentTime = percent * audioPlayer.duration;
+        }
+
+        function updateNowPlaying() {
+            const section = document.getElementById('nowPlayingSection');
+            const title = document.getElementById('nowPlayingTitle');
+            const totalTime = document.getElementById('totalTime');
+
+            if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
+                section.style.display = 'block';
+                title.textContent = playlist[currentTrackIndex].name;
+                totalTime.textContent = formatTime(playlist[currentTrackIndex].duration);
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        function updateTrackInfo() {
+            updateNowPlaying();
+        }
+
+        function updatePlayPauseButton() {
+            const btn = document.getElementById('playPauseBtn');
+            if (isPlaying) {
+                btn.textContent = '⏸️ Pause';
+            } else {
+                btn.textContent = '▶️ Play';
+            }
+        }
+
+        function enableControls() {
+            document.getElementById('playPauseBtn').disabled = false;
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('fileAudioModeBtn').disabled = false;
+        }
+
+        function stopPlayback() {
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+            }
+            isPlaying = false;
+            updatePlayPauseButton();
+            updatePlaylistDisplay();
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // === FILE AUDIO VISUALIZATION MODE ===
+        async function toggleFileAudioMode() {
+            console.log('🎵 toggleFileAudioMode called! Current state:', fileAudioModeActive);
+            console.log('Audio player exists:', !!audioPlayer);
+            console.log('Is playing:', isPlaying);
+
+            const btn = document.getElementById('fileAudioModeBtn');
+            fileAudioModeActive = !fileAudioModeActive;
+
+            if (fileAudioModeActive) {
+                // Stop tab sharing mode if active
+                if (audioReactiveActive) {
+                    console.log('⚠️ Stopping tab sharing mode first...');
+                    await toggleAudioReactive();
+                }
+
+                btn.textContent = '⏸️ STOP VISUALIZATION';
+                btn.style.background = '#ff4444';
+
+                try {
+                    // Set up Web Audio API for file - ONLY if not already set up
+                    if (!fileAudioContext || fileAudioContext.state === 'closed') {
+                        console.log('✅ Creating new audio context...');
+                        fileAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        fileAudioAnalyser = fileAudioContext.createAnalyser();
+                        fileAudioAnalyser.fftSize = 2048;
+                        fileAudioAnalyser.smoothingTimeConstant = 0.5;
+
+                        // Connect audio player to analyzer - ONLY ONCE
+                        if (!fileAudioSource) {
+                            console.log('✅ Creating media element source and connecting...');
+                            fileAudioSource = fileAudioContext.createMediaElementSource(audioPlayer);
+                            fileAudioSource.connect(fileAudioAnalyser);
+                            fileAudioAnalyser.connect(fileAudioContext.destination);
+                        }
+
+                        fileAudioDataArray = new Uint8Array(fileAudioAnalyser.frequencyBinCount);
+                    } else {
+                        console.log('✅ Reusing existing audio context, state:', fileAudioContext.state);
+                        // Resume context if suspended
+                        if (fileAudioContext.state === 'suspended') {
+                            console.log('⚠️ Resuming suspended context...');
+                            await fileAudioContext.resume();
+                        }
+                    }
+
+                    // Force Classic pattern for audio mode
+                    console.log('✅ Setting rain pattern to classic...');
+                    setRainPattern('classic');
+
+                    console.log('✅ Starting audio analysis loop...');
+                    MatrixRainEngine.logActivity('🎵 File Audio Visualization ACTIVATED', 'success');
+                    analyzeFileAudio();
+                    console.log('🎉 VISUALIZATION STARTED! Watch the rain!');
+
+                } catch (error) {
+                    console.error('❌ File audio setup error:', error);
+                    console.error('Error details:', error.message, error.name);
+                    fileAudioModeActive = false;
+                    btn.textContent = '🎵 START AUDIO VISUALIZATION';
+                    btn.style.background = '#ff1493';
+                    alert('Error starting visualization: ' + error.message);
+                }
+
+            } else {
+                console.log('⏸️ Stopping visualization...');
+                btn.textContent = '🎵 START AUDIO VISUALIZATION';
+                btn.style.background = '#ff1493';
+                stopFileAudioMode();
+                MatrixRainEngine.logActivity('🎵 File Audio Visualization STOPPED', 'info');
+            }
+        }
+
+        function stopFileAudioMode() {
+            if (fileAudioAnimationFrame) {
+                cancelAnimationFrame(fileAudioAnimationFrame);
+                fileAudioAnimationFrame = null;
+            }
+            // Note: We don't close the context because it's connected to the audio player
+            // The audio player needs to keep working for playback
+            fileAudioAnalyser = null;
+        }
+
+        function analyzeFileAudio() {
+            if (!fileAudioModeActive || !fileAudioAnalyser) return;
+
+            fileAudioAnimationFrame = requestAnimationFrame(analyzeFileAudio);
+
+            // Get frequency data
+            fileAudioAnalyser.getByteFrequencyData(fileAudioDataArray);
+
+            // Use the same index ranges as tab audio reactive mode
+            const len = fileAudioDataArray.length;
+            const avgRange = (start, end) => {
+                let sum = 0, count = 0;
+                for (let i = start; i < end && i < len; i++) { sum += fileAudioDataArray[i]; count++; }
+                return count > 0 ? sum / count : 0;
+            };
+            const bass = avgRange(0, 80);        // 0-80 bins
+            const lowMid = avgRange(80, 200);    // 80-200 bins
+            const mid = avgRange(200, 600);      // 200-600 bins
+            const high = avgRange(600, 1024);    // 600-1024 bins
+
+            // Calculate overall volume (RMS-like average)
+            let sum = 0;
+            for (let i = 0; i < len; i++) { sum += fileAudioDataArray[i]; }
+            const avgVolume = sum / len;
+            const normalizedVolume = avgVolume / 255; // 0-1
+
+            // Mirror tab audio reactive behavior exactly
+            const volume = (bass + lowMid + mid + high) / 4 / 255;
+
+            // Syllables/consonants/vocals trigger reverse flow exactly like tab mode
+            detectSyllables(volume, mid, high);
+            // Optional: beat backup (keep consistent with tab mode usage)
+            // detectBeats(bass);
+
+            // Use the same intelligent mapping as tab audio mode
+            reactToAudio(bass, lowMid, mid, high, volume);
+
+            // Update visualizer bars
+            drawAudioVisualizer(bass, lowMid, mid, high);
+        }
+
+        // Helper function to convert HSL to Hex
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
     </script>
 </body>
-</html> 
+</html>
