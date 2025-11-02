@@ -2,8 +2,6 @@
 
 A dynamic, configurable Matrix rain effect with 6 visual patterns, real-time controls, autonomous orchestration, **intelligent audio-reactive mode** featuring real-time synesthesia, and **AI integration** that streams LLM responses through the Matrix rain.
 
-**🌐 [LIVE DEMO](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** - Try it now!
-
 ## What's New ✨
 
 **Latest Updates** (2025):
