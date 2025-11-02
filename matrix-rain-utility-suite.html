@@ -1221,13 +1221,14 @@
                 // HORIZONTAL rain (left/right)
                 const rows = Math.floor(matrixCanvas.height / fontSize);
                 for (let i = 0; i < rows; i++) {
-                    // Skip rows used by Ollama message rain
-                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    // Check if this is a user message row FIRST (for horizontal, rows map to columns visually)
+                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip rows used ONLY by Ollama (don't skip user rows even if Ollama uses them)
+                    if (!isUserRow && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    // Check if this is a user message row (for horizontal, rows map to columns visually)
-                    const isUserRow = window.userMessageColumns && window.userMessageColumns.has(i);
                     const char = getNextCharacter(characters, i, isUserRow);
                     const y = i * fontSize;
                     const x = matrixDrops[i] * fontSize;
@@ -1249,13 +1250,14 @@
                 // DIAGONAL rain
                 const streams = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < streams; i++) {
-                    // Skip streams used by Ollama message rain
-                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    // Check if this is a user message column FIRST
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip streams used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    // Check if this is a user message column
-                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const progress = matrixDrops[i];
                     const x = i * fontSize + progress * fontSize * 0.5;
@@ -1279,13 +1281,14 @@
                 // VERTICAL rain (up/down)
                 const columns = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < columns; i++) {
-                    // Skip columns used by Ollama message rain
-                    if (window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    // Check if this is a user message column FIRST
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    // Check if this is a user message column
-                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
@@ -2865,7 +2868,7 @@
                 this.msgCtx.clearRect(0, 0, this.msgCanvas.width, this.msgCanvas.height);
 
                 const baseFontSize = MatrixRainEngine.rainConfig.fontSize || 14;
-                const messageFontSize = Math.round(baseFontSize * 1.25); // 25% larger for readability
+                const messageFontSize = baseFontSize; // Same size as user messages for equality
                 this.msgCtx.font = `${messageFontSize}px monospace`;
                 const dir = this.direction || 'down';
                 const trailLength = 14; // Longer trail for better readability (was 8)
