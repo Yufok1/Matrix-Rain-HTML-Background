@@ -62,6 +62,34 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 
 **Note**: Audio mode locks to **Classic pattern** so color changes are visible (no pattern-based colors interfering).
 
+## Audio File Player Mode 🎵
+
+Use local audio files to drive the visualization — no screen share required.
+
+- Upload via the click zone labeled `Click to Select Audio Files`.
+- Supported formats: `MP3`, `WAV`, `OGG`, `M4A`.
+- Drag-and-drop is disabled globally to prevent lag from large file drops.
+- A playlist is built automatically with track count and total duration.
+- Player controls include: Prev/Play/Pause/Next, Shuffle, Repeat, Seek bar, and Now Playing info.
+
+### Start Visualization
+
+1. Load files and pick a track in the playlist.
+2. Click `🎵 START AUDIO VISUALIZATION` in the player panel.
+3. If tab audio mode is running, it will be stopped automatically (only one mode active at a time).
+4. The visualization uses the same analyzer and intelligent mapping as tab sharing:
+   - Low‑mid drives color hue; bass drives speed; mid drives density; high selects character set; volume drives intensity; combined energy nudges direction.
+   - Secondary color is used along with primary in classic mode (alternating rows/columns/streams).
+   - Black/white extremes appear at very low intensity (black on white) and very high energy (white on black).
+   - Background auto-contrast adapts to extreme monochrome cases.
+
+### Tips
+
+- Ensure your browser can play the selected file type.
+- You can shuffle or repeat tracks; visualization continues seamlessly.
+- For best color responsiveness, use material with clear low‑mid detail (vocals, instruments).
+
+
 ## Usage
 
 ### Basic Setup
