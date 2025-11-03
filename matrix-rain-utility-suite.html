@@ -1089,7 +1089,30 @@
 
             updateRainDirection() {
                 const direction = document.getElementById('rainDirection').value;
+                const oldDirection = this.rainConfig.direction;
                 this.rainConfig.direction = direction;
+
+                // Reinitialize drop positions when switching to/from horizontal
+                if (matrixCanvas && matrixDrops) {
+                    const fontSize = this.rainConfig.fontSize;
+                    const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
+                    const isHorizontal = (direction === 'left' || direction === 'right');
+
+                    if (wasHorizontal !== isHorizontal) {
+                        // Switching orientation - reinitialize all drops
+                        const columns = Math.floor(matrixCanvas.width / fontSize);
+                        for (let i = 0; i < columns; i++) {
+                            if (isHorizontal) {
+                                // Going horizontal: randomize X positions across full width
+                                matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
+                            } else {
+                                // Going vertical: randomize Y positions across full height
+                                matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
+                            }
+                        }
+                    }
+                }
+
                 this.addActivity(`➡️ Rain direction updated to: ${direction}`, true);
                 this.addAuditEntry(`[🌊 Matrix Rain] ➡️ Direction updated: ${direction}`);
             },
@@ -1310,12 +1333,15 @@
             const columns = Math.floor(matrixCanvas.width / fontSize);
             matrixDrops = [];
             window.dropSpeeds = []; // Per-column speed variation
-            
+            window.horizontalYPositions = []; // Y positions for horizontal rain
+
             for (let i = 0; i < columns; i++) {
                 // Highly randomized starting positions - spread across entire visible + off-screen area
                 matrixDrops[i] = (Math.random() * matrixCanvas.height / fontSize) - (Math.random() * 50);
                 // Random speed variation (0.7 to 1.3x normal speed)
                 window.dropSpeeds[i] = 0.7 + Math.random() * 0.6;
+                // Random Y position for horizontal rain (spread across screen height)
+                window.horizontalYPositions[i] = Math.random() * (matrixCanvas.height / fontSize);
             }
             
             console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
@@ -1483,22 +1509,22 @@
             }
             
             if (direction === 'left' || direction === 'right') {
-                // HORIZONTAL rain (left/right)
-                const rows = Math.floor(matrixCanvas.height / fontSize);
-                for (let i = 0; i < rows; i++) {
+                // HORIZONTAL rain (left/right) - USE ALL DROPS
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
                 const char = characters[Math.floor(Math.random() * characters.length)];
-                    const y = i * fontSize;
+                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
-                    
+
                     const useColor_h = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
                     matrixCtx.fillStyle = useColor_h;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
-                    
+
                     // Update horizontal position
                     const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
                     matrixDrops[i] += dropSpeed * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-                    
+
                     // Simple wrap around - bulletproof
                     const maxCols = matrixCanvas.width / fontSize;
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
@@ -1559,19 +1585,19 @@
             const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
             
             if (direction === 'left' || direction === 'right') {
-                const rows = Math.floor(matrixCanvas.height / fontSize);
-                for (let i = 0; i < rows; i++) {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
                     const char = characters[Math.floor(Math.random() * characters.length)];
-                    const y = i * fontSize;
+                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
-                    
+
                     matrixCtx.fillStyle = colors[colorIndex];
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
-                    
+
                     matrixDrops[i] += (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-                    
+
                     // Simple wrap around - bulletproof
                     const maxCols = matrixCanvas.width / fontSize;
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
@@ -1605,19 +1631,19 @@
             const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
             
             if (direction === 'left' || direction === 'right') {
-                const rows = Math.floor(matrixCanvas.height / fontSize);
-                for (let i = 0; i < rows; i++) {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
                     const char = characters[Math.floor(Math.random() * characters.length)];
-                    const y = i * fontSize;
+                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const color = pentadColors[i % 5];
-                    
+
                     matrixCtx.fillStyle = color;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
-                    
+
                     matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-                    
+
                     // Simple wrap around - bulletproof
                     const maxCols = matrixCanvas.width / fontSize;
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
@@ -1650,19 +1676,19 @@
             const direction = config.direction || 'down';
             
             if (direction === 'left' || direction === 'right') {
-                const rows = Math.floor(matrixCanvas.height / fontSize);
-                for (let i = 0; i < rows; i++) {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
                     const char = characters[Math.floor(Math.random() * characters.length)];
-                    const y = i * fontSize + (Math.random() - 0.5) * 10;
+                    const y = ((window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize) + (Math.random() - 0.5) * 10;
                     const x = matrixDrops[i] * fontSize;
                     const hue = (Date.now() + i * 50) % 360;
-                    
+
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
-                    
+
                     matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-                    
+
                     // Simple wrap around - bulletproof
                     const maxCols = matrixCanvas.width / fontSize;
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
@@ -1695,21 +1721,21 @@
             const direction = config.direction || 'down';
             
             if (direction === 'left' || direction === 'right') {
-                const rows = Math.floor(matrixCanvas.height / fontSize);
-                for (let i = 0; i < rows; i++) {
+                const columns = Math.floor(matrixCanvas.width / fontSize);
+                for (let i = 0; i < columns; i++) {
                     const char = characters[Math.floor(Math.random() * characters.length)];
-                    const y = i * fontSize;
+                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
                     const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
                     const harmonicX = x + wave;
                     const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
-                    
+
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, harmonicX, y);
-                    
+
                     matrixDrops[i] += 0.8 * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-                    
+
                     // Simple wrap around - bulletproof
                     const maxCols = matrixCanvas.width / fontSize;
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
@@ -2088,7 +2114,30 @@
         
         function updateRainDirection() {
             const direction = document.getElementById('rainDirection').value;
+            const oldDirection = MatrixRainEngine.rainConfig.direction;
             MatrixRainEngine.rainConfig.direction = direction;
+
+            // Reinitialize drop positions when switching to/from horizontal
+            if (matrixCanvas && matrixDrops) {
+                const fontSize = MatrixRainEngine.rainConfig.fontSize;
+                const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
+                const isHorizontal = (direction === 'left' || direction === 'right');
+
+                if (wasHorizontal !== isHorizontal) {
+                    // Switching orientation - reinitialize all drops
+                    const columns = Math.floor(matrixCanvas.width / fontSize);
+                    for (let i = 0; i < columns; i++) {
+                        if (isHorizontal) {
+                            // Going horizontal: randomize X positions across full width
+                            matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
+                        } else {
+                            // Going vertical: randomize Y positions across full height
+                            matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
+                        }
+                    }
+                }
+            }
+
             updateRainConfig();
         }
         
@@ -2264,7 +2313,30 @@
             MatrixRainEngine.rainConfig.intensity = 40 + Math.floor(Math.random() * 60); // 40-100
             MatrixRainEngine.rainConfig.density = 30 + Math.floor(Math.random() * 70); // 30-100
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
-            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+            const newDirection = directions[Math.floor(Math.random() * directions.length)];
+
+            // Reinitialize drop positions when switching to/from horizontal
+            if (matrixCanvas && matrixDrops && previousDirection !== newDirection) {
+                const fontSize = MatrixRainEngine.rainConfig.fontSize;
+                const wasHorizontal = (previousDirection === 'left' || previousDirection === 'right');
+                const isHorizontal = (newDirection === 'left' || newDirection === 'right');
+
+                if (wasHorizontal !== isHorizontal) {
+                    // Switching orientation - reinitialize all drops
+                    const columns = Math.floor(matrixCanvas.width / fontSize);
+                    for (let i = 0; i < columns; i++) {
+                        if (isHorizontal) {
+                            // Going horizontal: randomize X positions across full width
+                            matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
+                        } else {
+                            // Going vertical: randomize Y positions across full height
+                            matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
+                        }
+                    }
+                }
+            }
+
+            MatrixRainEngine.rainConfig.direction = newDirection;
 
             // 60% chance to toggle reverse flow for dynamic reversals!
             if (Math.random() < 0.6) {
@@ -2721,8 +2793,32 @@
                 // Use combined audio energy to pick direction
                 const dirValue = (bass + high + lowMid) / 3;
                 const dirIndex = Math.floor((dirValue / 255) * directions.length);
-                config.direction = directions[Math.min(dirIndex, 4)];
-                document.getElementById('rainDirection').value = config.direction;
+                const newDirection = directions[Math.min(dirIndex, 4)];
+                const oldDirection = config.direction;
+
+                // Reinitialize drop positions when switching to/from horizontal
+                if (matrixCanvas && matrixDrops && oldDirection !== newDirection) {
+                    const fontSize = config.fontSize;
+                    const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
+                    const isHorizontal = (newDirection === 'left' || newDirection === 'right');
+
+                    if (wasHorizontal !== isHorizontal) {
+                        // Switching orientation - reinitialize all drops
+                        const columns = Math.floor(matrixCanvas.width / fontSize);
+                        for (let i = 0; i < columns; i++) {
+                            if (isHorizontal) {
+                                // Going horizontal: randomize X positions across full width
+                                matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
+                            } else {
+                                // Going vertical: randomize Y positions across full height
+                                matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
+                            }
+                        }
+                    }
+                }
+
+                config.direction = newDirection;
+                document.getElementById('rainDirection').value = newDirection;
             }
 
             // Opacity always maxed
