@@ -657,19 +657,19 @@
 
     <div class="matrix-modal scrollbar minimized">
         <div class="modal-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div class="minimized-header-text">
-                    <span style="font-size: 18px; color: #ffff00; font-weight: bold;">👉 CLICK HERE</span>
-                    <span style="font-size: 24px; color: #ff0000; font-weight: bold;">→→→</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;">
+                <div class="minimized-header-text" style="flex: 1; min-width: 0; overflow: hidden;">
+                    <span style="font-size: 16px; color: #ffff00; font-weight: bold;">👉 CLICK</span>
+                    <span style="font-size: 20px; color: #ff0000; font-weight: bold;">→→</span>
                 </div>
-                <div class="full-header-text">
-                    🌊 Matrix Rain - Advanced Visual Control Unit
+                <div class="full-header-text" style="flex: 1; min-width: 0;">
+                    🌊 Matrix Rain
                     <span class="status-indicator status-connected"></span>
-                    <span style="font-size: 14px; color: #000;">Connected</span>
+                    <span style="font-size: 12px; color: #000;">Connected</span>
                     <br>
-                    <span style="font-size: 30px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize/maximize</span>
+                    <span style="font-size: 14px; color: #ff0000; padding: 2px 6px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M</span>
                 </div>
-                <div>
+                <div style="display: flex; gap: 5px; flex-shrink: 0;">
                     <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
                     <button class="close-btn" onclick="closeMatrixModal()">×</button>
                 </div>
