@@ -305,9 +305,6 @@ If your Ollama models are stored in a **custom location** (not the default C: dr
 - **README.md**: This documentation
 - **LICENSE**: MIT License
 
-*Note: `index.html` (GitHub Pages version) exists only in the `main` branch, not in `main---OLLAMA` branch*
-
-## Demo Videos
 
 Watch the audio reactive mode in action:
 - Movie dialogue: Each character speaks in their own color!
