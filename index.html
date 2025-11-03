@@ -1516,7 +1516,7 @@
                     const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
 
-                    const useColor_h = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                    const useColor_h = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 8 === 1)) ? config.secondaryColor : config.primaryColor;
                     matrixCtx.fillStyle = useColor_h;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
@@ -1540,7 +1540,7 @@
                     const y = progress * fontSize;
                     
                     if (x < matrixCanvas.width && y < matrixCanvas.height) {
-                        const useColor_d = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                        const useColor_d = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 8 === 1)) ? config.secondaryColor : config.primaryColor;
                         matrixCtx.fillStyle = useColor_d;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(char, x, y);
@@ -1562,7 +1562,7 @@
                     const x = i * fontSize;
                     const y = matrixDrops[i] * fontSize;
                     
-                    const useColor_v = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 2 === 1)) ? config.secondaryColor : config.primaryColor;
+                    const useColor_v = (config.secondaryColor && config.secondaryColor !== config.primaryColor && (i % 8 === 1)) ? config.secondaryColor : config.primaryColor;
                     matrixCtx.fillStyle = useColor_v;
                     matrixCtx.globalAlpha = opacity;
                     matrixCtx.fillText(char, x, y);
@@ -2726,18 +2726,16 @@
             deltaHue = Math.max(-90, Math.min(90, deltaHue));
             const hue = (baseHue + deltaHue + 360) % 360;
 
-            let usePrimary = `hsl(${hue}, 100%, 50%)`;
-            let useSecondary = `hsl(${(hue + 180) % 360}, 100%, 50%)`;
+            let usePrimary, useSecondary;
 
-            // Allow monochrome extremes: black on white at low intensity, white on black at high energy
+            // Show RED when there's silence/low volume
             const lowIntensity = volume < 0.05;
-            const highEnergy = volume > 0.95 || (bass > 220 && high > 220);
             if (lowIntensity) {
-                usePrimary = '#000000';
-                useSecondary = '#ffffff';
-            } else if (highEnergy) {
-                usePrimary = '#ffffff';
-                useSecondary = '#000000';
+                usePrimary = '#ff0000';  // Red for silence
+                useSecondary = '#cc0000'; // Darker red
+            } else {
+                usePrimary = `hsl(${hue}, 100%, 50%)`;
+                useSecondary = `hsl(${(hue + 180) % 360}, 100%, 50%)`;
             }
 
             config.primaryColor = usePrimary;
@@ -2758,18 +2756,6 @@
             }
             document.getElementById('primaryColor').value = primaryHex;
             document.getElementById('secondaryColor').value = secondaryHex;
-
-            // Adjust canvas background for extreme monochrome cases
-            const canvasEl = document.getElementById('matrixRainCanvas');
-            if (canvasEl) {
-                if (usePrimary === '#000000') {
-                    canvasEl.style.background = '#ffffff';
-                } else if (usePrimary === '#ffffff') {
-                    canvasEl.style.background = '#000000';
-                } else {
-                    canvasEl.style.background = 'transparent';
-                }
-            }
 
             // MID → DENSITY (vocal/melody range controls how much rain)
             const midNormalized = mid / 255;
