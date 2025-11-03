@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Ollama Matrix Rain - Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff41;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #00ff41;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00ffff;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .connected { background: #00ff41; animation: pulse 2s infinite; }
+        .disconnected { background: #ff4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .test-section {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 1px solid #00ffff;
+            padding-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #00ff41;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            background: #1a1a2e;
+            color: #00ff41;
+            border: 2px solid #00ff41;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00cc33;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary { background: #00ff41; color: #000; }
+        .btn-warning { background: #ffaa00; color: #000; }
+        .btn-danger { background: #ff4444; color: #fff; }
+        .btn-info { background: #00ffff; color: #000; }
+
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin: 3px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+        }
+
+        .log-time {
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .log-info { color: #00ff41; }
+        .log-warning { color: #ffaa00; }
+        .log-error { color: #ff4444; }
+        .log-success { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Ollama Matrix Rain - Test Interface</h1>
+        <div class="subtitle">Manual Message Sender for Testing</div>
+
+        <!-- Status -->
+        <div class="status">
+            <div class="status-line">
+                <span>WebSocket Server:</span>
+                <span><span class="status-indicator disconnected" id="wsStatus"></span><span id="wsText">Disconnected</span></span>
+            </div>
+            <div class="status-line">
+                <span>Server URL:</span>
+                <span id="serverUrl">ws://localhost:8080</span>
+            </div>
+        </div>
+
+        <!-- Manual Test -->
+        <div class="test-section">
+            <h2>📝 Manual Message</h2>
+
+            <label>Message Text:</label>
+            <textarea id="messageText" placeholder="Enter LLM message here...">Hello from the test interface!</textarea>
+
+            <label>Urgency Level: <span class="range-value" id="urgencyValue">3</span></label>
+            <input type="range" id="urgency" min="0" max="10" value="3" oninput="updateUrgencyValue()">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-top: 5px;">
+                <span>0: Ambient</span>
+                <span>3: Normal</span>
+                <span>6: Emphasis</span>
+                <span>10: URGENT</span>
+            </div>
+
+            <label>Duration (ms): <span class="range-value" id="durationValue">4000</span></label>
+            <input type="range" id="duration" min="1000" max="10000" step="500" value="4000" oninput="updateDurationValue()">
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-primary" onclick="sendMessage()">🚀 Send Message</button>
+            </div>
+        </div>
+
+        <!-- Preset Messages -->
+        <div class="test-section">
+            <h2>⚡ Quick Presets</h2>
+            <div class="presets">
+                <button class="btn-info" onclick="sendPreset(0)">😊 Friendly</button>
+                <button class="btn-info" onclick="sendPreset(1)">❓ Question</button>
+                <button class="btn-warning" onclick="sendPreset(2)">⚠️ Important</button>
+                <button class="btn-danger" onclick="sendPreset(3)">🚨 URGENT</button>
+                <button class="btn-info" onclick="sendPreset(4)">🤔 Uncertain</button>
+                <button class="btn-info" onclick="sendPreset(5)">🎉 Excited</button>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div class="test-section">
+            <h2>📜 Message Log</h2>
+            <div class="log" id="log">
+                <div class="log-entry log-info">
+                    <span class="log-time">--:--:--</span>
+                    <span>Waiting for connection...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        const wsUrl = 'ws://localhost:8080';
+
+        const presets = [
+            { text: "That's a great question! Let me help you understand.", urgency: 3, duration: 4000 },
+            { text: "What would you like to know more about?", urgency: 5, duration: 3000 },
+            { text: "IMPORTANT: Please pay close attention to this!", urgency: 7, duration: 5000 },
+            { text: "WARNING: This is critical information!", urgency: 9, duration: 6000 },
+            { text: "I'm not entirely sure, but I think...", urgency: 2, duration: 4000 },
+            { text: "Amazing! That's exactly right!", urgency: 6, duration: 3000 }
+        ];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">${time}</span><span>${message}</span>`;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+
+            // Keep only last 50 entries
+            while (logDiv.children.length > 50) {
+                logDiv.removeChild(logDiv.lastChild);
+            }
+        }
+
+        function updateStatus(connected) {
+            const indicator = document.getElementById('wsStatus');
+            const text = document.getElementById('wsText');
+
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                text.textContent = 'Connected';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        function connect() {
+            log('Connecting to WebSocket server...', 'info');
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                log('✅ Connected to server!', 'success');
+                updateStatus(true);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`📨 Received: ${data.type}`, 'info');
+                } catch (error) {
+                    log(`❌ Error parsing message: ${error}`, 'error');
+                }
+            };
+
+            ws.onerror = (error) => {
+                log(`❌ WebSocket error`, 'error');
+            };
+
+            ws.onclose = () => {
+                log('🔌 Disconnected from server', 'warning');
+                updateStatus(false);
+
+                // Attempt reconnection
+                setTimeout(() => {
+                    log('🔄 Attempting reconnection...', 'info');
+                    connect();
+                }, 3000);
+            };
+        }
+
+        function sendMessage() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('❌ Not connected to server!', 'error');
+                return;
+            }
+
+            const text = document.getElementById('messageText').value;
+            const urgency = parseInt(document.getElementById('urgency').value);
+            const duration = parseInt(document.getElementById('duration').value);
+
+            const message = {
+                type: 'expression',
+                text: text,
+                urgency: urgency,
+                duration: duration
+            };
+
+            ws.send(JSON.stringify(message));
+            log(`🚀 Sent: "${text}" (urgency: ${urgency})`, 'success');
+        }
+
+        function sendPreset(index) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('❌ Not connected to server!', 'error');
+                return;
+            }
+
+            const preset = presets[index];
+
+            // Update form
+            document.getElementById('messageText').value = preset.text;
+            document.getElementById('urgency').value = preset.urgency;
+            document.getElementById('duration').value = preset.duration;
+            updateUrgencyValue();
+            updateDurationValue();
+
+            // Send immediately
+            setTimeout(() => sendMessage(), 100);
+        }
+
+        function updateUrgencyValue() {
+            const value = document.getElementById('urgency').value;
+            document.getElementById('urgencyValue').textContent = value;
+
+            let modeText = '';
+            if (value >= 8) modeText = ' (URGENT)';
+            else if (value >= 6) modeText = ' (Emphasis)';
+            else if (value >= 3) modeText = ' (Normal)';
+            else modeText = ' (Ambient)';
+
+            document.getElementById('urgencyValue').textContent = value + modeText;
+        }
+
+        function updateDurationValue() {
+            const value = document.getElementById('duration').value;
+            document.getElementById('durationValue').textContent = value + 'ms';
+        }
+
+        // Connect on load
+        window.addEventListener('load', () => {
+            log('🌀 Test interface loaded', 'info');
+            connect();
+        });
+
+        // Keyboard shortcut: Enter to send
+        document.getElementById('messageText').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
