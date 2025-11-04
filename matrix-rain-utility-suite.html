@@ -647,43 +647,6 @@
             color: #999;
             font-size: 12px;
         }
-
-        .zoom-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        .zoom-btn {
-            background: rgba(0, 255, 65, 0.2);
-            border: 1px solid #00ff41;
-            border-radius: 5px;
-            padding: 8px 15px;
-            color: #00ff41;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.2s ease;
-            min-width: 45px;
-        }
-
-        .zoom-btn:hover {
-            background: rgba(0, 255, 65, 0.4);
-            transform: scale(1.1);
-        }
-
-        .zoom-btn:active {
-            transform: scale(0.95);
-        }
-
-        .zoom-display {
-            color: #00ff41;
-            font-size: 14px;
-            min-width: 50px;
-            text-align: center;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -704,7 +667,7 @@
                     <span class="status-indicator status-connected"></span>
                     <span style="font-size: 14px; color: #000;">Connected</span>
                     <br>
-                    <span style="font-size: 30px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize/maximize</span>
+                    <span style="font-size: 20px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize | CTRL + Mousewheel to resize rain</span>
                 </div>
                 <div>
                     <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
@@ -790,15 +753,6 @@
                             <div class="control-item">
                                 <label>Density</label>
                                 <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
-                            </div>
-                            <div class="control-item">
-                                <label>Character Size (1-100)</label>
-                                <input type="range" id="characterSize" min="1" max="100" value="10" oninput="updateCharacterSize()">
-                                <div class="zoom-control">
-                                    <button class="zoom-btn" onclick="decreaseCharacterSize()">-</button>
-                                    <span class="zoom-display" id="charSizeDisplay">10px</span>
-                                    <button class="zoom-btn" onclick="increaseCharacterSize()">+</button>
-                                </div>
                             </div>
                         </div>
 
@@ -987,17 +941,8 @@
         }
 
         function refreshAudioReactive() {
-            if (audioReactiveActive) {
-                MatrixRainEngine.logActivity('🔄 Refreshing audio reactive mode...', 'info');
-                // Stop and restart audio reactive mode
-                toggleAudioReactive().then(() => {
-                    setTimeout(() => {
-                        toggleAudioReactive();
-                    }, 500);
-                });
-            } else {
-                MatrixRainEngine.logActivity('⚠️ Audio reactive mode not active', 'warning');
-            }
+            // Hard refresh - reload entire page like CTRL+F5
+            location.reload(true);
         }
 
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
@@ -2793,34 +2738,6 @@
             MatrixRainEngine.rainConfig.primaryColor = primary;
             MatrixRainEngine.rainConfig.secondaryColor = secondary;
             updateRainConfig();
-        }
-
-        function updateCharacterSize() {
-            const size = parseInt(document.getElementById('characterSize').value);
-            MatrixRainEngine.rainConfig.fontSize = size;
-            document.getElementById('charSizeDisplay').textContent = size + 'px';
-            updateRainConfig();
-            MatrixRainEngine.logActivity(`Character size changed to ${size}px`, 'info');
-        }
-
-        function increaseCharacterSize() {
-            const slider = document.getElementById('characterSize');
-            let currentSize = parseInt(slider.value);
-            if (currentSize < 100) {
-                currentSize++;
-                slider.value = currentSize;
-                updateCharacterSize();
-            }
-        }
-
-        function decreaseCharacterSize() {
-            const slider = document.getElementById('characterSize');
-            let currentSize = parseInt(slider.value);
-            if (currentSize > 1) {
-                currentSize--;
-                slider.value = currentSize;
-                updateCharacterSize();
-            }
         }
 
         function updateFontSize() {
