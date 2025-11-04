@@ -1250,7 +1250,7 @@
                         fileAudioContext = new (window.AudioContext || window.webkitAudioContext)();
                         fileAudioAnalyser = fileAudioContext.createAnalyser();
                         fileAudioAnalyser.fftSize = 2048;
-                        fileAudioAnalyser.smoothingTimeConstant = 0.5;
+                        fileAudioAnalyser.smoothingTimeConstant = 0.2; // REDUCED from 0.5 for ultra-responsive color changes!
 
                         // Connect audio player to analyzer - ONLY ONCE
                         if (!fileAudioSource) {
@@ -1274,6 +1274,19 @@
                     console.log('✅ Setting rain pattern to classic...');
                     setRainPattern('classic');
 
+                    // Gray out secondary color picker (not used in audio mode)
+                    const secondaryColorPicker = document.getElementById('secondaryColor');
+                    const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                    if (secondaryColorPicker) {
+                        secondaryColorPicker.style.opacity = '0.3';
+                        secondaryColorPicker.style.pointerEvents = 'none';
+                        secondaryColorPicker.style.filter = 'grayscale(100%)';
+                        secondaryColorPicker.disabled = true;
+                    }
+                    if (secondaryColorLabel) {
+                        secondaryColorLabel.style.opacity = '0.5';
+                    }
+
                     console.log('✅ Starting audio analysis loop...');
                     MatrixRainEngine.logActivity('🎵 File Audio Visualization ACTIVATED', 'success');
                     analyzeFileAudio();
@@ -1285,6 +1298,20 @@
                     fileAudioModeActive = false;
                     btn.textContent = '🎵 START AUDIO VISUALIZATION';
                     btn.style.background = '#ff1493';
+
+                    // Re-enable secondary color picker on error
+                    const secondaryColorPicker = document.getElementById('secondaryColor');
+                    const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                    if (secondaryColorPicker) {
+                        secondaryColorPicker.style.opacity = '1';
+                        secondaryColorPicker.style.pointerEvents = 'auto';
+                        secondaryColorPicker.style.filter = 'none';
+                        secondaryColorPicker.disabled = false;
+                    }
+                    if (secondaryColorLabel) {
+                        secondaryColorLabel.style.opacity = '1';
+                    }
+
                     alert('Error starting visualization: ' + error.message);
                 }
 
@@ -1293,6 +1320,20 @@
                 btn.textContent = '🎵 START AUDIO VISUALIZATION';
                 btn.style.background = '#ff1493';
                 stopFileAudioMode();
+
+                // Re-enable secondary color picker
+                const secondaryColorPicker = document.getElementById('secondaryColor');
+                const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                if (secondaryColorPicker) {
+                    secondaryColorPicker.style.opacity = '1';
+                    secondaryColorPicker.style.pointerEvents = 'auto';
+                    secondaryColorPicker.style.filter = 'none';
+                    secondaryColorPicker.disabled = false;
+                }
+                if (secondaryColorLabel) {
+                    secondaryColorLabel.style.opacity = '1';
+                }
+
                 MatrixRainEngine.logActivity('🎵 File Audio Visualization STOPPED', 'info');
             }
         }
@@ -3039,7 +3080,7 @@
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     audioAnalyser = audioContext.createAnalyser();
                     audioAnalyser.fftSize = 2048;
-                    audioAnalyser.smoothingTimeConstant = 0.8;
+                    audioAnalyser.smoothingTimeConstant = 0.2; // REDUCED from 0.8 for ultra-responsive color changes!
 
                     const source = audioContext.createMediaStreamSource(audioStream);
                     source.connect(audioAnalyser);
@@ -3049,6 +3090,19 @@
 
                     status.textContent = '🎵 AUDIO REACTIVE - Syncing with sound!';
                     MatrixRainEngine.logActivity('🎵 Audio Reactive Mode ACTIVATED - Rain synced to audio!', 'success');
+
+                    // Gray out secondary color picker (not used in audio mode)
+                    const secondaryColorPicker = document.getElementById('secondaryColor');
+                    const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                    if (secondaryColorPicker) {
+                        secondaryColorPicker.style.opacity = '0.3';
+                        secondaryColorPicker.style.pointerEvents = 'none';
+                        secondaryColorPicker.style.filter = 'grayscale(100%)';
+                        secondaryColorPicker.disabled = true;
+                    }
+                    if (secondaryColorLabel) {
+                        secondaryColorLabel.style.opacity = '0.5';
+                    }
 
                     // Start audio analysis loop
                     analyzeAudio();
@@ -3062,6 +3116,20 @@
                     window.audioReactiveActive = false; // Sync global
                     btn.textContent = '🎵 AUDIO REACTIVE MODE';
                     btn.style.background = '#ff1493';
+
+                    // Re-enable secondary color picker on error
+                    const secondaryColorPicker = document.getElementById('secondaryColor');
+                    const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                    if (secondaryColorPicker) {
+                        secondaryColorPicker.style.opacity = '1';
+                        secondaryColorPicker.style.pointerEvents = 'auto';
+                        secondaryColorPicker.style.filter = 'none';
+                        secondaryColorPicker.disabled = false;
+                    }
+                    if (secondaryColorLabel) {
+                        secondaryColorLabel.style.opacity = '1';
+                    }
+
                     updateModeButtons(null); // Re-enable all buttons on error
                 }
 
@@ -3070,6 +3138,20 @@
                 btn.style.background = '#ff1493';
                 status.textContent = '';
                 stopAudioReactive();
+
+                // Re-enable secondary color picker
+                const secondaryColorPicker = document.getElementById('secondaryColor');
+                const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
+                if (secondaryColorPicker) {
+                    secondaryColorPicker.style.opacity = '1';
+                    secondaryColorPicker.style.pointerEvents = 'auto';
+                    secondaryColorPicker.style.filter = 'none';
+                    secondaryColorPicker.disabled = false;
+                }
+                if (secondaryColorLabel) {
+                    secondaryColorLabel.style.opacity = '1';
+                }
+
                 MatrixRainEngine.logActivity('🎵 Audio Reactive Mode STOPPED', 'info');
                 updateModeButtons(null); // Re-enable all buttons
             }
@@ -3275,20 +3357,50 @@
             const bassNormalized = bass / 255;
             config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
 
-            // LOW-MID → COLOR HUE (music body controls color wheel position)
-            const hue = Math.floor((lowMid / 255) * 360);
-            config.primaryColor = `hsl(${hue}, 100%, 50%)`;
+            // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
+            // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
+            // Musical notes are in 200-600Hz range, so we focus heavily on mid frequencies
+
+            // Weight mid frequencies MORE heavily (where vocals/melody live)
+            const lowMidNormalized = lowMid / 255;
+            const midNormalized = mid / 255;
+
+            // MAXIMUM SENSITIVITY: power of 0.15 makes TINY pitch differences create HUGE color shifts!
+            // This is EXTREME - every subtle vocal tone change will be visible
+            const lowMidSensitive = Math.pow(lowMidNormalized, 0.15);
+            const midSensitive = Math.pow(midNormalized, 0.15);
+
+            // Combine with HEAVY emphasis on mid frequencies (70% mid, 30% lowMid)
+            // Maximum focus on the exact frequencies where sung notes exist
+            const combinedColorControl = (midSensitive * 0.7) + (lowMidSensitive * 0.3);
+
+            // AGGRESSIVE multiplier to spread colors across the FULL spectrum
+            // This ensures each semitone gets a visually distinct color
+            const hueMultiplier = 2.5; // MAXIMUM color spread!
+            let hue = Math.floor(combinedColorControl * 360 * hueMultiplier) % 360;
+
+            // Add MORE high-frequency modulation for extra texture variation
+            const highModulation = Math.floor((high / 255) * 50) - 25; // -25 to +25 degrees
+            hue = (hue + highModulation + 360) % 360;
+
+            // Maximum saturation: keep colors VIVID
+            const saturation = 85 + Math.floor((midNormalized * 15)); // 85-100% saturation
+
+            // Dynamic lightness: keeps colors vibrant and eye-popping
+            const lightness = 40 + Math.floor((volume * 20)); // 40-60% lightness for maximum vibrancy
+
+            config.primaryColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
             const compHue = (hue + 180) % 360;
-            config.secondaryColor = `hsl(${compHue}, 100%, 50%)`;
+            config.secondaryColor = `hsl(${compHue}, ${saturation}%, ${lightness}%)`;
 
             // Update color pickers
-            const primaryHex = hslToHex(hue, 100, 50);
-            const secondaryHex = hslToHex(compHue, 100, 50);
+            const primaryHex = hslToHex(hue, saturation, lightness);
+            const secondaryHex = hslToHex(compHue, saturation, lightness);
             document.getElementById('primaryColor').value = primaryHex;
             document.getElementById('secondaryColor').value = secondaryHex;
 
             // MID → DENSITY (vocal/melody range controls how much rain)
-            const midNormalized = mid / 255;
+            // midNormalized already declared above
             config.density = 20 + Math.floor(midNormalized * 80); // 20-100
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
