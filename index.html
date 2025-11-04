@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #000000 0%, #010108 50%, #020205 100%);
             color: #00ff41;
             overflow-x: hidden;
         }
@@ -2018,7 +2018,7 @@
             const complementHue = (avgHue + 180) % 360;
 
             // Clear canvas with auto-contrast background (dark complementary color)
-            matrixCtx.fillStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
+            matrixCtx.fillStyle = `rgba(0, 0, 0, 0.15)`;
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -2888,7 +2888,7 @@
                 flashCount++;
                 if (flashCount >= 5) {
                     clearInterval(flashInterval);
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }, 100);
