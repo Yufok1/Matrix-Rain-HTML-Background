@@ -647,6 +647,43 @@
             color: #999;
             font-size: 12px;
         }
+
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .zoom-btn {
+            background: rgba(0, 255, 65, 0.2);
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+            padding: 8px 15px;
+            color: #00ff41;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            min-width: 45px;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(0, 255, 65, 0.4);
+            transform: scale(1.1);
+        }
+
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+
+        .zoom-display {
+            color: #00ff41;
+            font-size: 14px;
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -657,19 +694,19 @@
 
     <div class="matrix-modal scrollbar minimized">
         <div class="modal-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;">
-                <div class="minimized-header-text" style="flex: 1; min-width: 0; overflow: hidden;">
-                    <span style="font-size: 16px; color: #ffff00; font-weight: bold;">👉 CLICK</span>
-                    <span style="font-size: 20px; color: #ff0000; font-weight: bold;">→→</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="minimized-header-text">
+                    <span style="font-size: 18px; color: #ffff00; font-weight: bold;">👉 CLICK HERE</span>
+                    <span style="font-size: 24px; color: #ff0000; font-weight: bold;">→→→</span>
                 </div>
-                <div class="full-header-text" style="flex: 1; min-width: 0;">
-                    🌊 Matrix Rain
+                <div class="full-header-text">
+                    🌊 Matrix Rain - Advanced Visual Control Unit
                     <span class="status-indicator status-connected"></span>
-                    <span style="font-size: 12px; color: #000;">Connected</span>
+                    <span style="font-size: 14px; color: #000;">Connected</span>
                     <br>
-                    <span style="font-size: 14px; color: #ff0000; padding: 2px 6px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M</span>
+                    <span style="font-size: 30px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize/maximize</span>
                 </div>
-                <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                <div>
                     <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
                     <button class="close-btn" onclick="closeMatrixModal()">×</button>
                 </div>
@@ -711,6 +748,20 @@
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
                         <div id="ollamaStatus" style="margin-top: 10px; font-size: 12px; color: #00ffff;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
+                            <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
+                            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    ✅ Reverse Flow
+                                </button>
+                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    ❌ Diagonals
+                                </button>
+                                <button class="btn" onclick="refreshAudioReactive()" style="background: #0080ff; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    🔄 Refresh
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="pattern-grid">
                         <button class="pattern-btn active" onclick="setRainPattern('classic', this)">Classic Matrix</button>
@@ -739,6 +790,15 @@
                             <div class="control-item">
                                 <label>Density</label>
                                 <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
+                            </div>
+                            <div class="control-item">
+                                <label>Character Size (1-100)</label>
+                                <input type="range" id="characterSize" min="1" max="100" value="10" oninput="updateCharacterSize()">
+                                <div class="zoom-control">
+                                    <button class="zoom-btn" onclick="decreaseCharacterSize()">-</button>
+                                    <span class="zoom-display" id="charSizeDisplay">10px</span>
+                                    <button class="zoom-btn" onclick="increaseCharacterSize()">+</button>
+                                </div>
                             </div>
                         </div>
 
@@ -887,6 +947,58 @@
     <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
+
+        // === AUDIO MODE SETTINGS ===
+        let audioReverseEnabled = true;  // Default: enabled
+        let audioDiagonalsEnabled = false; // Default: disabled
+
+        function toggleAudioReverse() {
+            audioReverseEnabled = !audioReverseEnabled;
+            const btn = document.getElementById('toggleAudioReverseBtn');
+
+            if (audioReverseEnabled) {
+                btn.textContent = '✅ Reverse Flow';
+                btn.style.background = '#00ff41';
+                btn.style.color = '#000';
+                MatrixRainEngine.logActivity('Audio reverse flow enabled', 'info');
+            } else {
+                btn.textContent = '❌ Reverse Flow';
+                btn.style.background = '#333';
+                btn.style.color = '#666';
+                MatrixRainEngine.logActivity('Audio reverse flow disabled', 'info');
+            }
+        }
+
+        function toggleAudioDiagonals() {
+            audioDiagonalsEnabled = !audioDiagonalsEnabled;
+            const btn = document.getElementById('toggleAudioDiagonalsBtn');
+
+            if (audioDiagonalsEnabled) {
+                btn.textContent = '✅ Diagonals';
+                btn.style.background = '#00ff41';
+                btn.style.color = '#000';
+                MatrixRainEngine.logActivity('Audio diagonal directions enabled', 'info');
+            } else {
+                btn.textContent = '❌ Diagonals';
+                btn.style.background = '#333';
+                btn.style.color = '#666';
+                MatrixRainEngine.logActivity('Audio diagonal directions disabled', 'info');
+            }
+        }
+
+        function refreshAudioReactive() {
+            if (audioReactiveActive) {
+                MatrixRainEngine.logActivity('🔄 Refreshing audio reactive mode...', 'info');
+                // Stop and restart audio reactive mode
+                toggleAudioReactive().then(() => {
+                    setTimeout(() => {
+                        toggleAudioReactive();
+                    }, 500);
+                });
+            } else {
+                MatrixRainEngine.logActivity('⚠️ Audio reactive mode not active', 'warning');
+            }
+        }
 
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
         function updateModeButtons(activeMode) {
@@ -2683,6 +2795,34 @@
             updateRainConfig();
         }
 
+        function updateCharacterSize() {
+            const size = parseInt(document.getElementById('characterSize').value);
+            MatrixRainEngine.rainConfig.fontSize = size;
+            document.getElementById('charSizeDisplay').textContent = size + 'px';
+            updateRainConfig();
+            MatrixRainEngine.logActivity(`Character size changed to ${size}px`, 'info');
+        }
+
+        function increaseCharacterSize() {
+            const slider = document.getElementById('characterSize');
+            let currentSize = parseInt(slider.value);
+            if (currentSize < 100) {
+                currentSize++;
+                slider.value = currentSize;
+                updateCharacterSize();
+            }
+        }
+
+        function decreaseCharacterSize() {
+            const slider = document.getElementById('characterSize');
+            let currentSize = parseInt(slider.value);
+            if (currentSize > 1) {
+                currentSize--;
+                slider.value = currentSize;
+                updateCharacterSize();
+            }
+        }
+
         function updateFontSize() {
             const fontSize = document.getElementById('fontSize').value;
             MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
@@ -3269,7 +3409,9 @@
         // Rhythm change detection removed - music now controls everything continuously
 
         function onSyllableDetected() {
-            // REVERSE FLOW on EVERY syllable!
+            // REVERSE FLOW on EVERY syllable - ONLY if enabled!
+            if (!audioReverseEnabled) return;
+
             reverseFlowMultiplier *= -1;
             lastSyllableOrBeatReversalTime = Date.now(); // Track this reversal
             const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
@@ -3293,6 +3435,8 @@
         }
 
         function onBeatDetected(bass) {
+            if (!audioReverseEnabled) return; // Respect audio reverse setting
+
             const now = Date.now();
             const timeSinceLastReversal = now - lastSyllableOrBeatReversalTime;
 
@@ -3417,11 +3561,15 @@
             // Very low threshold to catch musical moments!
             const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
             if (directionTrigger) {
-                const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
+                // Build directions array based on diagonal setting
+                const directions = audioDiagonalsEnabled
+                    ? ['down', 'up', 'left', 'right', 'diagonal', 'toward']
+                    : ['down', 'up', 'left', 'right']; // No diagonals when disabled
+
                 // Use combined audio energy to pick direction
                 const dirValue = (bass + high + lowMid) / 3;
                 const dirIndex = Math.floor((dirValue / 255) * directions.length);
-                const newDirection = directions[Math.min(dirIndex, 4)];
+                const newDirection = directions[Math.min(dirIndex, directions.length - 1)];
                 const oldDirection = config.direction;
 
                 // Reinitialize drop positions when switching to/from horizontal
