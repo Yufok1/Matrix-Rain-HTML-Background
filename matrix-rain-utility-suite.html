@@ -711,18 +711,40 @@
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
                         <div id="ollamaStatus" style="margin-top: 10px; font-size: 12px; color: #00ffff;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
-                            <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
-                            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                                <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ✅ Reverse Flow
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
+                                <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
+                                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    ❌ Reverse Flow
                                 </button>
                                 <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ❌ Diagonals
+                                    ❌ Angles
                                 </button>
                                 <button class="btn" onclick="refreshAudioReactive()" style="background: #0080ff; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     🔄 Refresh
                                 </button>
+                            </div>
+                            <div style="margin-top: 10px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; align-items: center;">
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Hue Reactivity</label>
+                                    <input type="range" id="hueReactSlider" min="50" max="200" value="100" oninput="updateHueReactivity()">
+                                    <span id="hueReactDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Saturation Gain</label>
+                                    <input type="range" id="satGainSlider" min="50" max="200" value="100" oninput="updateSaturationGain()">
+                                    <span id="satGainDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Brightness Depth</label>
+                                    <input type="range" id="brightDepthSlider" min="50" max="200" value="100" oninput="updateBrightnessDepth()">
+                                    <span id="brightDepthDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn" onclick="setColorPreset('neon')" style="background: #222; color: #ff00ff; font-weight: bold; font-size: 12px; padding: 8px 12px;">Neon</button>
+                                <button class="btn" onclick="setColorPreset('prism')" style="background: #222; color: #00ffff; font-weight: bold; font-size: 12px; padding: 8px 12px;">Prism</button>
+                                <button class="btn" onclick="setColorPreset('pastel')" style="background: #222; color: #ffff80; font-weight: bold; font-size: 12px; padding: 8px 12px;">Pastel</button>
                             </div>
                         </div>
                     </div>
@@ -752,7 +774,11 @@
                             </div>
                             <div class="control-item">
                                 <label>Density</label>
-                                <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
+            <input type="range" id="rainDensity" min="1" max="100" value="50" oninput="updateRainDensity()">
+                            </div>
+                            <div class="control-item">
+                                <label>Character Size</label>
+                                <input type="range" id="fontSize" min="6" max="100" value="10" onchange="updateFontSize()">
                             </div>
                         </div>
 
@@ -903,7 +929,7 @@
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
 
         // === AUDIO MODE SETTINGS ===
-        let audioReverseEnabled = true;  // Default: enabled
+        let audioReverseEnabled = false;  // Default: disabled
         let audioDiagonalsEnabled = false; // Default: disabled
 
         function toggleAudioReverse() {
@@ -928,21 +954,81 @@
             const btn = document.getElementById('toggleAudioDiagonalsBtn');
 
             if (audioDiagonalsEnabled) {
-                btn.textContent = '✅ Diagonals';
+                btn.textContent = '✅ Angles';
                 btn.style.background = '#00ff41';
                 btn.style.color = '#000';
-                MatrixRainEngine.logActivity('Audio diagonal directions enabled', 'info');
+                MatrixRainEngine.logActivity('Audio angles enabled', 'info');
             } else {
-                btn.textContent = '❌ Diagonals';
+                btn.textContent = '❌ Angles';
                 btn.style.background = '#333';
                 btn.style.color = '#666';
-                MatrixRainEngine.logActivity('Audio diagonal directions disabled', 'info');
+                MatrixRainEngine.logActivity('Audio angles disabled', 'info');
             }
         }
 
         function refreshAudioReactive() {
             // Hard refresh - reload entire page like CTRL+F5
             location.reload(true);
+        }
+
+        // === AUDIO COLOR REACTIVITY CONTROLS ===
+        function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+        let hueReactivityScale = 1.0;  // 0.5–2.0 via UI slider
+        let satGainScale = 1.0;        // 0.5–2.0 via UI slider
+        let brightnessDepthScale = 1.0; // 0.5–2.0 via UI slider
+        let satFloor = 65;             // preset-controlled saturation floor
+        let brightnessMin = 36;        // preset-controlled min lightness
+        let brightnessMax = 64;        // preset-controlled max lightness
+
+        function updateHueReactivity() {
+            const slider = document.getElementById('hueReactSlider');
+            const display = document.getElementById('hueReactDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            hueReactivityScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(hueReactivityScale * 100)}%`;
+        }
+
+        function updateSaturationGain() {
+            const slider = document.getElementById('satGainSlider');
+            const display = document.getElementById('satGainDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            satGainScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(satGainScale * 100)}%`;
+        }
+
+        function updateBrightnessDepth() {
+            const slider = document.getElementById('brightDepthSlider');
+            const display = document.getElementById('brightDepthDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            brightnessDepthScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(brightnessDepthScale * 100)}%`;
+        }
+
+        function setColorPreset(mode) {
+            if (mode === 'neon') {
+                satFloor = 75; brightnessMin = 40; brightnessMax = 68;
+                hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1;
+            } else if (mode === 'prism') {
+                satFloor = 65; brightnessMin = 36; brightnessMax = 64;
+                hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0;
+            } else if (mode === 'pastel') {
+                satFloor = 50; brightnessMin = 46; brightnessMax = 72;
+                hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9;
+            }
+            // Update slider controls to reflect internal scale changes
+            const sliders = [
+                ['hueReactSlider', 'hueReactDisplay', hueReactivityScale],
+                ['satGainSlider', 'satGainDisplay', satGainScale],
+                ['brightDepthSlider', 'brightDepthDisplay', brightnessDepthScale]
+            ];
+            sliders.forEach(([sid, did, val]) => {
+                const s = document.getElementById(sid);
+                const d = document.getElementById(did);
+                if (s && d) { s.value = Math.round(val * 100); d.textContent = `${Math.round(val * 100)}%`; }
+            });
         }
 
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
@@ -1643,6 +1729,8 @@
                 this.rainConfig.density = parseInt(density);
                 this.addActivity(`🌧️ Rain density updated to: ${density}%`, true);
                 this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Density updated: ${density}%`);
+                // Recompute active columns mask on density change
+                recomputeActiveColumnsMask();
             },
 
             updateRainColors() {
@@ -1880,6 +1968,42 @@
 
         // === MATRIX RAIN ANIMATION ENGINE ===
         let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
+        // Density-driven column activity mask and helpers
+        window.activeColumnsMask = [];
+        function recomputeActiveColumnsMask() {
+            if (!matrixCanvas) return;
+            const fontSize = MatrixRainEngine.rainConfig.fontSize;
+            const columns = Math.max(1, Math.floor(matrixCanvas.width / fontSize));
+            const density = Math.max(1, Math.min(100, parseInt(MatrixRainEngine.rainConfig.density || 50)));
+            const activeCount = Math.max(1, Math.floor(columns * (density / 100)));
+
+            window.activeColumnsMask = new Array(columns).fill(false);
+
+            // Preserve user and Ollama message columns
+            const preserve = new Set();
+            if (window.userMessageColumns) window.userMessageColumns.forEach(c => preserve.add(c));
+            if (window.ollamaMessageColumns) window.ollamaMessageColumns.forEach(c => preserve.add(c));
+
+            // Random activation order
+            const order = Array.from({ length: columns }, (_, i) => i);
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+            let enabled = 0;
+            for (const idx of order) {
+                if (enabled >= activeCount) break;
+                window.activeColumnsMask[idx] = true;
+                enabled++;
+            }
+            preserve.forEach(idx => {
+                if (idx >= 0 && idx < columns) window.activeColumnsMask[idx] = true;
+            });
+        }
+        function columnIsActive(i) {
+            const mask = window.activeColumnsMask;
+            return !mask || mask.length === 0 || mask[i] === true;
+        }
         
         function initMatrixRain() {
             console.log("🌊 Matrix Rain: Initializing animation...");
@@ -1904,6 +2028,8 @@
             function resizeCanvas() {
                 matrixCanvas.width = window.innerWidth;
                 matrixCanvas.height = window.innerHeight;
+                // Recompute mask on resize
+                recomputeActiveColumnsMask();
             }
             
             resizeCanvas();
@@ -1924,6 +2050,9 @@
                 // Random Y position for horizontal rain (spread across screen height)
                 window.horizontalYPositions[i] = Math.random() * (matrixCanvas.height / fontSize);
             }
+
+            // Initial mask based on current density
+            recomputeActiveColumnsMask();
             
             console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
             
@@ -2098,6 +2227,11 @@
                         continue;
                     }
 
+                    // Apply density mask: skip inactive columns unless preserved
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
+                    }
+
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
@@ -2127,6 +2261,11 @@
                         continue;
                     }
 
+                    // Apply density mask
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
+                    }
+
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const progress = matrixDrops[i];
                     const x = i * fontSize + progress * fontSize * 0.5;
@@ -2146,7 +2285,7 @@
                     while (matrixDrops[i] < 0) matrixDrops[i] += maxDiag + 10;
                     while (matrixDrops[i] > maxDiag) matrixDrops[i] -= maxDiag + 10;
                     }
-                } else {
+            } else {
                 // VERTICAL rain (up/down)
                 const columns = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < columns; i++) {
@@ -2156,6 +2295,11 @@
                     // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
                     if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
+                    }
+
+                    // Apply density mask
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
                     }
 
                     const char = getNextCharacter(characters, i, isUserColumn);
@@ -2729,6 +2873,8 @@
         function updateRainDensity() {
             const density = document.getElementById('rainDensity').value;
             MatrixRainEngine.rainConfig.density = density;
+            // Recompute active columns mask without restarting animation
+            recomputeActiveColumnsMask();
             updateRainConfig();
         }
         
@@ -2743,6 +2889,8 @@
         function updateFontSize() {
             const fontSize = document.getElementById('fontSize').value;
             MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
+            // Recompute mask as column count changes with font size
+            recomputeActiveColumnsMask();
             updateRainConfig();
         }
         
@@ -2993,24 +3141,7 @@
 
             MatrixRainEngine.rainConfig.direction = newDirection;
 
-            // 60% chance to toggle reverse flow for dynamic reversals!
-            if (Math.random() < 0.6) {
-                reverseFlowMultiplier *= -1;
-                const flowStatus = reverseFlowMultiplier === -1 ? '⏪ REVERSED' : '⏩ FORWARD';
-                MatrixRainEngine.logActivity(`🔄 Flow reversal: ${flowStatus}`, 'success');
-
-                // Update reverse flow button UI
-                const btn = document.getElementById('reverseFlowBtn');
-                if (btn) {
-                    if (reverseFlowMultiplier === -1) {
-                        btn.textContent = '⏩ FORWARD FLOW';
-                        btn.style.background = '#00ff88';
-                    } else {
-                        btn.textContent = '⏪ REVERSE FLOW';
-                        btn.style.background = '#ffaa00';
-                    }
-                }
-            }
+            // Disable random reverse flow flipping to respect user control
 
             // Update UI to reflect changes
             document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
@@ -3438,17 +3569,19 @@
             // AGGRESSIVE multiplier to spread colors across the FULL spectrum
             // This ensures each semitone gets a visually distinct color
             const hueMultiplier = 2.5; // MAXIMUM color spread!
-            let hue = Math.floor(combinedColorControl * 360 * hueMultiplier) % 360;
+            let hue = Math.floor(combinedColorControl * 360 * hueMultiplier * hueReactivityScale) % 360;
 
             // Add MORE high-frequency modulation for extra texture variation
             const highModulation = Math.floor((high / 255) * 50) - 25; // -25 to +25 degrees
             hue = (hue + highModulation + 360) % 360;
 
-            // Maximum saturation: keep colors VIVID
-            const saturation = 85 + Math.floor((midNormalized * 15)); // 85-100% saturation
+            // Saturation: apply gain scale and clamp to floor
+            let satRaw = 85 + Math.floor((midNormalized * 15) * satGainScale);
+            const saturation = Math.min(100, Math.max(satFloor, satRaw));
 
-            // Dynamic lightness: keeps colors vibrant and eye-popping
-            const lightness = 40 + Math.floor((volume * 20)); // 40-60% lightness for maximum vibrancy
+            // Lightness: scale within min/max using brightness depth
+            const lightnessRange = brightnessMax - brightnessMin;
+            const lightness = Math.round(brightnessMin + lightnessRange * Math.min(1, Math.max(0, volume * brightnessDepthScale)));
 
             config.primaryColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
             const compHue = (hue + 180) % 360;
@@ -3460,9 +3593,7 @@
             document.getElementById('primaryColor').value = primaryHex;
             document.getElementById('secondaryColor').value = secondaryHex;
 
-            // MID → DENSITY (vocal/melody range controls how much rain)
-            // midNormalized already declared above
-            config.density = 20 + Math.floor(midNormalized * 80); // 20-100
+            // Density stays user-controlled; do not change in audio mode
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
             const highNormalized = high / 255;
@@ -3521,7 +3652,7 @@
 
             // Update UI sliders
             document.getElementById('rainSpeed').value = 101 - config.speed;
-            document.getElementById('rainDensity').value = config.density;
+            // Do NOT update rainDensity here: density is manual in audio mode.
             document.getElementById('rainIntensity').value = config.intensity;
         }
 
@@ -3542,7 +3673,7 @@
                 <div style="position: absolute; bottom: 0; left: 70%; width: 15%; height: ${highHeight}%; background: linear-gradient(to top, #0080ff, #60a0ff); transition: height 0.05s;"></div>
                 <div style="position: absolute; top: 5px; left: 10%; font-size: 10px; color: #ff6060;">BASS→Speed</div>
                 <div style="position: absolute; top: 5px; left: 30%; font-size: 10px; color: #ffaa60;">LOW→Color</div>
-                <div style="position: absolute; top: 5px; left: 50%; font-size: 10px; color: #60ff60;">MID→Density</div>
+                <div style="position: absolute; top: 5px; left: 50%; font-size: 10px; color: #60ff60;">MID→Color</div>
                 <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH→Chars</div>
             `;
         }
@@ -4159,4 +4290,4 @@
 
     </script>
 </body>
-</html> 
+</html>
