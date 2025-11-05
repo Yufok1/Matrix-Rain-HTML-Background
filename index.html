@@ -997,6 +997,14 @@
                             <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                                 <button class="btn" onclick="setColorPreset('neon')" style="background:#00ff88; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Neon</button>
                                 <button class="btn" onclick="setColorPreset('prism')" style="background:#ff00ff; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Prism</button>
+                                <button class="btn" onclick="setColorPreset('pastel')" style="background:#a3ffcf; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Pastel</button>
+                                <button class="btn" onclick="setColorPreset('hyperneon')" style="background:#00ffd1; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Hyperneon</button>
+                                <button class="btn" onclick="setColorPreset('aurora')" style="background:#7fffd4; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Aurora</button>
+                                <button class="btn" onclick="setColorPreset('bassstorm')" style="background:#ff6a00; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Bassstorm</button>
+                                <button class="btn" onclick="setColorPreset('crystal')" style="background:#e0fff8; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Crystal</button>
+                                <button class="btn" onclick="setColorPreset('vaporwave')" style="background:#ff77e9; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Vaporwave</button>
+                                <button class="btn" onclick="setColorPreset('inferno')" style="background:#ff3300; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Inferno</button>
+                                <button class="btn" onclick="setColorPreset('zen')" style="background:#cfe8ff; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Zen</button>
                             </div>
                         </div>
                     </div>
@@ -3190,6 +3198,9 @@
         let satFloor = 65;            // preset-controlled saturation floor
         let brightnessMin = 36;       // preset-controlled min lightness
         let brightnessMax = 64;       // preset-controlled max lightness
+        // Audio color spread and high-frequency modulation amplitude (preset-tunable)
+        let audioHueSpread = 2.5;     // default hue multiplier
+        let audioHighModRange = 25;   // default +/- degrees for high-frequency modulation
 
         // === COLOR REACTIVITY UI ===
         function updateHueReactivity() {
@@ -3222,13 +3233,41 @@
         function setColorPreset(mode) {
             if (mode === 'neon') {
                 satFloor = 75; brightnessMin = 40; brightnessMax = 68;
-                hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1;
+                hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1; audioHueSpread = 2.7; audioHighModRange = 30;
             } else if (mode === 'prism') {
                 satFloor = 65; brightnessMin = 36; brightnessMax = 64;
-                hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0;
+                hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0; audioHueSpread = 2.5; audioHighModRange = 25;
             } else if (mode === 'pastel') {
                 satFloor = 50; brightnessMin = 46; brightnessMax = 72;
-                hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9;
+                hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9; audioHueSpread = 2.0; audioHighModRange = 20;
+            } else if (mode === 'hyperneon') {
+                // Ultra reactive, vivid, strong modulation
+                satFloor = 80; brightnessMin = 38; brightnessMax = 70;
+                hueReactivityScale = 1.8; satGainScale = 1.6; brightnessDepthScale = 1.3; audioHueSpread = 3.2; audioHighModRange = 40;
+            } else if (mode === 'aurora') {
+                // Smooth luminous gradients, high depth, softer modulation
+                satFloor = 60; brightnessMin = 44; brightnessMax = 78;
+                hueReactivityScale = 1.2; satGainScale = 1.0; brightnessDepthScale = 1.6; audioHueSpread = 2.2; audioHighModRange = 20;
+            } else if (mode === 'bassstorm') {
+                // Darker, punchy saturation, dramatic direction feel
+                satFloor = 70; brightnessMin = 30; brightnessMax = 60;
+                hueReactivityScale = 0.9; satGainScale = 1.4; brightnessDepthScale = 0.9; audioHueSpread = 1.8; audioHighModRange = 35;
+            } else if (mode === 'crystal') {
+                // Clean luminous pastels with crisp accents
+                satFloor = 55; brightnessMin = 48; brightnessMax = 80;
+                hueReactivityScale = 1.1; satGainScale = 0.8; brightnessDepthScale = 1.4; audioHueSpread = 2.0; audioHighModRange = 25;
+            } else if (mode === 'vaporwave') {
+                // Washed neon vibes, gentle hue, medium modulation
+                satFloor = 60; brightnessMin = 50; brightnessMax = 78;
+                hueReactivityScale = 1.0; satGainScale = 0.9; brightnessDepthScale = 1.2; audioHueSpread = 1.7; audioHighModRange = 30;
+            } else if (mode === 'inferno') {
+                // Intense saturation, darker base, aggressive modulation
+                satFloor = 85; brightnessMin = 28; brightnessMax = 62;
+                hueReactivityScale = 1.5; satGainScale = 1.8; brightnessDepthScale = 0.8; audioHueSpread = 2.8; audioHighModRange = 45;
+            } else if (mode === 'zen') {
+                // Calm, low reactivity, smooth transitions
+                satFloor = 50; brightnessMin = 46; brightnessMax = 74;
+                hueReactivityScale = 0.7; satGainScale = 0.6; brightnessDepthScale = 1.1; audioHueSpread = 1.4; audioHighModRange = 15;
             }
             // update slider displays to reflect internal scale changes
             const sliders = [
@@ -4078,12 +4117,11 @@
 
             // AGGRESSIVE multiplier to spread colors across the FULL spectrum
             // This ensures each semitone gets a visually distinct color
-            const hueMultiplier = 2.5; // MAXIMUM color spread!
-            // Apply user-controlled hue reactivity scale
-            let hue = Math.floor(combinedColorControl * 360 * hueMultiplier * hueReactivityScale) % 360;
+            // Apply user-controlled hue reactivity scale and preset-controlled hue spread
+            let hue = Math.floor(combinedColorControl * 360 * audioHueSpread * hueReactivityScale) % 360;
 
             // Add MORE high-frequency modulation for extra texture variation
-            const highModulation = Math.floor((high / 255) * 50) - 25; // -25 to +25 degrees
+            const highModulation = Math.floor((high / 255) * (audioHighModRange * 2)) - audioHighModRange; // -range to +range degrees
             hue = (hue + highModulation + 360) % 360;
 
             // Saturation: scale and clamp to avoid dull/blown-out colors
