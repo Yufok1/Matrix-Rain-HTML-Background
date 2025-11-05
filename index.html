@@ -974,8 +974,8 @@
                                 <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     ❌ Reverse Flow
                                 </button>
-                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ❌ Angles
+                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    ✅ Angles
                                 </button>
                                 <button class="btn" onclick="hardRefresh()" style="background: #ff6600; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     🔄 Hard Refresh
@@ -1034,7 +1034,7 @@
                             </div>
                             <div class="control-item">
                                 <label>Density</label>
-                                <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
+<input type="range" id="rainDensity" min="1" max="100" value="100" onchange="updateRainDensity()">
                             </div>
                             <div class="control-item">
                                 <label>Character Size (1-100)</label>
@@ -1196,7 +1196,7 @@
 
         // === AUDIO MODE SETTINGS ===
         let audioReverseEnabled = false;  // Default: disabled per user request
-        let audioDiagonalsEnabled = false; // Default: disabled per user request
+let audioDiagonalsEnabled = true; // Default: enabled
 
         function toggleAudioReverse() {
             audioReverseEnabled = !audioReverseEnabled;
@@ -1774,7 +1774,7 @@
                 pattern: 'classic',
                 speed: 35,
                 intensity: 70,
-                density: 50,
+                density: 100,
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
                 fontSize: 10,
