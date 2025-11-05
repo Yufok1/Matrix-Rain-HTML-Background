@@ -2875,7 +2875,15 @@
             MatrixRainEngine.rainConfig.density = density;
             // Recompute active columns mask without restarting animation
             recomputeActiveColumnsMask();
-            updateRainConfig();
+            // In audio-reactive mode, avoid restarting the animation interval.
+            // Restarting can snap the interval to the current audio-derived speed,
+            // causing a sudden jump to extremely fast updates when bass is high.
+            if (!window.audioReactiveActive) {
+                updateRainConfig();
+            } else {
+                // Optional: surface the change without interval restart
+                MatrixRainEngine.logActivity('🟢 Density changed (audio mode) – interval preserved', 'info');
+            }
         }
         
         function updateRainColors() {
