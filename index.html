@@ -1968,9 +1968,7 @@
 
         // === MATRIX RAIN ANIMATION ENGINE ===
         let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
-        // Track current interval speed to allow safe, debounced updates in audio modes
-        window.lastAppliedIntervalSpeed = null;
-        window.lastIntervalUpdateTime = 0;
+        // Interval tracking (removed debounced updater to restore original behavior)
         // Density-driven column activity mask and helpers
         window.activeColumnsMask = [];
         function recomputeActiveColumnsMask() {
@@ -2072,28 +2070,6 @@
             console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
             matrixInterval = setInterval(drawMatrixRain, speed);
             console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
-            window.lastAppliedIntervalSpeed = speed;
-            window.lastIntervalUpdateTime = Date.now();
-        }
-        
-        // Debounced interval updater used by audio-reactive modes
-        function updateAnimationIntervalIfNeeded() {
-            const desired = MatrixRainEngine.rainConfig.speed;
-            const now = Date.now();
-            const last = window.lastAppliedIntervalSpeed;
-            const lastTime = window.lastIntervalUpdateTime || 0;
-            const minUpdateGap = 200; // ms; avoid thrashing interval on rapid audio changes
-            const significantChange = (last === null) || Math.abs(desired - last) >= 3;
-
-            if (significantChange && (now - lastTime) >= minUpdateGap) {
-                if (matrixInterval) {
-                    clearInterval(matrixInterval);
-                }
-                matrixInterval = setInterval(drawMatrixRain, desired);
-                window.lastAppliedIntervalSpeed = desired;
-                window.lastIntervalUpdateTime = now;
-                console.log(`🎵 Audio interval updated to ${desired}ms`);
-            }
         }
         
         // Helper function to get random character
@@ -2844,13 +2820,7 @@
             
             // Update animation with new settings
             if (matrixInterval) {
-                // In audio-reactive modes, do NOT hard-restart the interval here;
-                // speed updates are handled via a debounced updater to prevent spikes.
-                if (!window.audioReactiveActive && !window.fileAudioModeActive) {
-                    startMatrixAnimation();
-                } else {
-                    updateAnimationIntervalIfNeeded();
-                }
+                startMatrixAnimation();
             }
         }
         
@@ -2904,17 +2874,9 @@
         function updateRainDensity() {
             const density = document.getElementById('rainDensity').value;
             MatrixRainEngine.rainConfig.density = density;
-            // Recompute active columns mask without restarting animation
+            // Better fix: recompute active columns mask only; do not restart interval
+            // Density affects which columns render, not the timer. Avoid interval restarts entirely.
             recomputeActiveColumnsMask();
-            // In audio-reactive mode, avoid restarting the animation interval.
-            // Restarting can snap the interval to the current audio-derived speed,
-            // causing a sudden jump to extremely fast updates when bass is high.
-            if (!window.audioReactiveActive) {
-                updateRainConfig();
-            } else {
-                // Optional: surface the change without interval restart
-                MatrixRainEngine.logActivity('🟢 Density changed (audio mode) – interval preserved', 'info');
-            }
         }
         
         function updateRainColors() {
@@ -3694,8 +3656,7 @@
             // Do NOT update rainDensity here: density is manual in audio mode.
             document.getElementById('rainIntensity').value = config.intensity;
 
-            // Apply speed changes smoothly by updating interval if needed
-            updateAnimationIntervalIfNeeded();
+            // Speed changes are applied via regular interval restart logic
         }
 
         function drawAudioVisualizer(bass, lowMid, mid, high) {
