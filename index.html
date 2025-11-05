@@ -1968,7 +1968,6 @@
 
         // === MATRIX RAIN ANIMATION ENGINE ===
         let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
-        // Interval tracking (removed debounced updater to restore original behavior)
         // Density-driven column activity mask and helpers
         window.activeColumnsMask = [];
         function recomputeActiveColumnsMask() {
@@ -2874,9 +2873,9 @@
         function updateRainDensity() {
             const density = document.getElementById('rainDensity').value;
             MatrixRainEngine.rainConfig.density = density;
-            // Better fix: recompute active columns mask only; do not restart interval
-            // Density affects which columns render, not the timer. Avoid interval restarts entirely.
+            // Recompute active columns mask without restarting animation
             recomputeActiveColumnsMask();
+            updateRainConfig();
         }
         
         function updateRainColors() {
@@ -3655,8 +3654,6 @@
             document.getElementById('rainSpeed').value = 101 - config.speed;
             // Do NOT update rainDensity here: density is manual in audio mode.
             document.getElementById('rainIntensity').value = config.intensity;
-
-            // Speed changes are applied via regular interval restart logic
         }
 
         function drawAudioVisualizer(bass, lowMid, mid, high) {
