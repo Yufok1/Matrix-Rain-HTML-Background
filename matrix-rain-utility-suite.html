@@ -2400,8 +2400,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
             // Complementary color (opposite on color wheel)
             const complementHue = (avgHue + 180) % 360;
 
-            // Clear canvas with auto-contrast background (dark complementary color)
-            matrixCtx.fillStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
+            // Clear canvas with lighter fade to keep colors vivid
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -3193,11 +3193,11 @@ let audioDiagonalsEnabled = true; // Default: enabled
         function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
         // Color reactivity and bounds (used by audio-reactive UI and presets)
         let hueReactivityScale = 1.0; // 0.5–2.0 via UI slider
-        let satGainScale = 1.0;       // 0.5–2.0 via UI slider
-        let brightnessDepthScale = 1.0; // 0.5–2.0 via UI slider
-        let satFloor = 65;            // preset-controlled saturation floor
-        let brightnessMin = 36;       // preset-controlled min lightness
-        let brightnessMax = 64;       // preset-controlled max lightness
+        let satGainScale = 1.5;       // 0.5–2.0 via UI slider (more saturation)
+        let brightnessDepthScale = 1.25; // 0.5–2.0 via UI slider (deeper brightness)
+ let satFloor = 80;            // preset-controlled saturation floor (ensure vivid)
+ let brightnessMin = 20;       // preset-controlled min lightness (much darker)
+ let brightnessMax = 50;       // preset-controlled max lightness (still dark, but brighter)
         // Audio color spread and high-frequency modulation amplitude (preset-tunable)
         let audioHueSpread = 2.5;     // default hue multiplier
         let audioHighModRange = 25;   // default +/- degrees for high-frequency modulation
@@ -3232,41 +3232,41 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
         function setColorPreset(mode) {
             if (mode === 'neon') {
-                satFloor = 75; brightnessMin = 40; brightnessMax = 68;
+ satFloor = 75; brightnessMin = 22; brightnessMax = 46;
                 hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1; audioHueSpread = 2.7; audioHighModRange = 30;
             } else if (mode === 'prism') {
-                satFloor = 65; brightnessMin = 36; brightnessMax = 64;
+ satFloor = 65; brightnessMin = 20; brightnessMax = 42;
                 hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0; audioHueSpread = 2.5; audioHighModRange = 25;
             } else if (mode === 'pastel') {
-                satFloor = 50; brightnessMin = 46; brightnessMax = 72;
+ satFloor = 50; brightnessMin = 24; brightnessMax = 44;
                 hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9; audioHueSpread = 2.0; audioHighModRange = 20;
             } else if (mode === 'hyperneon') {
                 // Ultra reactive, vivid, strong modulation
-                satFloor = 80; brightnessMin = 38; brightnessMax = 70;
+ satFloor = 80; brightnessMin = 18; brightnessMax = 44;
                 hueReactivityScale = 1.8; satGainScale = 1.6; brightnessDepthScale = 1.3; audioHueSpread = 3.2; audioHighModRange = 40;
             } else if (mode === 'aurora') {
                 // Smooth luminous gradients, high depth, softer modulation
-                satFloor = 60; brightnessMin = 44; brightnessMax = 78;
+ satFloor = 60; brightnessMin = 22; brightnessMax = 50;
                 hueReactivityScale = 1.2; satGainScale = 1.0; brightnessDepthScale = 1.6; audioHueSpread = 2.2; audioHighModRange = 20;
             } else if (mode === 'bassstorm') {
                 // Darker, punchy saturation, dramatic direction feel
-                satFloor = 70; brightnessMin = 30; brightnessMax = 60;
+ satFloor = 70; brightnessMin = 16; brightnessMax = 40;
                 hueReactivityScale = 0.9; satGainScale = 1.4; brightnessDepthScale = 0.9; audioHueSpread = 1.8; audioHighModRange = 35;
             } else if (mode === 'crystal') {
                 // Clean luminous pastels with crisp accents
-                satFloor = 55; brightnessMin = 48; brightnessMax = 80;
+ satFloor = 55; brightnessMin = 24; brightnessMax = 46;
                 hueReactivityScale = 1.1; satGainScale = 0.8; brightnessDepthScale = 1.4; audioHueSpread = 2.0; audioHighModRange = 25;
             } else if (mode === 'vaporwave') {
                 // Washed neon vibes, gentle hue, medium modulation
-                satFloor = 60; brightnessMin = 50; brightnessMax = 78;
+ satFloor = 60; brightnessMin = 22; brightnessMax = 44;
                 hueReactivityScale = 1.0; satGainScale = 0.9; brightnessDepthScale = 1.2; audioHueSpread = 1.7; audioHighModRange = 30;
             } else if (mode === 'inferno') {
                 // Intense saturation, darker base, aggressive modulation
-                satFloor = 85; brightnessMin = 28; brightnessMax = 62;
+ satFloor = 85; brightnessMin = 16; brightnessMax = 38;
                 hueReactivityScale = 1.5; satGainScale = 1.8; brightnessDepthScale = 0.8; audioHueSpread = 2.8; audioHighModRange = 45;
             } else if (mode === 'zen') {
                 // Calm, low reactivity, smooth transitions
-                satFloor = 50; brightnessMin = 46; brightnessMax = 74;
+ satFloor = 50; brightnessMin = 22; brightnessMax = 44;
                 hueReactivityScale = 0.7; satGainScale = 0.6; brightnessDepthScale = 1.1; audioHueSpread = 1.4; audioHighModRange = 15;
             }
             // update slider displays to reflect internal scale changes
@@ -3490,7 +3490,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
+            // Limit directions: no diagonal or toward
+            const directions = ['down', 'up', 'left', 'right'];
             
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -3498,14 +3499,19 @@ let audioDiagonalsEnabled = true; // Default: enabled
             MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
             MatrixRainEngine.rainConfig.speed = Math.floor(Math.random() * 50) + 10;
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
-            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+            // Do not override direction during audio-reactive mode
+            if (!window.audioReactiveActive) {
+                MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
+            }
 
             // Update UI controls
             document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
             document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
             document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
             document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
-            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
+            if (!window.audioReactiveActive) {
+                document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
+            }
             
             // Update pattern button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
@@ -4098,31 +4104,25 @@ let audioDiagonalsEnabled = true; // Default: enabled
             const bassNormalized = bass / 255;
             config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
 
-            // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
-            // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
-            // Musical notes are in 200-600Hz range, so we focus heavily on mid frequencies
-
-            // Weight mid frequencies MORE heavily (where vocals/melody live)
+            // LOW-MID + MID → COLOR HUE (balanced, non-freezing mapping)
             const lowMidNormalized = lowMid / 255;
             const midNormalized = mid / 255;
 
-            // MAXIMUM SENSITIVITY: power of 0.15 makes TINY pitch differences create HUGE color shifts!
-            // This is EXTREME - every subtle vocal tone change will be visible
-            const lowMidSensitive = Math.pow(lowMidNormalized, 0.15);
-            const midSensitive = Math.pow(midNormalized, 0.15);
+            // Balanced linear blend (avoid over-compressing with extreme exponents)
+            const baseColorControl = (midNormalized * 0.6) + (lowMidNormalized * 0.4);
+            let hueRaw = (baseColorControl * 360) * audioHueSpread * hueReactivityScale;
 
-            // Combine with HEAVY emphasis on mid frequencies (70% mid, 30% lowMid)
-            // Maximum focus on the exact frequencies where sung notes exist
-            const combinedColorControl = (midSensitive * 0.7) + (lowMidSensitive * 0.3);
+            // High band adds fine-grain modulation to prevent flat hues
+            const highNormalized = high / 255;
+            const highModulation = ((highNormalized - 0.5) * (audioHighModRange * 2));
+            hueRaw = hueRaw + highModulation;
 
-            // AGGRESSIVE multiplier to spread colors across the FULL spectrum
-            // This ensures each semitone gets a visually distinct color
-            // Apply user-controlled hue reactivity scale and preset-controlled hue spread
-            let hue = Math.floor(combinedColorControl * 360 * audioHueSpread * hueReactivityScale) % 360;
-
-            // Add MORE high-frequency modulation for extra texture variation
-            const highModulation = Math.floor((high / 255) * (audioHighModRange * 2)) - audioHighModRange; // -range to +range degrees
-            hue = (hue + highModulation + 360) % 360;
+            // Light EMA smoothing to avoid jitter while still tracking changes
+            const hueAlpha = 0.4;
+            window.audioHueEma = (typeof window.audioHueEma === 'number')
+                ? (window.audioHueEma * (1 - hueAlpha)) + (hueRaw * hueAlpha)
+                : hueRaw;
+            let hue = Math.round(((window.audioHueEma % 360) + 360) % 360);
 
             // Saturation: scale and clamp to avoid dull/blown-out colors
             let satRaw = 85 + Math.floor((midNormalized * 15) * satGainScale);
@@ -4145,7 +4145,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
-            const highNormalized = high / 255;
             const charIndex = Math.floor(highNormalized * 5); // 0-4
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             config.characterSet = characterSets[Math.min(charIndex, 4)];
@@ -4156,54 +4155,80 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
 
 
-            // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
-            // Adjust thresholds based on mode - MUCH LOWER for Wallpaper Engine!
-            // ULTRA SENSITIVE: Respond to even tiny audio movements
-            const bassThreshold = isWallpaperEngine ? 3 : 10;
-            const highThreshold = isWallpaperEngine ? 4 : 15;
-            const lowMidThreshold = isWallpaperEngine ? 5 : 20;
+            // AUDIO-DRIVEN DIRECTION (peak-based: bass peaks → left, high peaks → right)
+            const bn = bass / 255, lmn = lowMid / 255, mn = mid / 255, hn = high / 255;
 
-            const directionTrigger = bass > bassThreshold || high > highThreshold || lowMid > lowMidThreshold;
-            if (directionTrigger) {
-                // Build directions array based on diagonal setting
-                const directions = audioDiagonalsEnabled
-                    ? ['down', 'up', 'left', 'right', 'diagonal', 'toward']
-                    : ['down', 'up', 'left', 'right']; // No diagonals when disabled
+            // Running baselines (EMA) for bass and highs
+            const emaAlpha = 0.25;
+            window.bnEma = (typeof window.bnEma === 'number') ? (window.bnEma * (1 - emaAlpha) + bn * emaAlpha) : bn;
+            window.hnEma = (typeof window.hnEma === 'number') ? (window.hnEma * (1 - emaAlpha) + hn * emaAlpha) : hn;
 
-                // Use combined audio energy to pick direction
-                const dirValue = (bass + high + lowMid) / 3;
-                const dirIndex = Math.floor((dirValue / 255) * directions.length);
-                const newDirection = directions[Math.min(dirIndex, directions.length - 1)];
-                const oldDirection = config.direction;
+            const bnDelta = bn - window.bnEma;
+            const hnDelta = hn - window.hnEma;
+            // Fixed peak threshold: clear peaks only, more sensitive to beats
+            const peakThreshold = 0.07; // catch more bass hits and high hats
+            const bassStrong = bn > 0.15; // lower floor so beats register
+            const highStrong = hn > 0.15;
 
-                // Reinitialize drop positions when switching to/from horizontal
-                if (matrixCanvas && matrixDrops && oldDirection !== newDirection) {
-                    const fontSize = config.fontSize;
-                    const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
-                    const isHorizontal = (newDirection === 'left' || newDirection === 'right');
+            // Cooldown to prevent rapid flip-flopping (shorter for more dance)
+            window.directionCooldown = (typeof window.directionCooldown === 'number') ? Math.max(0, window.directionCooldown - 1) : 0;
+            const cooldownFrames = 6;
 
-                    if (wasHorizontal !== isHorizontal) {
-                        // Switching orientation - reinitialize all drops
-                        const columns = Math.floor(matrixCanvas.width / fontSize);
-                        for (let i = 0; i < columns; i++) {
-                            if (isHorizontal) {
-                                // Going horizontal: randomize X positions across full width
-                                matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
-                            } else {
-                                // Going vertical: randomize Y positions across full height
-                                matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
-                            }
-                        }
+            let newDirection = config.direction || 'down';
+            // Lightweight burst memory: require 2 frames of peaks for stronger confidence
+            window.bassPeakFrames = (typeof window.bassPeakFrames === 'number') ? Math.max(0, window.bassPeakFrames - 0.4) : 0;
+            window.highPeakFrames = (typeof window.highPeakFrames === 'number') ? Math.max(0, window.highPeakFrames - 0.4) : 0;
+            if (bnDelta > peakThreshold) window.bassPeakFrames += 1;
+            if (hnDelta > peakThreshold) window.highPeakFrames += 1;
+
+            if (window.directionCooldown === 0) {
+                const bassPeak = bassStrong && (bnDelta > peakThreshold || window.bassPeakFrames >= 2);
+                const highPeak = highStrong && (hnDelta > peakThreshold || window.highPeakFrames >= 2);
+
+                if (bassPeak && highPeak) {
+                    // Choose the stronger peak; no diagonal/toward in audio mode
+                    newDirection = (hnDelta > bnDelta) ? 'right' : 'left';
+                    window.directionCooldown = cooldownFrames;
+                } else if (bassPeak) {
+                    newDirection = 'left';
+                    window.directionCooldown = cooldownFrames;
+                } else if (highPeak) {
+                    newDirection = 'right';
+                    window.directionCooldown = cooldownFrames;
+                } else {
+                    // No horizontal peaks: only switch vertical on strong tilt
+                    const vertTilt = bn - (hn + 0.50 * mn + 0.35 * lmn); // weigh highs more
+                    const vertThresh = 0.12; // easier to go up on airy sources
+                    if (vertTilt > vertThresh) {
+                        newDirection = 'down';
+                    } else if (vertTilt < -vertThresh) {
+                        newDirection = 'up';
+                    } else {
+                        // No clear vertical cue — hold current direction
+                        newDirection = config.direction || 'down';
                     }
                 }
+            }
 
-                config.direction = newDirection;
-                document.getElementById('rainDirection').value = config.direction;
-
-                // Also update Ollama message direction if Ollama is active
-                if (window.OllamaSystem && window.OllamaSystem.active && window.OllamaSystem.messageActive) {
-                    window.OllamaSystem.direction = newDirection;
+            if (matrixCanvas && matrixDrops && newDirection !== config.direction) {
+                const fontSize = config.fontSize;
+                const wasHorizontal = (config.direction === 'left' || config.direction === 'right');
+                const isHorizontal = (newDirection === 'left' || newDirection === 'right');
+                if (wasHorizontal !== isHorizontal) {
+                    const columns = Math.floor(matrixCanvas.width / fontSize);
+                    for (let i = 0; i < columns; i++) {
+                        matrixDrops[i] = isHorizontal
+                            ? Math.random() * (matrixCanvas.width / fontSize)
+                            : Math.random() * (matrixCanvas.height / fontSize);
+                    }
                 }
+            }
+
+            config.direction = newDirection;
+            const dirInput = document.getElementById('rainDirection');
+            if (dirInput) dirInput.value = config.direction;
+            if (window.OllamaSystem && window.OllamaSystem.active && window.OllamaSystem.messageActive) {
+                window.OllamaSystem.direction = newDirection;
             }
 
             // Update UI sliders
