@@ -49,7 +49,7 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 
 - **BASS (0-80Hz)** → **Speed** - Drum kicks make the rain faster
 - **LOW-MID (80-200Hz)** → **Color Hue** - Vocal timbre and music body paint the color wheel (0-360°)
-- **MID (200-600Hz)** → **Density** - Melody/vocals control the amount of rain
+- **MID (200-600Hz)** → **Color Hue (accent)** - Melody/vocals strongly influence hue and saturation
 - **HIGH (600+Hz)** → **Character Set** - Treble frequencies pick which symbols appear
 - **VOLUME (Overall)** → **Intensity** - Loudness equals brightness
 - **AUDIO PEAKS** → **Direction** - Musical events change flow direction
@@ -82,6 +82,21 @@ Transform your desktop audio into a living visual experience! The rain becomes a
 - Any audio with rhythm and melody
 
 **Note**: Audio mode locks to **Classic pattern** so color changes are visible (no pattern-based colors interfering).
+
+### Audio Mode Controls
+
+- `Hue Reactivity` (50–200%) — scales how quickly hue changes with audio
+- `Saturation Gain` (50–200%) — amplifies or tames saturation; clamped at a floor
+- `Brightness Depth` (50–200%) — scales dynamic lightness range between min/max bounds
+- Presets:
+  - `Neon` — vivid saturation, bright mid-range lightness, high reactivity
+  - `Prism` — balanced saturation and hue reactivity (default baseline)
+  - `Pastel` — softer colors, higher minimum lightness, lower saturation gain
+
+**Density Control**
+
+- In audio mode, density is **manual**. Audio does not change `density`.
+- Use the `Density` slider or your own script updates; audio mapping leaves it untouched.
 
 ## Ollama AI Integration 🌀
 
