@@ -774,7 +774,7 @@
                             </div>
                             <div class="control-item">
                                 <label>Density</label>
-            <input type="range" id="rainDensity" min="1" max="100" value="50" oninput="updateRainDensity()">
+            <input type="range" id="rainDensity" min="1" max="100" value="100" oninput="updateRainDensity()">
                             </div>
                             <div class="control-item">
                                 <label>Character Size</label>
@@ -1551,7 +1551,7 @@
                 pattern: 'classic',
                 speed: 35,
                 intensity: 70,
-                density: 50,
+                density: 100,
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
                 fontSize: 10,
@@ -1974,7 +1974,7 @@
             if (!matrixCanvas) return;
             const fontSize = MatrixRainEngine.rainConfig.fontSize;
             const columns = Math.max(1, Math.floor(matrixCanvas.width / fontSize));
-            const density = Math.max(1, Math.min(100, parseInt(MatrixRainEngine.rainConfig.density || 50)));
+            const density = Math.max(1, Math.min(100, parseInt(MatrixRainEngine.rainConfig.density || 100)));
             const activeCount = Math.max(1, Math.floor(columns * (density / 100)));
 
             window.activeColumnsMask = new Array(columns).fill(false);
