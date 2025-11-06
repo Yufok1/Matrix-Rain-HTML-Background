@@ -13,10 +13,9 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #000000 0%, #010108 50%, #020205 100%);
             color: #00ff41;
             overflow-x: hidden;
-            pointer-events: none;
         }
 
         .matrix-modal {
@@ -35,7 +34,6 @@
             flex-direction: column;
             backdrop-filter: blur(5px);
             box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
-            pointer-events: auto;
         }
 
         .matrix-modal.minimized {
@@ -61,7 +59,6 @@
             align-items: center;
             font-weight: bold;
             font-size: 18px;
-            pointer-events: auto;
         }
 
         .close-btn {
@@ -72,7 +69,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            pointer-events: auto;
         }
 
         .minimize-btn {
@@ -84,7 +80,6 @@
             cursor: pointer;
             font-weight: bold;
             margin-right: 10px;
-            pointer-events: auto;
         }
 
         .matrix-modal.minimized {
@@ -113,9 +108,6 @@
             padding: 20px;
             overflow-y: auto;
             display: block;
-            -webkit-overflow-scrolling: touch;
-            pointer-events: auto;
-            cursor: default;
         }
 
         .section {
@@ -124,10 +116,6 @@
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
-            pointer-events: auto !important;
-            cursor: default;
-            position: relative;
-            z-index: 9999;
         }
 
         .section h3 {
@@ -162,7 +150,6 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-top: 15px;
-            pointer-events: auto;
         }
 
         .control-group {
@@ -170,7 +157,6 @@
             border: 1px solid #00ff41;
             border-radius: 8px;
             padding: 15px;
-            pointer-events: auto;
         }
 
         .control-group h4 {
@@ -181,13 +167,9 @@
 
         .control-item {
             margin-bottom: 10px;
-            pointer-events: auto !important;
-            position: relative;
-            z-index: 10000;
         }
 
         .control-item label {
-            pointer-events: none;
             display: block;
             margin-bottom: 5px;
             font-size: 12px;
@@ -199,80 +181,6 @@
             background: #333;
             border-radius: 5px;
             outline: none;
-            pointer-events: auto;
-            cursor: pointer;
-            -webkit-appearance: none;
-            height: 8px;
-        }
-
-        /* Slider thumb for Chrome/Safari/Edge */
-        .control-item input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #00ff41;
-            cursor: grab;
-            pointer-events: auto;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
-        }
-
-        .control-item input[type="range"]::-webkit-slider-thumb:hover {
-            width: 26px;
-            height: 26px;
-            background: #00ff88;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
-            cursor: grabbing;
-        }
-
-        .control-item input[type="range"]::-webkit-slider-thumb:active {
-            cursor: grabbing;
-            background: #00ffaa;
-        }
-
-        /* Slider thumb for Firefox */
-        .control-item input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #00ff41;
-            cursor: grab;
-            pointer-events: auto;
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
-        }
-
-        .control-item input[type="range"]::-moz-range-thumb:hover {
-            width: 26px;
-            height: 26px;
-            background: #00ff88;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
-            cursor: grabbing;
-        }
-
-        .control-item input[type="range"]::-moz-range-thumb:active {
-            cursor: grabbing;
-            background: #00ffaa;
-        }
-
-        /* Slider track styling */
-        .control-item input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            background: #333;
-            border-radius: 5px;
-            pointer-events: auto;
-        }
-
-        .control-item input[type="range"]::-moz-range-track {
-            width: 100%;
-            height: 8px;
-            background: #333;
-            border-radius: 5px;
-            pointer-events: auto;
         }
 
         .control-item input[type="color"] {
@@ -281,121 +189,15 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            pointer-events: auto;
-            position: relative;
-            z-index: 10000;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background: none;
-            border: 2px solid #00ff41;
         }
 
-        .control-item input[type="color"]:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-            border-color: #00ff88;
-        }
-
-        .control-item input[type="color"]:focus {
-            outline: 2px solid #00ff41;
-            outline-offset: 2px;
-            transform: scale(1.05);
-            z-index: 10001;
-        }
-
-        .control-item input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-
-        .control-item input[type="color"]::-webkit-color-swatch {
-            border: none;
-            border-radius: 3px;
-        }
-
-        /* FORCE INTERACTIVE ELEMENTS TO WORK */
-        select, input, button, .pattern-btn, .zoom-btn, .btn {
-            pointer-events: auto !important;
-            cursor: pointer !important;
-            -webkit-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            user-select: none !important;
-            position: relative !important;
-            z-index: 99999 !important;
-        }
-
-        /* FIX DROPDOWN CLICK HANDLING */
-        select {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Close dropdowns when clicking outside */
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('select') && !e.target.closest('input')) {
-                document.querySelectorAll('select').forEach(select => {
-                    select.blur();
-                });
-                document.querySelectorAll('input[type="color"]').forEach(input => {
-                    input.blur();
-                });
-            }
-        });
-
-        /* WALLPAPER ENGINE COMPATIBILITY */
-        .matrix-modal * {
-            pointer-events: auto !important;
-        }
+        .control-item select {
             width: 100%;
             background: #333;
             color: #00ff41;
             border: 1px solid #00ff41;
             border-radius: 5px;
-            padding: 8px;
-            font-size: 14px;
-            pointer-events: auto !important;
-            cursor: pointer;
-            position: relative;
-            z-index: 9999;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            outline: none;
-        }
-
-        .control-item select:hover {
-            background: #444;
-            border-color: #00ff88;
-            box-shadow: 0 2px 8px rgba(0, 255, 65, 0.4);
-        }
-
-        .control-item select:focus {
-            outline: 2px solid #00ff41;
-            outline-offset: 2px;
-            background: #444;
-        }
-
-        .control-item select option {
-            background: #333;
-            color: #00ff41;
-            padding: 10px 5px;
-            border: none;
-            min-height: 20px;
-        }
-
-        .control-item select option:hover {
-            background: #00ff41;
-            color: #000;
-        }
-
-        .control-item select::after {
-            content: '▼';
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #00ff41;
-            pointer-events: none;
+            padding: 5px;
             font-size: 12px;
         }
 
@@ -416,7 +218,6 @@
             font-size: 12px;
             text-align: center;
             transition: all 0.3s ease;
-            pointer-events: auto;
         }
 
         .pattern-btn:hover {
@@ -450,44 +251,6 @@
 
         .spectrum-color.active {
             border-color: #fff;
-        }
-
-        .zoom-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        .zoom-btn {
-            background: rgba(0, 255, 65, 0.2);
-            border: 1px solid #00ff41;
-            border-radius: 5px;
-            padding: 8px 15px;
-            color: #00ff41;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.2s ease;
-            min-width: 45px;
-            pointer-events: auto;
-        }
-
-        .zoom-btn:hover {
-            background: rgba(0, 255, 65, 0.4);
-            transform: scale(1.1);
-        }
-
-        .zoom-btn:active {
-            transform: scale(0.95);
-        }
-
-        .zoom-display {
-            color: #00ff41;
-            font-size: 14px;
-            min-width: 50px;
-            text-align: center;
-            font-weight: bold;
         }
 
         .metrics-grid {
@@ -524,8 +287,6 @@
             border: 1px solid #00ff41;
             border-radius: 5px;
             padding: 10px;
-            -webkit-overflow-scrolling: touch;
-            pointer-events: auto;
         }
 
         .activity-item {
@@ -651,36 +412,20 @@
         }
 
         .scrollbar::-webkit-scrollbar {
-            width: 30px;
+            width: 8px;
         }
 
         .scrollbar::-webkit-scrollbar-track {
-            background: linear-gradient(90deg,
-                rgba(100, 0, 0, 0.8) 0%,
-                rgba(150, 0, 0, 0.6) 50%,
-                rgba(100, 0, 0, 0.8) 100%);
-            border: 3px solid #ff0000;
-            border-radius: 5px;
-            pointer-events: auto;
-            cursor: pointer;
-            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-
-        .scrollbar::-webkit-scrollbar-track:hover {
-            background: linear-gradient(90deg,
-                rgba(150, 0, 0, 0.9) 0%,
-                rgba(200, 0, 0, 0.7) 50%,
-                rgba(150, 0, 0, 0.9) 100%);
-            border-color: #ff3333;
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 0, 0.7);
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 0, 0.9);
-            pointer-events: none;
-            min-height: 50px;
-            box-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
+            background: #00ff41;
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
         }
 
         .file-upload-zone {
@@ -716,8 +461,6 @@
             max-height: 300px;
             overflow-y: auto;
             margin-bottom: 20px;
-            -webkit-overflow-scrolling: touch;
-            pointer-events: auto;
         }
 
         .playlist-item {
@@ -919,17 +662,17 @@
                     <span style="font-size: 18px; color: #ffff00; font-weight: bold;">👉 CLICK HERE</span>
                     <span style="font-size: 24px; color: #ff0000; font-weight: bold;">→→→</span>
                 </div>
-                    <div class="full-header-text">
-                        🌊 Matrix Rain - Advanced Visual Control Unit
-                        <span class="status-indicator status-connected"></span>
-                        <span style="font-size: 14px; color: #000;">Connected</span>
-                        <br>
-                        <span style="font-size: 20px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize | CTRL + Mousewheel to resize rain</span>
-                    </div>
-                    <div>
-                        <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
-                        <button class="close-btn" onclick="closeMatrixModal()">×</button>
-                    </div>
+                <div class="full-header-text">
+                    🌊 Matrix Rain - Advanced Visual Control Unit
+                    <span class="status-indicator status-connected"></span>
+                    <span style="font-size: 14px; color: #000;">Connected</span>
+                    <br>
+                    <span style="font-size: 20px; color: #ff0000; padding: 3px 8px; background: rgba(255,255,0,0.3); border-radius: 4px; font-weight: bold;">⌨️ Press M to minimize | CTRL + Mousewheel to resize rain</span>
+                </div>
+                <div>
+                    <button class="minimize-btn" onclick="toggleMatrixModal()" id="minimizeBtn">−</button>
+                    <button class="close-btn" onclick="closeMatrixModal()">×</button>
+                </div>
             </div>
         </div>
 
@@ -968,43 +711,40 @@
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
                         <div id="ollamaStatus" style="margin-top: 10px; font-size: 12px; color: #00ffff;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
-                            <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
-                            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
+                                <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
+                                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                                 <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     ❌ Reverse Flow
                                 </button>
-                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ✅ Angles
+                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    ❌ Angles
                                 </button>
-                                <button class="btn" onclick="hardRefresh()" style="background: #ff6600; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    🔄 Hard Refresh
+                                <button class="btn" onclick="refreshAudioReactive()" style="background: #0080ff; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
+                                    🔄 Refresh
                                 </button>
                             </div>
-                            <div style="margin-top: 8px; display: grid; grid-template-columns: auto 220px auto; align-items: center; gap: 10px; justify-content: center;">
-                                <label for="hueReactSlider" style="font-size: 12px; color: #ccc;">Hue Reactivity</label>
-                                <input type="range" id="hueReactSlider" min="50" max="200" value="100" oninput="updateHueReactivity()">
-                                <span id="hueReactDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
-
-                                <label for="satGainSlider" style="font-size: 12px; color: #ccc;">Saturation Gain</label>
-                                <input type="range" id="satGainSlider" min="50" max="200" value="100" oninput="updateSaturationGain()">
-                                <span id="satGainDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
-
-                                <label for="brightDepthSlider" style="font-size: 12px; color: #ccc;">Brightness Depth</label>
-                                <input type="range" id="brightDepthSlider" min="50" max="200" value="100" oninput="updateBrightnessDepth()">
-                                <span id="brightDepthDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                            <div style="margin-top: 10px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; align-items: center;">
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Hue Reactivity</label>
+                                    <input type="range" id="hueReactSlider" min="50" max="200" value="100" oninput="updateHueReactivity()">
+                                    <span id="hueReactDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Saturation Gain</label>
+                                    <input type="range" id="satGainSlider" min="50" max="200" value="100" oninput="updateSaturationGain()">
+                                    <span id="satGainDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
+                                <div class="control-item" style="min-width: 220px;">
+                                    <label style="font-size: 12px; color: #999;">Brightness Depth</label>
+                                    <input type="range" id="brightDepthSlider" min="50" max="200" value="100" oninput="updateBrightnessDepth()">
+                                    <span id="brightDepthDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
                             </div>
-                            <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                                <button class="btn" onclick="setColorPreset('neon')" style="background:#00ff88; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Neon</button>
-                                <button class="btn" onclick="setColorPreset('prism')" style="background:#ff00ff; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Prism</button>
-                                <button class="btn" onclick="setColorPreset('pastel')" style="background:#a3ffcf; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Pastel</button>
-                                <button class="btn" onclick="setColorPreset('hyperneon')" style="background:#00ffd1; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Hyperneon</button>
-                                <button class="btn" onclick="setColorPreset('aurora')" style="background:#7fffd4; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Aurora</button>
-                                <button class="btn" onclick="setColorPreset('bassstorm')" style="background:#ff6a00; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Bassstorm</button>
-                                <button class="btn" onclick="setColorPreset('crystal')" style="background:#e0fff8; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Crystal</button>
-                                <button class="btn" onclick="setColorPreset('vaporwave')" style="background:#ff77e9; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Vaporwave</button>
-                                <button class="btn" onclick="setColorPreset('inferno')" style="background:#ff3300; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Inferno</button>
-                                <button class="btn" onclick="setColorPreset('zen')" style="background:#cfe8ff; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Zen</button>
+                            <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn" onclick="setColorPreset('neon')" style="background: #222; color: #ff00ff; font-weight: bold; font-size: 12px; padding: 8px 12px;">Neon</button>
+                                <button class="btn" onclick="setColorPreset('prism')" style="background: #222; color: #00ffff; font-weight: bold; font-size: 12px; padding: 8px 12px;">Prism</button>
+                                <button class="btn" onclick="setColorPreset('pastel')" style="background: #222; color: #ffff80; font-weight: bold; font-size: 12px; padding: 8px 12px;">Pastel</button>
                             </div>
                         </div>
                     </div>
@@ -1034,22 +774,16 @@
                             </div>
                             <div class="control-item">
                                 <label>Density</label>
-<input type="range" id="rainDensity" min="1" max="100" value="100" onchange="updateRainDensity()">
+            <input type="range" id="rainDensity" min="1" max="100" value="50" oninput="updateRainDensity()">
                             </div>
                             <div class="control-item">
-                                <label>Character Size (1-100)</label>
-                                <input type="range" id="characterSize" min="1" max="100" value="10" oninput="updateCharacterSize()">
-                                <div class="zoom-control">
-                                    <button class="zoom-btn" onclick="decreaseCharacterSize()">-</button>
-                                    <span class="zoom-display" id="charSizeDisplay">10px</span>
-                                    <button class="zoom-btn" onclick="increaseCharacterSize()">+</button>
-                                </div>
+                                <label>Character Size</label>
+                                <input type="range" id="fontSize" min="6" max="100" value="10" onchange="updateFontSize()">
                             </div>
                         </div>
 
                         <div class="control-group">
                             <h4>Colors & Effects</h4>
-                            
                             <div class="control-item">
                                 <label>Primary Color</label>
                                 <input type="color" id="primaryColor" value="#00ff41" onchange="updateRainColors()">
@@ -1195,8 +929,8 @@
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
 
         // === AUDIO MODE SETTINGS ===
-        let audioReverseEnabled = false;  // Default: disabled per user request
-let audioDiagonalsEnabled = true; // Default: enabled
+        let audioReverseEnabled = false;  // Default: disabled
+        let audioDiagonalsEnabled = false; // Default: disabled
 
         function toggleAudioReverse() {
             audioReverseEnabled = !audioReverseEnabled;
@@ -1233,25 +967,68 @@ let audioDiagonalsEnabled = true; // Default: enabled
         }
 
         function refreshAudioReactive() {
-            if (audioReactiveActive) {
-                MatrixRainEngine.logActivity('🔄 Refreshing audio reactive mode...', 'info');
-                // Stop and restart audio reactive mode
-                toggleAudioReactive().then(() => {
-                    setTimeout(() => {
-                        toggleAudioReactive();
-                    }, 500);
-                });
-            } else {
-                MatrixRainEngine.logActivity('⚠️ Audio reactive mode not active', 'warning');
-            }
+            // Hard refresh - reload entire page like CTRL+F5
+            location.reload(true);
         }
 
-        function hardRefresh() {
-            MatrixRainEngine.logActivity('🔄 Hard refresh - reloading wallpaper...', 'info');
-            // Force full page reload with cache bypass (like Ctrl+F5)
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 100);
+        // === AUDIO COLOR REACTIVITY CONTROLS ===
+        function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+        let hueReactivityScale = 1.0;  // 0.5–2.0 via UI slider
+        let satGainScale = 1.0;        // 0.5–2.0 via UI slider
+        let brightnessDepthScale = 1.0; // 0.5–2.0 via UI slider
+        let satFloor = 65;             // preset-controlled saturation floor
+        let brightnessMin = 36;        // preset-controlled min lightness
+        let brightnessMax = 64;        // preset-controlled max lightness
+
+        function updateHueReactivity() {
+            const slider = document.getElementById('hueReactSlider');
+            const display = document.getElementById('hueReactDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            hueReactivityScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(hueReactivityScale * 100)}%`;
+        }
+
+        function updateSaturationGain() {
+            const slider = document.getElementById('satGainSlider');
+            const display = document.getElementById('satGainDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            satGainScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(satGainScale * 100)}%`;
+        }
+
+        function updateBrightnessDepth() {
+            const slider = document.getElementById('brightDepthSlider');
+            const display = document.getElementById('brightDepthDisplay');
+            if (!slider || !display) return;
+            const value = parseInt(slider.value, 10);
+            brightnessDepthScale = clamp(value / 100, 0.5, 2.0);
+            display.textContent = `${Math.round(brightnessDepthScale * 100)}%`;
+        }
+
+        function setColorPreset(mode) {
+            if (mode === 'neon') {
+                satFloor = 75; brightnessMin = 40; brightnessMax = 68;
+                hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1;
+            } else if (mode === 'prism') {
+                satFloor = 65; brightnessMin = 36; brightnessMax = 64;
+                hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0;
+            } else if (mode === 'pastel') {
+                satFloor = 50; brightnessMin = 46; brightnessMax = 72;
+                hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9;
+            }
+            // Update slider controls to reflect internal scale changes
+            const sliders = [
+                ['hueReactSlider', 'hueReactDisplay', hueReactivityScale],
+                ['satGainSlider', 'satGainDisplay', satGainScale],
+                ['brightDepthSlider', 'brightDepthDisplay', brightnessDepthScale]
+            ];
+            sliders.forEach(([sid, did, val]) => {
+                const s = document.getElementById(sid);
+                const d = document.getElementById(did);
+                if (s && d) { s.value = Math.round(val * 100); d.textContent = `${Math.round(val * 100)}%`; }
+            });
         }
 
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
@@ -1774,7 +1551,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 pattern: 'classic',
                 speed: 35,
                 intensity: 70,
-                density: 100,
+                density: 50,
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
                 fontSize: 10,
@@ -1858,7 +1635,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                     console.log(`🌊 Matrix Rain: ${message} (UI elements not ready)`);
                 }
             },
-
 
             // === PATTERN CONTROL FUNCTIONS ===
             setRainPattern(pattern, buttonElement) {
@@ -1953,6 +1729,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 this.rainConfig.density = parseInt(density);
                 this.addActivity(`🌧️ Rain density updated to: ${density}%`, true);
                 this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Density updated: ${density}%`);
+                // Recompute active columns mask on density change
+                recomputeActiveColumnsMask();
             },
 
             updateRainColors() {
@@ -2190,47 +1968,42 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
         // === MATRIX RAIN ANIMATION ENGINE ===
         let matrixCanvas, matrixCtx, matrixDrops, matrixInterval;
-        // Density-based active column mask helpers
+        // Density-driven column activity mask and helpers
         window.activeColumnsMask = [];
-        window.columnOrder = [];
-
         function recomputeActiveColumnsMask() {
-            const fontSize = MatrixRainEngine.rainConfig.fontSize;
             if (!matrixCanvas) return;
+            const fontSize = MatrixRainEngine.rainConfig.fontSize;
             const columns = Math.max(1, Math.floor(matrixCanvas.width / fontSize));
-            const density = Math.max(1, Math.min(100, Number(MatrixRainEngine.rainConfig.density || 50)));
+            const density = Math.max(1, Math.min(100, parseInt(MatrixRainEngine.rainConfig.density || 50)));
+            const activeCount = Math.max(1, Math.floor(columns * (density / 100)));
 
-            // Build or refresh column order when size changes
-            if (!window.columnOrder || window.columnOrder.length !== columns) {
-                window.columnOrder = Array.from({ length: columns }, (_, i) => i);
-                for (let i = window.columnOrder.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [window.columnOrder[i], window.columnOrder[j]] = [window.columnOrder[j], window.columnOrder[i]];
-                }
-            }
-
-            const activeCount = Math.max(1, Math.floor((density / 100) * columns));
             window.activeColumnsMask = new Array(columns).fill(false);
-            for (let k = 0; k < activeCount; k++) {
-                const col = window.columnOrder[k];
-                window.activeColumnsMask[col] = true;
-            }
 
-            // Always preserve user and Ollama columns
-            if (window.userMessageColumns) {
-                window.userMessageColumns.forEach(col => {
-                    if (col >= 0 && col < window.activeColumnsMask.length) window.activeColumnsMask[col] = true;
-                });
+            // Preserve user and Ollama message columns
+            const preserve = new Set();
+            if (window.userMessageColumns) window.userMessageColumns.forEach(c => preserve.add(c));
+            if (window.ollamaMessageColumns) window.ollamaMessageColumns.forEach(c => preserve.add(c));
+
+            // Random activation order
+            const order = Array.from({ length: columns }, (_, i) => i);
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
             }
-            if (window.ollamaMessageColumns) {
-                window.ollamaMessageColumns.forEach(col => {
-                    if (col >= 0 && col < window.activeColumnsMask.length) window.activeColumnsMask[col] = true;
-                });
+            let enabled = 0;
+            for (const idx of order) {
+                if (enabled >= activeCount) break;
+                window.activeColumnsMask[idx] = true;
+                enabled++;
             }
+            preserve.forEach(idx => {
+                if (idx >= 0 && idx < columns) window.activeColumnsMask[idx] = true;
+            });
         }
-        // Density-based column activation mask and order
-        window.activeColumnsMask = null;
-        window.columnOrder = null;
+        function columnIsActive(i) {
+            const mask = window.activeColumnsMask;
+            return !mask || mask.length === 0 || mask[i] === true;
+        }
         
         function initMatrixRain() {
             console.log("🌊 Matrix Rain: Initializing animation...");
@@ -2255,7 +2028,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             function resizeCanvas() {
                 matrixCanvas.width = window.innerWidth;
                 matrixCanvas.height = window.innerHeight;
-                // Recompute active columns when canvas size changes
+                // Recompute mask on resize
                 recomputeActiveColumnsMask();
             }
             
@@ -2277,10 +2050,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 // Random Y position for horizontal rain (spread across screen height)
                 window.horizontalYPositions[i] = Math.random() * (matrixCanvas.height / fontSize);
             }
-            // Initialize density-based active columns mask
-            recomputeActiveColumnsMask();
 
-            // Initialize density-based active columns mask
+            // Initial mask based on current density
             recomputeActiveColumnsMask();
             
             console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
@@ -2288,7 +2059,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             // Start animation
             startMatrixAnimation();
         }
-
+        
         function startMatrixAnimation() {
             if (matrixInterval) {
                 clearInterval(matrixInterval);
@@ -2298,31 +2069,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
             console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
             matrixInterval = setInterval(drawMatrixRain, speed);
             console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
-        }
-
-        // Recompute active column mask based on current density and canvas size
-        function recomputeActiveColumnsMask() {
-            if (!matrixCanvas) return;
-            const fontSize = MatrixRainEngine.rainConfig.fontSize;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
-            const densityPercent = parseInt(MatrixRainEngine.rainConfig.density) || 100;
-            const activeCount = Math.max(1, Math.round(columns * densityPercent / 100));
-
-            // Build or rebuild a stable randomized column order when column count changes
-            if (!window.columnOrder || window.columnOrder.length !== columns) {
-                window.columnOrder = Array.from({ length: columns }, (_, i) => i);
-                for (let i = columns - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    const tmp = window.columnOrder[i];
-                    window.columnOrder[i] = window.columnOrder[j];
-                    window.columnOrder[j] = tmp;
-                }
-            }
-
-            window.activeColumnsMask = new Array(columns).fill(false);
-            for (let k = 0; k < activeCount && k < window.columnOrder.length; k++) {
-                window.activeColumnsMask[window.columnOrder[k]] = true;
-            }
         }
         
         // Helper function to get random character
@@ -2400,8 +2146,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
             // Complementary color (opposite on color wheel)
             const complementHue = (avgHue + 180) % 360;
 
-            // Clear canvas with lighter fade to keep colors vivid
-            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            // Clear canvas with auto-contrast background (dark complementary color)
+            matrixCtx.fillStyle = `rgba(0, 0, 0, 0.15)`;
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
             
             // Set font
@@ -2481,9 +2227,9 @@ let audioDiagonalsEnabled = true; // Default: enabled
                         continue;
                     }
 
-                    // Apply density mask (do not skip user columns)
-                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
-                        continue;
+                    // Apply density mask: skip inactive columns unless preserved
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
                     }
 
                     const char = getNextCharacter(characters, i, isUserColumn);
@@ -2515,9 +2261,9 @@ let audioDiagonalsEnabled = true; // Default: enabled
                         continue;
                     }
 
-                    // Apply density mask (do not skip user columns)
-                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
-                        continue;
+                    // Apply density mask
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
                     }
 
                     const char = getNextCharacter(characters, i, isUserColumn);
@@ -2551,9 +2297,9 @@ let audioDiagonalsEnabled = true; // Default: enabled
                         continue;
                     }
 
-                    // Apply density mask (do not skip user columns)
-                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
-                        continue;
+                    // Apply density mask
+                    if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                        if (!columnIsActive(i)) continue;
                     }
 
                     const char = getNextCharacter(characters, i, isUserColumn);
@@ -2588,11 +2334,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
                     // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
                     if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
-                        continue;
-                    }
-
-                    // Apply density mask (do not skip user columns)
-                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
                         continue;
                     }
 
@@ -2656,13 +2397,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                         continue;
                     }
 
-                    // Apply density-based mask (unless user or Ollama column)
-                    if (window.activeColumnsMask && window.activeColumnsMask.length) {
-                        if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
-                            if (!window.activeColumnsMask[i]) continue;
-                        }
-                    }
-
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
                     const x = matrixDrops[i] * fontSize;
@@ -2686,11 +2420,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
                 // Skip columns used ONLY by Ollama
                 if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
-                    continue;
-                }
-
-                // Apply density mask (do not skip user columns)
-                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
                     continue;
                 }
 
@@ -2753,11 +2482,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                     continue;
                 }
 
-                // Apply density mask (do not skip user columns)
-                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
-                    continue;
-                }
-
                 const char = getNextCharacter(characters, i, isUserColumn);
                     const x = i * fontSize + (Math.random() - 0.5) * 10;
                 const y = matrixDrops[i] * fontSize;
@@ -2785,10 +2509,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 const columns = Math.floor(matrixCanvas.width / fontSize);
                 for (let i = 0; i < columns; i++) {
                     const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
-                    // Apply density mask (do not skip user columns)
-                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
-                        continue;
-                    }
 
                     // Skip columns used ONLY by Ollama
                     if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
@@ -3096,19 +2816,10 @@ let audioDiagonalsEnabled = true; // Default: enabled
             const config = MatrixRainEngine.rainConfig;
             console.log('Matrix Rain Config Updated:', config);
             MatrixRainEngine.logActivity('Configuration updated', 'info');
-
-            // Recompute density-based active column mask whenever config changes
-            recomputeActiveColumnsMask();
             
-            // Update animation with new settings ONLY if not in audio reactive mode
-            // Audio mode controls speed dynamically - don't override it
-            if (matrixInterval && !audioReactiveActive) {
-                // Clear current interval first
-                clearInterval(matrixInterval);
-                // Start new animation with current config speed
-                const newSpeed = MatrixRainEngine.rainConfig.speed;
-                matrixInterval = setInterval(drawMatrixRain, newSpeed);
-                console.log(`🌊 Matrix Rain: Animation restarted with speed ${newSpeed}ms`);
+            // Update animation with new settings
+            if (matrixInterval) {
+                startMatrixAnimation();
             }
         }
         
@@ -3135,23 +2846,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             }
             MatrixRainEngine.logActivity('EMERGENCY STOP: Matrix rain terminated', 'error');
         }
-
-        // === REVERSE FLOW TOGGLE ===
-        function toggleReverseFlow() {
-            reverseFlowMultiplier *= -1; // Flip between 1 and -1
-            const btn = document.getElementById('reverseFlowBtn');
-
-            if (reverseFlowMultiplier === -1) {
-                btn.textContent = '⏩ FORWARD FLOW';
-                btn.style.background = '#00ff88';
-                MatrixRainEngine.logActivity('⏪ REVERSE FLOW ACTIVATED - Everything is rewinding!', 'success');
-            } else {
-                btn.textContent = '⏪ REVERSE FLOW';
-                btn.style.background = '#ffaa00';
-                MatrixRainEngine.logActivity('⏩ Forward flow restored', 'info');
-            }
-        }
-
+        
         function setRainPattern(pattern, buttonElement) {
             MatrixRainEngine.rainConfig.pattern = pattern;
             updateRainConfig();
@@ -3178,6 +2873,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
         function updateRainDensity() {
             const density = document.getElementById('rainDensity').value;
             MatrixRainEngine.rainConfig.density = density;
+            // Recompute active columns mask without restarting animation
+            recomputeActiveColumnsMask();
             updateRainConfig();
         }
         
@@ -3189,130 +2886,11 @@ let audioDiagonalsEnabled = true; // Default: enabled
             updateRainConfig();
         }
 
-        // === UTILITIES ===
-        function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
-        // Color reactivity and bounds (used by audio-reactive UI and presets)
-        let hueReactivityScale = 1.0; // 0.5–2.0 via UI slider
-        let satGainScale = 1.5;       // 0.5–2.0 via UI slider (more saturation)
-        let brightnessDepthScale = 1.25; // 0.5–2.0 via UI slider (deeper brightness)
- let satFloor = 80;            // preset-controlled saturation floor (ensure vivid)
- let brightnessMin = 20;       // preset-controlled min lightness (much darker)
- let brightnessMax = 50;       // preset-controlled max lightness (still dark, but brighter)
-        // Audio color spread and high-frequency modulation amplitude (preset-tunable)
-        let audioHueSpread = 2.5;     // default hue multiplier
-        let audioHighModRange = 25;   // default +/- degrees for high-frequency modulation
-
-        // === COLOR REACTIVITY UI ===
-        function updateHueReactivity() {
-            const slider = document.getElementById('hueReactSlider');
-            const display = document.getElementById('hueReactDisplay');
-            if (!slider || !display) return;
-            const value = parseInt(slider.value, 10);
-            hueReactivityScale = clamp(value / 100, 0.5, 2.0);
-            display.textContent = `${Math.round(hueReactivityScale * 100)}%`;
-        }
-
-        function updateSaturationGain() {
-            const slider = document.getElementById('satGainSlider');
-            const display = document.getElementById('satGainDisplay');
-            if (!slider || !display) return;
-            const value = parseInt(slider.value, 10);
-            satGainScale = clamp(value / 100, 0.5, 2.0);
-            display.textContent = `${Math.round(satGainScale * 100)}%`;
-        }
-
-        function updateBrightnessDepth() {
-            const slider = document.getElementById('brightDepthSlider');
-            const display = document.getElementById('brightDepthDisplay');
-            if (!slider || !display) return;
-            const value = parseInt(slider.value, 10);
-            brightnessDepthScale = clamp(value / 100, 0.5, 2.0);
-            display.textContent = `${Math.round(brightnessDepthScale * 100)}%`;
-        }
-
-        function setColorPreset(mode) {
-            if (mode === 'neon') {
- satFloor = 75; brightnessMin = 22; brightnessMax = 46;
-                hueReactivityScale = 1.3; satGainScale = 1.4; brightnessDepthScale = 1.1; audioHueSpread = 2.7; audioHighModRange = 30;
-            } else if (mode === 'prism') {
- satFloor = 65; brightnessMin = 20; brightnessMax = 42;
-                hueReactivityScale = 1.0; satGainScale = 1.2; brightnessDepthScale = 1.0; audioHueSpread = 2.5; audioHighModRange = 25;
-            } else if (mode === 'pastel') {
- satFloor = 50; brightnessMin = 24; brightnessMax = 44;
-                hueReactivityScale = 0.8; satGainScale = 0.7; brightnessDepthScale = 0.9; audioHueSpread = 2.0; audioHighModRange = 20;
-            } else if (mode === 'hyperneon') {
-                // Ultra reactive, vivid, strong modulation
- satFloor = 80; brightnessMin = 18; brightnessMax = 44;
-                hueReactivityScale = 1.8; satGainScale = 1.6; brightnessDepthScale = 1.3; audioHueSpread = 3.2; audioHighModRange = 40;
-            } else if (mode === 'aurora') {
-                // Smooth luminous gradients, high depth, softer modulation
- satFloor = 60; brightnessMin = 22; brightnessMax = 50;
-                hueReactivityScale = 1.2; satGainScale = 1.0; brightnessDepthScale = 1.6; audioHueSpread = 2.2; audioHighModRange = 20;
-            } else if (mode === 'bassstorm') {
-                // Darker, punchy saturation, dramatic direction feel
- satFloor = 70; brightnessMin = 16; brightnessMax = 40;
-                hueReactivityScale = 0.9; satGainScale = 1.4; brightnessDepthScale = 0.9; audioHueSpread = 1.8; audioHighModRange = 35;
-            } else if (mode === 'crystal') {
-                // Clean luminous pastels with crisp accents
- satFloor = 55; brightnessMin = 24; brightnessMax = 46;
-                hueReactivityScale = 1.1; satGainScale = 0.8; brightnessDepthScale = 1.4; audioHueSpread = 2.0; audioHighModRange = 25;
-            } else if (mode === 'vaporwave') {
-                // Washed neon vibes, gentle hue, medium modulation
- satFloor = 60; brightnessMin = 22; brightnessMax = 44;
-                hueReactivityScale = 1.0; satGainScale = 0.9; brightnessDepthScale = 1.2; audioHueSpread = 1.7; audioHighModRange = 30;
-            } else if (mode === 'inferno') {
-                // Intense saturation, darker base, aggressive modulation
- satFloor = 85; brightnessMin = 16; brightnessMax = 38;
-                hueReactivityScale = 1.5; satGainScale = 1.8; brightnessDepthScale = 0.8; audioHueSpread = 2.8; audioHighModRange = 45;
-            } else if (mode === 'zen') {
-                // Calm, low reactivity, smooth transitions
- satFloor = 50; brightnessMin = 22; brightnessMax = 44;
-                hueReactivityScale = 0.7; satGainScale = 0.6; brightnessDepthScale = 1.1; audioHueSpread = 1.4; audioHighModRange = 15;
-            }
-            // update slider displays to reflect internal scale changes
-            const sliders = [
-                ['hueReactSlider', 'hueReactDisplay', hueReactivityScale],
-                ['satGainSlider', 'satGainDisplay', satGainScale],
-                ['brightDepthSlider', 'brightDepthDisplay', brightnessDepthScale]
-            ];
-            sliders.forEach(([sid, did, val]) => {
-                const s = document.getElementById(sid);
-                const d = document.getElementById(did);
-                if (s && d) { s.value = Math.round(val * 100); d.textContent = `${Math.round(val * 100)}%`; }
-            });
-        }
-
-        function updateCharacterSize() {
-            const size = parseInt(document.getElementById('characterSize').value);
-            MatrixRainEngine.rainConfig.fontSize = size;
-            document.getElementById('charSizeDisplay').textContent = size + 'px';
-            updateRainConfig();
-            MatrixRainEngine.logActivity(`Character size changed to ${size}px`, 'info');
-        }
-
-        function increaseCharacterSize() {
-            const slider = document.getElementById('characterSize');
-            let currentSize = parseInt(slider.value);
-            if (currentSize < 100) {
-                currentSize++;
-                slider.value = currentSize;
-                updateCharacterSize();
-            }
-        }
-
-        function decreaseCharacterSize() {
-            const slider = document.getElementById('characterSize');
-            let currentSize = parseInt(slider.value);
-            if (currentSize > 1) {
-                currentSize--;
-                slider.value = currentSize;
-                updateCharacterSize();
-            }
-        }
-
         function updateFontSize() {
             const fontSize = document.getElementById('fontSize').value;
             MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
+            // Recompute mask as column count changes with font size
+            recomputeActiveColumnsMask();
             updateRainConfig();
         }
         
@@ -3377,23 +2955,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
             console.log("🌊 Matrix Rain: DOM loaded, initializing...");
             MatrixRainEngine.init();
 
-            // FORCE RIGHT-CLICK TO WORK IN WALLPAPER ENGINE
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault(); // Stop Wallpaper Engine's context menu
-                // Re-attach all event listeners to controls
-                setTimeout(() => {
-                    const selects = document.querySelectorAll('select');
-                    const inputs = document.querySelectorAll('input');
-                    selects.forEach(select => {
-                        select.onclick = null;
-                        select.onchange = null;
-                        // Re-assign to force re-registration
-                        const newSelect = select.cloneNode(true);
-                        select.parentNode.replaceChild(newSelect, select);
-                    });
-                }, 100);
-            });
-
             // Set initial minimize button state (starts minimized)
             const minimizeBtn = document.getElementById('minimizeBtn');
             minimizeBtn.textContent = 'M +';
@@ -3418,67 +2979,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                     }
                 }
             });
-
-            // Enable mousewheel scrolling for settings menu in Wallpaper Engine
-            const modalContent = document.querySelector('.modal-content');
-            if (modalContent) {
-                modalContent.addEventListener('wheel', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Scroll the menu content with mousewheel
-                    modalContent.scrollTop += e.deltaY;
-                }, { passive: false });
-
-                // Enable click-and-drag scrolling on the scrollbar track
-                let isDragging = false;
-                let startY = 0;
-                let startScrollTop = 0;
-
-                modalContent.addEventListener('mousedown', function(e) {
-                    const rect = modalContent.getBoundingClientRect();
-                    const scrollbarWidth = 40; // Match our scrollbar width
-                    const isInScrollbar = (e.clientX > rect.right - scrollbarWidth);
-
-                    if (isInScrollbar) {
-                        isDragging = true;
-                        startY = e.clientY;
-                        startScrollTop = modalContent.scrollTop;
-                        modalContent.style.cursor = 'grabbing';
-                        e.preventDefault();
-                    }
-                });
-
-                document.addEventListener('mousemove', function(e) {
-                    if (isDragging) {
-                        const deltaY = e.clientY - startY;
-                        const scrollRatio = modalContent.scrollHeight / modalContent.clientHeight;
-                        modalContent.scrollTop = startScrollTop + (deltaY * scrollRatio);
-                    }
-                });
-
-                document.addEventListener('mouseup', function() {
-                    if (isDragging) {
-                        isDragging = false;
-                        modalContent.style.cursor = 'default';
-                    }
-                });
-            }
-
-            // Register Wallpaper Engine audio listener at page load (REQUIRED!)
-            if (window.wallpaperRegisterAudioListener) {
-                audioBufferLength = 128;
-                audioDataArray = new Uint8Array(128);
-
-                window.wallpaperRegisterAudioListener(function(audioArray) {
-                    if (!audioReactiveActive) return;
-
-                    // MASSIVE amplification for Wallpaper Engine audio (remove artificial cap!)
-                    // Apply 8x multiplier for ULTRA sensitivity at normal volumes
-                    audioDataArray = new Uint8Array(audioArray.map(v => Math.floor(Math.max(v, 0) * 8 * 255)));
-                    audioBufferLength = audioDataArray.length;
-                    analyzeAudio();
-                });
-            }
         });
         
         // === CHAOS RANDOMIZER ===
@@ -3490,8 +2990,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            // Limit directions: no diagonal or toward
-            const directions = ['down', 'up', 'left', 'right'];
+            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
             
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -3499,19 +2998,14 @@ let audioDiagonalsEnabled = true; // Default: enabled
             MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
             MatrixRainEngine.rainConfig.speed = Math.floor(Math.random() * 50) + 10;
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
-            // Do not override direction during audio-reactive mode
-            if (!window.audioReactiveActive) {
-                MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
-            }
+            MatrixRainEngine.rainConfig.direction = directions[Math.floor(Math.random() * directions.length)];
 
             // Update UI controls
             document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
             document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
             document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
             document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
-            if (!window.audioReactiveActive) {
-                document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
-            }
+            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
             
             // Update pattern button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
@@ -3542,7 +3036,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 flashCount++;
                 if (flashCount >= 5) {
                     clearInterval(flashInterval);
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
             }, 100);
@@ -3620,7 +3114,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
             MatrixRainEngine.rainConfig.speed = 20 + Math.floor(Math.random() * 70); // 20-90
             MatrixRainEngine.rainConfig.intensity = 40 + Math.floor(Math.random() * 60); // 40-100
-            // Do NOT change density here; keep manual control
+            MatrixRainEngine.rainConfig.density = 30 + Math.floor(Math.random() * 70); // 30-100
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
             const newDirection = directions[Math.floor(Math.random() * directions.length)];
 
@@ -3647,7 +3141,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
             MatrixRainEngine.rainConfig.direction = newDirection;
 
-            // Reverse flow is now controlled only by manual toggle or audio setting; no orchestrator reversals
+            // Disable random reverse flow flipping to respect user control
 
             // Update UI to reflect changes
             document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
@@ -3722,8 +3216,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
         // Syllable detection state (for reversals)
         let syllableDetector = {
-            threshold: 0.3,         // ULTRA sensitive - catch tiny audio movements
-            minVolume: 0.02,        // Very low but not zero
+            threshold: 1.08,        // Balanced sensitivity
+            minVolume: 0.06,        // Low but not too low
             lastSyllableTime: 0,
             syllableCooldown: 120,  // 120ms = ~8 syllables/sec (prevents double-reversals)
             volumeHistory: [],
@@ -3733,8 +3227,8 @@ let audioDiagonalsEnabled = true; // Default: enabled
 
         // Beat detection state (for color changes AND reversal backup)
         let beatDetector = {
-            threshold: 0.3,         // ULTRA sensitive - catch even small beats
-            minBass: 40,           // Trigger on tiny bass movements
+            threshold: 1.4,         // Higher threshold for just strong beats
+            minBass: 140,          // Only trigger on significant bass
             lastBeatTime: 0,
             beatCooldown: 150,      // Allow more frequent beat reactions
             bassHistory: [],
@@ -3757,36 +3251,10 @@ let audioDiagonalsEnabled = true; // Default: enabled
             if (audioReactiveActive) {
                 btn.textContent = '⏸️ STOP AUDIO MODE';
                 btn.style.background = '#ff4444';
-
-                // CHECK IF WE'RE IN WALLPAPER ENGINE
-                if (window.wallpaperRegisterAudioListener) {
-                    // WALLPAPER ENGINE MODE - audio listener already registered at page load!
-                    status.textContent = '🎵 AUDIO REACTIVE - Syncing with desktop audio!';
-                    MatrixRainEngine.logActivity('🎵 Audio Reactive Mode ACTIVATED - Using Wallpaper Engine audio!', 'success');
-
-                    // Gray out secondary color picker (not used in audio mode)
-                    const secondaryColorPicker = document.getElementById('secondaryColor');
-                    const secondaryColorLabel = secondaryColorPicker.previousElementSibling;
-                    if (secondaryColorPicker) {
-                        secondaryColorPicker.style.opacity = '0.3';
-                        secondaryColorPicker.style.pointerEvents = 'none';
-                        secondaryColorPicker.style.filter = 'grayscale(100%)';
-                        secondaryColorPicker.disabled = true;
-                    }
-                    if (secondaryColorLabel) {
-                        secondaryColorLabel.style.opacity = '0.5';
-                    }
-
-                    updateModeButtons('audio'); // Disable other mode buttons
-
-                    // That's it! The analyzeAudio() function is already being called by the listener
-                    return;
-                }
-
-                // BROWSER MODE - Request desktop/tab audio capture
                 status.textContent = '🎤 Requesting audio access...';
 
                 try {
+                    // Request desktop/tab audio capture
                     audioStream = await navigator.mediaDevices.getDisplayMedia({
                         video: true,
                         audio: {
@@ -3895,45 +3363,27 @@ let audioDiagonalsEnabled = true; // Default: enabled
         }
 
         function analyzeAudio() {
-            if (!audioReactiveActive) return;
+            if (!audioReactiveActive || !audioAnalyser) return;
 
-            // Check if we're in Wallpaper Engine or Browser mode
-            const isWallpaperEngine = window.wallpaperRegisterAudioListener && !audioAnalyser;
+            audioAnimationFrame = requestAnimationFrame(analyzeAudio);
 
-            if (!isWallpaperEngine) {
-                // BROWSER MODE - use standard frequency analysis
-                if (!audioAnalyser) return;
-                audioAnimationFrame = requestAnimationFrame(analyzeAudio);
-                audioAnalyser.getByteFrequencyData(audioDataArray);
-            }
-            // In Wallpaper Engine mode, data is already populated by the listener callback
+            // Get frequency data
+            audioAnalyser.getByteFrequencyData(audioDataArray);
 
-            // Calculate different frequency ranges based on mode
-            let bass, lowMid, mid, high;
-
-            if (isWallpaperEngine) {
-                // WALLPAPER ENGINE: 128 samples (64 left + 64 right)
-                // Scale down the ranges proportionally: 128 is ~12.5% of 1024
-                bass = getAverageFrequency(0, 10);       // ~0-80 scaled to 128 → 0-10
-                lowMid = getAverageFrequency(10, 25);    // ~80-200 → 10-25
-                mid = getAverageFrequency(25, 75);       // ~200-600 → 25-75
-                high = getAverageFrequency(75, 128);     // ~600-1024 → 75-128
-            } else {
-                // BROWSER MODE: 1024+ bins
-                bass = getAverageFrequency(0, 80);       // 0-80: Bass/kick
-                lowMid = getAverageFrequency(80, 200);   // 80-200: Low-mid (music body)
-                mid = getAverageFrequency(200, 600);     // 200-600: Mid (vocals)
-                high = getAverageFrequency(600, 1024);   // 600+: High frequencies (consonants)
-            }
+            // Calculate different frequency ranges
+            const bass = getAverageFrequency(0, 80);      // 0-80: Bass/kick
+            const lowMid = getAverageFrequency(80, 200);  // 80-200: Low-mid (music body)
+            const mid = getAverageFrequency(200, 600);    // 200-600: Mid (vocals)
+            const high = getAverageFrequency(600, 1024);  // 600+: High frequencies (consonants)
 
             // Overall volume
             const volume = (bass + lowMid + mid + high) / 4 / 255;
 
             // SYLLABLES = REVERSALS ONLY
-            detectSyllables(volume, mid, high, isWallpaperEngine);
+            detectSyllables(volume, mid, high);
 
             // MUSIC = EVERYTHING ELSE (continuous background control)
-            reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine);
+            reactToAudio(bass, lowMid, mid, high, volume);
 
             // Draw visualizer
             drawAudioVisualizer(bass, lowMid, mid, high);
@@ -3949,7 +3399,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             return count > 0 ? sum / count : 0;
         }
 
-        function detectSyllables(volume, mid, high, isWallpaperEngine = false) {
+        function detectSyllables(volume, mid, high) {
             const now = Date.now();
 
             // Update volume history
@@ -3961,23 +3411,18 @@ let audioDiagonalsEnabled = true; // Default: enabled
             // Calculate average volume
             syllableDetector.avgVolume = syllableDetector.volumeHistory.reduce((a, b) => a + b, 0) / syllableDetector.volumeHistory.length;
 
-            // Adjust thresholds based on mode
-            const midThreshold = isWallpaperEngine ? 15 : 40;       // Much lower for WE
-            const consonantThreshold = isWallpaperEngine ? 30 : 100; // Much lower for WE
-            const vocalThreshold = isWallpaperEngine ? 35 : 120;     // Much lower for WE
-
             // Detect syllables - HYPER SENSITIVE to catch EVERYTHING
             const isSyllable = volume > syllableDetector.avgVolume * syllableDetector.threshold
                             && volume > syllableDetector.minVolume
-                            && mid > midThreshold
+                            && mid > 40  // VERY low threshold - catches almost any vocal
                             && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
 
             // Also catch consonant pops (high frequency spikes) - LOWER threshold
-            const isConsonant = high > consonantThreshold
+            const isConsonant = high > 100
                              && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
 
             // ALSO catch any significant mid-frequency activity (vocals)
-            const isVocal = mid > vocalThreshold
+            const isVocal = mid > 120
                          && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
 
             if (isSyllable || isConsonant || isVocal) {
@@ -4088,7 +3533,7 @@ let audioDiagonalsEnabled = true; // Default: enabled
             return `#${f(0)}${f(8)}${f(4)}`;
         }
 
-        function reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine = false) {
+        function reactToAudio(bass, lowMid, mid, high, volume) {
             const config = MatrixRainEngine.rainConfig;
 
             // === INTELLIGENT AUDIO-TO-VISUAL MAPPING ===
@@ -4104,31 +3549,37 @@ let audioDiagonalsEnabled = true; // Default: enabled
             const bassNormalized = bass / 255;
             config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
 
-            // LOW-MID + MID → COLOR HUE (balanced, non-freezing mapping)
+            // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
+            // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
+            // Musical notes are in 200-600Hz range, so we focus heavily on mid frequencies
+
+            // Weight mid frequencies MORE heavily (where vocals/melody live)
             const lowMidNormalized = lowMid / 255;
             const midNormalized = mid / 255;
 
-            // Balanced linear blend (avoid over-compressing with extreme exponents)
-            const baseColorControl = (midNormalized * 0.6) + (lowMidNormalized * 0.4);
-            let hueRaw = (baseColorControl * 360) * audioHueSpread * hueReactivityScale;
+            // MAXIMUM SENSITIVITY: power of 0.15 makes TINY pitch differences create HUGE color shifts!
+            // This is EXTREME - every subtle vocal tone change will be visible
+            const lowMidSensitive = Math.pow(lowMidNormalized, 0.15);
+            const midSensitive = Math.pow(midNormalized, 0.15);
 
-            // High band adds fine-grain modulation to prevent flat hues
-            const highNormalized = high / 255;
-            const highModulation = ((highNormalized - 0.5) * (audioHighModRange * 2));
-            hueRaw = hueRaw + highModulation;
+            // Combine with HEAVY emphasis on mid frequencies (70% mid, 30% lowMid)
+            // Maximum focus on the exact frequencies where sung notes exist
+            const combinedColorControl = (midSensitive * 0.7) + (lowMidSensitive * 0.3);
 
-            // Light EMA smoothing to avoid jitter while still tracking changes
-            const hueAlpha = 0.4;
-            window.audioHueEma = (typeof window.audioHueEma === 'number')
-                ? (window.audioHueEma * (1 - hueAlpha)) + (hueRaw * hueAlpha)
-                : hueRaw;
-            let hue = Math.round(((window.audioHueEma % 360) + 360) % 360);
+            // AGGRESSIVE multiplier to spread colors across the FULL spectrum
+            // This ensures each semitone gets a visually distinct color
+            const hueMultiplier = 2.5; // MAXIMUM color spread!
+            let hue = Math.floor(combinedColorControl * 360 * hueMultiplier * hueReactivityScale) % 360;
 
-            // Saturation: scale and clamp to avoid dull/blown-out colors
+            // Add MORE high-frequency modulation for extra texture variation
+            const highModulation = Math.floor((high / 255) * 50) - 25; // -25 to +25 degrees
+            hue = (hue + highModulation + 360) % 360;
+
+            // Saturation: apply gain scale and clamp to floor
             let satRaw = 85 + Math.floor((midNormalized * 15) * satGainScale);
             const saturation = Math.min(100, Math.max(satFloor, satRaw));
 
-            // Lightness: modulate with brightness depth and clamp to preset bounds
+            // Lightness: scale within min/max using brightness depth
             const lightnessRange = brightnessMax - brightnessMin;
             const lightness = Math.round(brightnessMin + lightnessRange * Math.min(1, Math.max(0, volume * brightnessDepthScale)));
 
@@ -4142,9 +3593,10 @@ let audioDiagonalsEnabled = true; // Default: enabled
             document.getElementById('primaryColor').value = primaryHex;
             document.getElementById('secondaryColor').value = secondaryHex;
 
-
+            // Density stays user-controlled; do not change in audio mode
 
             // HIGH → CHARACTER SET (high frequencies pick character complexity)
+            const highNormalized = high / 255;
             const charIndex = Math.floor(highNormalized * 5); // 0-4
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             config.characterSet = characterSets[Math.min(charIndex, 4)];
@@ -4153,86 +3605,54 @@ let audioDiagonalsEnabled = true; // Default: enabled
             // OVERALL VOLUME → INTENSITY (loudness = brightness)
             config.intensity = 30 + Math.floor(volume * 70); // 30-100
 
+            // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
+            // Very low threshold to catch musical moments!
+            const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
+            if (directionTrigger) {
+                // Build directions array based on diagonal setting
+                const directions = audioDiagonalsEnabled
+                    ? ['down', 'up', 'left', 'right', 'diagonal', 'toward']
+                    : ['down', 'up', 'left', 'right']; // No diagonals when disabled
 
+                // Use combined audio energy to pick direction
+                const dirValue = (bass + high + lowMid) / 3;
+                const dirIndex = Math.floor((dirValue / 255) * directions.length);
+                const newDirection = directions[Math.min(dirIndex, directions.length - 1)];
+                const oldDirection = config.direction;
 
-            // AUDIO-DRIVEN DIRECTION (peak-based: bass peaks → left, high peaks → right)
-            const bn = bass / 255, lmn = lowMid / 255, mn = mid / 255, hn = high / 255;
+                // Reinitialize drop positions when switching to/from horizontal
+                if (matrixCanvas && matrixDrops && oldDirection !== newDirection) {
+                    const fontSize = config.fontSize;
+                    const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
+                    const isHorizontal = (newDirection === 'left' || newDirection === 'right');
 
-            // Running baselines (EMA) for bass and highs
-            const emaAlpha = 0.25;
-            window.bnEma = (typeof window.bnEma === 'number') ? (window.bnEma * (1 - emaAlpha) + bn * emaAlpha) : bn;
-            window.hnEma = (typeof window.hnEma === 'number') ? (window.hnEma * (1 - emaAlpha) + hn * emaAlpha) : hn;
-
-            const bnDelta = bn - window.bnEma;
-            const hnDelta = hn - window.hnEma;
-            // Fixed peak threshold: clear peaks only, more sensitive to beats
-            const peakThreshold = 0.07; // catch more bass hits and high hats
-            const bassStrong = bn > 0.15; // lower floor so beats register
-            const highStrong = hn > 0.15;
-
-            // Cooldown to prevent rapid flip-flopping (shorter for more dance)
-            window.directionCooldown = (typeof window.directionCooldown === 'number') ? Math.max(0, window.directionCooldown - 1) : 0;
-            const cooldownFrames = 6;
-
-            let newDirection = config.direction || 'down';
-            // Lightweight burst memory: require 2 frames of peaks for stronger confidence
-            window.bassPeakFrames = (typeof window.bassPeakFrames === 'number') ? Math.max(0, window.bassPeakFrames - 0.4) : 0;
-            window.highPeakFrames = (typeof window.highPeakFrames === 'number') ? Math.max(0, window.highPeakFrames - 0.4) : 0;
-            if (bnDelta > peakThreshold) window.bassPeakFrames += 1;
-            if (hnDelta > peakThreshold) window.highPeakFrames += 1;
-
-            if (window.directionCooldown === 0) {
-                const bassPeak = bassStrong && (bnDelta > peakThreshold || window.bassPeakFrames >= 2);
-                const highPeak = highStrong && (hnDelta > peakThreshold || window.highPeakFrames >= 2);
-
-                if (audioDiagonalsEnabled && bassPeak && highPeak) {
-                    // Choose the stronger peak; no diagonal/toward in audio mode
-                    newDirection = (hnDelta > bnDelta) ? 'right' : 'left';
-                    window.directionCooldown = cooldownFrames;
-                } else if (audioDiagonalsEnabled && bassPeak) {
-                    newDirection = 'left';
-                    window.directionCooldown = cooldownFrames;
-                } else if (audioDiagonalsEnabled && highPeak) {
-                    newDirection = 'right';
-                    window.directionCooldown = cooldownFrames;
-                } else {
-                    // No horizontal peaks: only switch vertical on strong tilt
-                    const vertTilt = bn - (hn + 0.50 * mn + 0.35 * lmn); // weigh highs more
-                    const vertThresh = 0.12; // easier to go up on airy sources
-                    if (vertTilt > vertThresh) {
-                        newDirection = 'down';
-                    } else if (vertTilt < -vertThresh) {
-                        newDirection = 'up';
-                    } else {
-                        // No clear vertical cue — hold current direction
-                        newDirection = config.direction || 'down';
+                    if (wasHorizontal !== isHorizontal) {
+                        // Switching orientation - reinitialize all drops
+                        const columns = Math.floor(matrixCanvas.width / fontSize);
+                        for (let i = 0; i < columns; i++) {
+                            if (isHorizontal) {
+                                // Going horizontal: randomize X positions across full width
+                                matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
+                            } else {
+                                // Going vertical: randomize Y positions across full height
+                                matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
+                            }
+                        }
                     }
                 }
-            }
 
-            if (matrixCanvas && matrixDrops && newDirection !== config.direction) {
-                const fontSize = config.fontSize;
-                const wasHorizontal = (config.direction === 'left' || config.direction === 'right');
-                const isHorizontal = (newDirection === 'left' || newDirection === 'right');
-                if (wasHorizontal !== isHorizontal) {
-                    const columns = Math.floor(matrixCanvas.width / fontSize);
-                    for (let i = 0; i < columns; i++) {
-                        matrixDrops[i] = isHorizontal
-                            ? Math.random() * (matrixCanvas.width / fontSize)
-                            : Math.random() * (matrixCanvas.height / fontSize);
-                    }
+                config.direction = newDirection;
+                document.getElementById('rainDirection').value = config.direction;
+
+                // Also update Ollama message direction if Ollama is active
+                if (window.OllamaSystem && window.OllamaSystem.active && window.OllamaSystem.messageActive) {
+                    window.OllamaSystem.direction = newDirection;
                 }
-            }
-
-            config.direction = newDirection;
-            const dirInput = document.getElementById('rainDirection');
-            if (dirInput) dirInput.value = config.direction;
-            if (window.OllamaSystem && window.OllamaSystem.active && window.OllamaSystem.messageActive) {
-                window.OllamaSystem.direction = newDirection;
             }
 
             // Update UI sliders
             document.getElementById('rainSpeed').value = 101 - config.speed;
+            // Do NOT update rainDensity here: density is manual in audio mode.
             document.getElementById('rainIntensity').value = config.intensity;
         }
 
@@ -4836,9 +4256,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 OllamaSystem.active = true;
                 OllamaSystem.init();
                 OllamaSystem.connect();
-                // Show Ollama message layer
-                const msgCanvas = document.getElementById('ollamaMessageCanvas');
-                if (msgCanvas) { msgCanvas.style.display = 'block'; }
                 btn.style.background = '#00ff41';
                 btn.textContent = '🌀 OLLAMA MODE (ON)';
                 console.log('🌀 Ollama Mode: ACTIVATED');
@@ -4848,9 +4265,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 // Deactivate Ollama mode
                 OllamaSystem.active = false;
                 OllamaSystem.disconnect();
-                // Hide Ollama message layer
-                const msgCanvas = document.getElementById('ollamaMessageCanvas');
-                if (msgCanvas) { msgCanvas.style.display = 'none'; }
                 btn.style.background = '#00ffff';
                 btn.textContent = '🌀 OLLAMA MODE';
                 console.log('🌀 Ollama Mode: DEACTIVATED');
@@ -4873,8 +4287,6 @@ let audioDiagonalsEnabled = true; // Default: enabled
             };
             console.log('🌀 Ollama System: Integrated into main animation loop');
         }
-
-        
 
     </script>
 </body>
