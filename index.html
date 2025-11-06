@@ -4185,14 +4185,14 @@ let audioDiagonalsEnabled = true; // Default: enabled
                 const bassPeak = bassStrong && (bnDelta > peakThreshold || window.bassPeakFrames >= 2);
                 const highPeak = highStrong && (hnDelta > peakThreshold || window.highPeakFrames >= 2);
 
-                if (bassPeak && highPeak) {
+                if (audioDiagonalsEnabled && bassPeak && highPeak) {
                     // Choose the stronger peak; no diagonal/toward in audio mode
                     newDirection = (hnDelta > bnDelta) ? 'right' : 'left';
                     window.directionCooldown = cooldownFrames;
-                } else if (bassPeak) {
+                } else if (audioDiagonalsEnabled && bassPeak) {
                     newDirection = 'left';
                     window.directionCooldown = cooldownFrames;
-                } else if (highPeak) {
+                } else if (audioDiagonalsEnabled && highPeak) {
                     newDirection = 'right';
                     window.directionCooldown = cooldownFrames;
                 } else {
