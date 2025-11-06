@@ -3549,29 +3549,25 @@
             const bassNormalized = bass / 255;
             config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
 
-            // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
-            // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
-            // Musical notes are in 200-600Hz range, so we focus heavily on mid frequencies
-
-            // Weight mid frequencies MORE heavily (where vocals/melody live)
+            // LOW-MID + MID → COLOR HUE (balanced sensitivity to musical notes)
+            // Balanced curve that works for both soft and loud audio
             const lowMidNormalized = lowMid / 255;
             const midNormalized = mid / 255;
 
-            // MAXIMUM SENSITIVITY: power of 0.15 makes TINY pitch differences create HUGE color shifts!
-            // This is EXTREME - every subtle vocal tone change will be visible
-            const lowMidSensitive = Math.pow(lowMidNormalized, 0.15);
-            const midSensitive = Math.pow(midNormalized, 0.15);
+            // Balanced sensitivity: power of 0.6 gives good range across all volumes
+            // Soft audio (0.2) → 0.525, Loud audio (0.8) → 0.871, Max (1.0) → 1.0
+            // This prevents plateauing while keeping sensitivity
+            const lowMidSensitive = Math.pow(lowMidNormalized, 0.6);
+            const midSensitive = Math.pow(midNormalized, 0.6);
 
-            // Combine with HEAVY emphasis on mid frequencies (70% mid, 30% lowMid)
-            // Maximum focus on the exact frequencies where sung notes exist
+            // Combine with emphasis on mid frequencies (70% mid, 30% lowMid)
             const combinedColorControl = (midSensitive * 0.7) + (lowMidSensitive * 0.3);
 
-            // AGGRESSIVE multiplier to spread colors across the FULL spectrum
-            // This ensures each semitone gets a visually distinct color
-            const hueMultiplier = 2.5; // MAXIMUM color spread!
+            // Color spread multiplier
+            const hueMultiplier = 2.5;
             let hue = Math.floor(combinedColorControl * 360 * hueMultiplier * hueReactivityScale) % 360;
 
-            // Add MORE high-frequency modulation for extra texture variation
+            // Add high-frequency modulation for texture variation
             const highModulation = Math.floor((high / 255) * 50) - 25; // -25 to +25 degrees
             hue = (hue + highModulation + 360) % 360;
 
@@ -3606,18 +3602,19 @@
             config.intensity = 30 + Math.floor(volume * 70); // 30-100
 
             // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
-            // Very low threshold to catch musical moments!
-            const directionTrigger = bass > 60 || high > 90 || lowMid > 100;
+            // Moderate threshold to catch musical moments
+            const directionTrigger = bass > 80 || high > 100 || lowMid > 120;
             if (directionTrigger) {
-                // Build directions array based on diagonal setting
+                // Build directions array based on Angles toggle
                 const directions = audioDiagonalsEnabled
                     ? ['down', 'up', 'left', 'right', 'diagonal', 'toward']
-                    : ['down', 'up', 'left', 'right']; // No diagonals when disabled
+                    : ['down', 'up']; // Only vertical when Angles is OFF
 
-                // Use combined audio energy to pick direction
-                const dirValue = (bass + high + lowMid) / 3;
-                const dirIndex = Math.floor((dirValue / 255) * directions.length);
-                const newDirection = directions[Math.min(dirIndex, directions.length - 1)];
+                // Use frequency variation (not amplitude) to pick direction
+                // This prevents bias towards high indices when loud
+                const freqVariation = Math.abs(bass - high) + Math.abs(lowMid - mid);
+                const dirIndex = Math.floor((freqVariation / 255) * directions.length) % directions.length;
+                const newDirection = directions[dirIndex];
                 const oldDirection = config.direction;
 
                 // Reinitialize drop positions when switching to/from horizontal
