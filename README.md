@@ -10,21 +10,9 @@ No build step, no dependencies, no CDN, no network calls. Open the file and it r
 
 ## Quick start
 
-### In a browser
 Download `matrix-rain-utility-suite.html` and open it. That's it.
 
 The control panel starts **minimized** as a small bar in the top-right corner. Click it — or press **`M`** — to open it.
-
-### As a Wallpaper Engine wallpaper
-The file is built to run as a Wallpaper Engine web wallpaper and detects that environment automatically:
-
-- System audio is picked up through `wallpaperRegisterAudioListener` — no screen-share prompt, no permissions.
-- Clicks pass through to the desktop everywhere except the control panel.
-- Custom scroll and right-click handling compensate for behaviour Wallpaper Engine doesn't provide natively.
-
-To package it yourself, point a Wallpaper Engine project at the HTML file with `type: "web"`, `allowmouseinput: true` and `supportsaudioprocessing: true`.
-
-Already published on the Steam Workshop: **[item 3599704378](https://steamcommunity.com/sharedfiles/filedetails/?id=3599704378)**.
 
 ---
 
@@ -101,8 +89,7 @@ The secondary colour is always held at the complement of the primary, so the pal
 
 ### Getting audio in
 
-- **Wallpaper Engine** — automatic. Nothing to configure.
-- **Browser** — click Audio Reactive Mode, pick the tab or screen playing your audio, and **tick "Share audio"** in the picker. Chrome or Edge required (`getDisplayMedia` audio capture).
+Click Audio Reactive Mode, pick the tab or screen playing your audio, and **tick "Share audio"** in the picker. Chrome or Edge required (`getDisplayMedia` audio capture).
 
 ### While audio mode is running
 
