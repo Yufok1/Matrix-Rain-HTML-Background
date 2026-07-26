@@ -136,6 +136,7 @@ Autonomous mode. Every 8–15 seconds it randomizes pattern, both colours, speed
 - **Nothing persists.** There is no `localStorage` — every reload returns to the defaults (Classic / Down / speed 35 / intensity 70 / density 100 / size 10 / `#00ff41` + `#00cc33`).
 - **Chromium recommended.** Slider and scrollbar styling leans on `-webkit-` pseudo-elements, and browser audio capture needs Chrome or Edge. Firefox renders the rain fine, but the panel looks plainer and there is no audio mode.
 - Rendering is canvas 2D on a `setInterval` loop, so it is not vsync-aligned.
+- **Diagnostics are off by default.** Set `DEBUG = true` near the top of the `<script>` block to surface the internal log in the browser console.
 
 ---
 
