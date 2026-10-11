@@ -11,9 +11,11 @@
             box-sizing: border-box;
         }
 
+        html { background: #000; }
+
         body {
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background: #000;
             color: #00ff41;
             overflow-x: hidden;
             pointer-events: none;
@@ -85,6 +87,11 @@
             font-weight: bold;
             margin-right: 10px;
             pointer-events: auto;
+        }
+
+        .matrix-modal.minimized {
+            height: 60px;
+            overflow: hidden;
         }
 
         .matrix-modal.minimized .modal-content {
@@ -325,12 +332,22 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Close dropdowns when clicking outside */
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('select') && !e.target.closest('input')) {
+                document.querySelectorAll('select').forEach(select => {
+                    select.blur();
+                });
+                document.querySelectorAll('input[type="color"]').forEach(input => {
+                    input.blur();
+                });
+            }
+        });
+
         /* WALLPAPER ENGINE COMPATIBILITY */
         .matrix-modal * {
             pointer-events: auto !important;
         }
-
-        .control-item select {
             width: 100%;
             background: #333;
             color: #00ff41;
@@ -668,12 +685,239 @@
             box-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
         }
 
-    </style>
+        .file-upload-zone {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px dashed #00ff41;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-zone:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: #00cc33;
+        }
+
+        .file-upload-zone.dragover {
+            background: rgba(0, 255, 65, 0.2);
+            border-color: #ffff00;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .playlist-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+            pointer-events: auto;
+        }
+
+        .playlist-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .playlist-item:hover {
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .playlist-item.playing {
+            background: rgba(0, 255, 65, 0.2);
+            border-left: 4px solid #00ff41;
+        }
+
+        .playlist-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .playlist-item-title {
+            color: #00ff41;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .playlist-item-duration {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .playlist-item-remove {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .playlist-item-remove:hover {
+            background: #cc0000;
+        }
+
+        .player-controls {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .now-playing {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .now-playing-title {
+            color: #00ff41;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .now-playing-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 3px;
+            margin: 10px 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #00ff41;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .playback-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .player-btn {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .player-btn:hover {
+            background: #00cc33;
+            transform: scale(1.05);
+        }
+
+        .player-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .player-btn-primary {
+            background: #ff1493;
+            color: white;
+            font-size: 20px;
+            padding: 15px 30px;
+        }
+
+        .player-btn-primary:hover {
+            background: #ff006f;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .volume-icon {
+            font-size: 20px;
+            color: #00ff41;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+            border: none;
+        }
+
+        .playlist-stats {
+            text-align: center;
+            padding: 10px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* Avoid Chromium's native select layout crash in the settings panel. */
+        .setting-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .setting-choice { padding: 8px 10px; border: 1px solid #00aa33; border-radius: 5px; background: #101810; color: #aaffbb; font: inherit; font-size: 12px; }
+        .setting-choice[aria-pressed="true"] { background: #00ff41; color: #000; border-color: #00ff41; }
+        .setting-choice:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+</style>
 </head>
 <body>
     <!-- Matrix Rain Canvas - Dual Layer System -->
-    <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: transparent;"></canvas>
-    
+    <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: #000;"></canvas>
+
 
     <div class="matrix-modal scrollbar minimized">
         <div class="modal-header">
@@ -724,17 +968,17 @@
                         <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🎵 AUDIO REACTIVE MODE
                         </button>
-                        
+
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
                         <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
                             <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
                             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                                 <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ❌ Reverse Flow
+                                    ❌ Beat turns
                                 </button>
                                 <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ✅ Angles
+                                    ✅ Depth
                                 </button>
                                 <button class="btn" onclick="hardRefresh()" style="background: #ff6600; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     🔄 Hard Refresh
@@ -793,7 +1037,7 @@
                             </div>
                             <div class="control-item">
                                 <label>Density</label>
-                                <input type="range" id="rainDensity" min="1" max="100" value="100" onchange="updateRainDensity()">
+                                <input type="range" id="rainDensity" min="1" max="100" value="50" onchange="updateRainDensity()">
                             </div>
                             <div class="control-item">
                                 <label>Character Size (1-100)</label>
@@ -838,26 +1082,29 @@
                             <h4>Pattern Settings</h4>
                             <div class="control-item">
                                 <label>Character Set</label>
-                                <select id="characterSet" onchange="updateCharacterSet()">
-                                    <option value="matrix">Matrix (A-Z, 0-9, @#$)</option>
-                                    <option value="binary">Binary (01)</option>
-                                    <option value="hex">Hexadecimal (0-F)</option>
-                                    <option value="symbols">Symbols (@#$%^&*)</option>
-                                    <option value="katakana">Katakana (アイウエオ...)</option>
-                                    <option value="custom">Custom</option>
-                                </select>
+                                <input type="hidden" id="characterSet" value="matrix">
+<div class="setting-choices" role="group" aria-label="characterSet" data-control="characterSet" data-handler="updateCharacterSet">
+<button type="button" class="setting-choice" data-value="matrix" aria-pressed="false">Matrix (A-Z, 0-9, @#$)</button>
+<button type="button" class="setting-choice" data-value="binary" aria-pressed="false">Binary (01)</button>
+<button type="button" class="setting-choice" data-value="hex" aria-pressed="false">Hexadecimal (0-F)</button>
+<button type="button" class="setting-choice" data-value="symbols" aria-pressed="false">Symbols (@#$%^&*)</button>
+<button type="button" class="setting-choice" data-value="katakana" aria-pressed="false">Katakana (アイウエオ...)</button>
+<button type="button" class="setting-choice" data-value="custom" aria-pressed="false">Custom</button>
+</div>
                                 <input type="text" id="customCharacters" placeholder="Enter custom characters..." style="display: none; margin-top: 5px; padding: 5px; width: 100%; background: rgba(0,255,65,0.1); border: 1px solid #00ff41; color: #00ff41; font-family: monospace;" onchange="updateCharacterSet()">
                             </div>
                             <div class="control-item">
                                 <label>Direction</label>
-                                <select id="rainDirection" onchange="updateRainDirection()">
-                                    <option value="down">Down</option>
-                                    <option value="up">Up</option>
-                                    <option value="left">Left</option>
-                                    <option value="right">Right</option>
-                                    <option value="diagonal">Diagonal</option>
-                                    <option value="toward">🚇 Toward Camera (3D)</option>
-                                </select>
+                                <input type="hidden" id="rainDirection" value="down">
+<div class="setting-choices" role="group" aria-label="rainDirection" data-control="rainDirection" data-handler="updateRainDirection">
+<button type="button" class="setting-choice" data-value="down" aria-pressed="false">Down</button>
+<button type="button" class="setting-choice" data-value="up" aria-pressed="false">Up</button>
+<button type="button" class="setting-choice" data-value="left" aria-pressed="false">Left</button>
+<button type="button" class="setting-choice" data-value="right" aria-pressed="false">Right</button>
+
+<button type="button" class="setting-choice" data-value="toward" aria-pressed="false">🚇 Toward Camera (3D)</button>
+<button type="button" class="setting-choice" data-value="away" aria-pressed="false">Away from Camera (3D)</button>
+</div>
                             </div>
                         </div>
                     </div>
@@ -870,11 +1117,6 @@
     </div>
 
     <script>
-        // Diagnostic output is silenced by default. Set DEBUG = true to
-        // surface it in the browser console.
-        var DEBUG = false;
-        function debugLog() { if (DEBUG) console.log.apply(console, arguments); }
-
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
 
@@ -890,15 +1132,15 @@
             const btn = document.getElementById('toggleAudioReverseBtn');
 
             if (audioReverseEnabled) {
-                btn.textContent = '✅ Reverse Flow';
+                btn.textContent = '✅ Beat turns';
                 btn.style.background = '#00ff41';
                 btn.style.color = '#000';
-                MatrixRainEngine.logActivity('Audio reverse flow enabled', 'info');
+                MatrixRainEngine.logActivity('Audio beat turns enabled', 'info');
             } else {
-                btn.textContent = '❌ Reverse Flow';
+                btn.textContent = '❌ Beat turns';
                 btn.style.background = '#333';
                 btn.style.color = '#666';
-                MatrixRainEngine.logActivity('Audio reverse flow disabled', 'info');
+                MatrixRainEngine.logActivity('Audio beat turns disabled', 'info');
             }
         }
 
@@ -907,15 +1149,29 @@
             const btn = document.getElementById('toggleAudioDiagonalsBtn');
 
             if (audioDiagonalsEnabled) {
-                btn.textContent = '✅ Angles';
+                btn.textContent = '✅ Depth';
                 btn.style.background = '#00ff41';
                 btn.style.color = '#000';
                 MatrixRainEngine.logActivity('Audio angles enabled', 'info');
             } else {
-                btn.textContent = '✅ Angles';
+                btn.textContent = '❌ Depth';
                 btn.style.background = '#333';
                 btn.style.color = '#666';
                 MatrixRainEngine.logActivity('Audio angles disabled', 'info');
+            }
+        }
+
+        function refreshAudioReactive() {
+            if (audioReactiveActive) {
+                MatrixRainEngine.logActivity('🔄 Refreshing audio reactive mode...', 'info');
+                // Stop and restart audio reactive mode
+                toggleAudioReactive().then(() => {
+                    setTimeout(() => {
+                        toggleAudioReactive();
+                    }, 500);
+                });
+            } else {
+                MatrixRainEngine.logActivity('⚠️ Audio reactive mode not active', 'warning');
             }
         }
 
@@ -942,9 +1198,20 @@
             }
         }
 
-        
+
 
         // Helper function to convert HSL to Hex
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
         // === MATRIX RAIN ADVANCED VISUAL CONTROL ENGINE ===
         const MatrixRainEngine = {
             // Rain configuration
@@ -952,7 +1219,7 @@
                 pattern: 'classic',
                 speed: 35,
                 intensity: 70,
-                density: 100,
+                density: 50,
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
                 fontSize: 10,
@@ -960,18 +1227,377 @@
                 direction: 'down',
                 spectrumColor: '#ff0000'
             },
-            
+
             // Pattern definitions
-            logActivity(message) {
-                debugLog(`🌊 Matrix Rain: ${message}`);
+            patterns: {
+                classic: {
+                    name: 'Classic Matrix',
+                    description: 'Traditional matrix rain effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down'
+                },
+                reverse: {
+                    name: 'Reverse Flow',
+                    description: 'Matrix rain flowing upward',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'up'
+                },
+                sideways: {
+                    name: 'Sideways Flow',
+                    description: 'Matrix rain flowing horizontally',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'left'
+                },
+                bidirectional: {
+                    name: 'Bidirectional',
+                    description: 'Matrix rain flowing in two directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'bidirectional'
+                },
+                quadirectional: {
+                    name: 'Quadirectional',
+                    description: 'Matrix rain flowing in four directions',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'quadirectional'
+                },
+                interdimensional: {
+                    name: 'Interdimensional',
+                    description: 'Multi-dimensional matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'interdimensional'
+                },
+                rainbow: {
+                    name: 'Rainbow Spectrum',
+                    description: 'Rainbow-colored matrix rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'down',
+                    colors: ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080']
+                },
+                pentad: {
+                    name: 'Pentad Prism',
+                    description: 'Five-dimensional prism effect',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'pentad'
+                },
+                chaos: {
+                    name: 'Chaos Flow',
+                    description: 'Chaotic matrix rain patterns',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'chaos'
+                },
+                harmonic: {
+                    name: 'Harmonic Waves',
+                    description: 'Harmonically synchronized rain',
+                    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}',
+                    direction: 'harmonic'
+                }
             },
 
-            init() {
-                debugLog('🌊 Matrix Rain Advanced Visual Control Unit initialized');
-            }
+            // === LOGGING FUNCTIONS ===
+            logActivity(message, type = 'info') {
+                console.log(`🌊 Matrix Rain: ${message}`);
+                try {
+                    this.addActivity(message, type === 'success');
+                    this.addAuditEntry(`[🌊 Matrix Rain] ${message}`);
+                } catch (error) {
+                    console.log(`🌊 Matrix Rain: ${message} (UI elements not ready)`);
+                }
+            },
+
+
+            // === PATTERN CONTROL FUNCTIONS ===
+            setRainPattern(pattern, buttonElement) {
+                console.log(`🌊 Matrix Rain: Setting pattern to ${pattern}`);
+
+                // Update active button
+                document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
+                if (buttonElement) {
+                    buttonElement.classList.add('active');
+                }
+
+                this.rainConfig.pattern = pattern;
+                const patternData = this.patterns[pattern];
+
+                this.addActivity(`🌧️ Rain pattern changed to: ${patternData.name}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Pattern changed: ${patternData.name} - ${patternData.description}`);
+
+                // Apply pattern-specific settings
+                this.applyPatternSettings(pattern);
+
+                return `Pattern set to: ${patternData.name}`;
+            },
+
+            applyPatternSettings(pattern) {
+                const patternData = this.patterns[pattern];
+
+                // Update character set
+                if (patternData.characters) {
+                    this.rainConfig.characterSet = patternData.characters;
+                    document.getElementById('characterSet').value = 'custom';
+                }
+
+                // Update direction
+                if (patternData.direction) {
+                    this.rainConfig.direction = patternData.direction;
+                    document.getElementById('rainDirection').value = patternData.direction;
+                }
+
+                // Apply special effects
+                if (pattern === 'rainbow') {
+                    this.applyRainbowEffect();
+                } else if (pattern === 'pentad') {
+                    this.applyPentadEffect();
+                } else if (pattern === 'chaos') {
+                    this.applyChaosEffect();
+                } else if (pattern === 'harmonic') {
+                    this.applyHarmonicEffect();
+                }
+            },
+
+            applyRainbowEffect() {
+                console.log("🌈 Applying rainbow spectrum effect...");
+                this.addActivity("🌈 Rainbow spectrum effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌈 Rainbow spectrum effect activated");
+            },
+
+            applyPentadEffect() {
+                console.log("🔮 Applying pentad prism effect...");
+                this.addActivity("🔮 Pentad prism effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🔮 Pentad prism effect activated");
+            },
+
+            applyChaosEffect() {
+                console.log("🌀 Applying chaos flow effect...");
+                this.addActivity("🌀 Chaos flow effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🌀 Chaos flow effect activated");
+            },
+
+            applyHarmonicEffect() {
+                console.log("🎵 Applying harmonic wave effect...");
+                this.addActivity("🎵 Harmonic wave effect applied", true);
+                this.addAuditEntry("[🌊 Matrix Rain] 🎵 Harmonic wave effect activated");
+            },
+
             // === VISUAL CONTROL FUNCTIONS ===
+            updateRainSpeed() {
+                const speed = document.getElementById('rainSpeed').value;
+                this.rainConfig.speed = parseInt(speed);
+                this.addActivity(`⚡ Rain speed updated to: ${speed}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Speed updated: ${speed}`);
+            },
+
+            updateRainIntensity() {
+                const intensity = document.getElementById('rainIntensity').value;
+                this.rainConfig.intensity = parseInt(intensity);
+                this.addActivity(`🔥 Rain intensity updated to: ${intensity}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔥 Intensity updated: ${intensity}%`);
+            },
+
+            updateRainDensity() {
+                const density = document.getElementById('rainDensity').value;
+                this.rainConfig.density = parseInt(density);
+                this.addActivity(`🌧️ Rain density updated to: ${density}%`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌧️ Density updated: ${density}%`);
+            },
+
+            updateRainColors() {
+                const primary = document.getElementById('primaryColor').value;
+                const secondary = document.getElementById('secondaryColor').value;
+                this.rainConfig.primaryColor = primary;
+                this.rainConfig.secondaryColor = secondary;
+                this.addActivity(`🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🎨 Colors updated: Primary ${primary}, Secondary ${secondary}`);
+            },
+
+
+            updateFontSize() {
+                const fontSize = document.getElementById('fontSize').value;
+                this.rainConfig.fontSize = parseInt(fontSize);
+                this.addActivity(`📝 Font size updated to: ${fontSize}px`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 📝 Font size updated: ${fontSize}px`);
+            },
+
+            updateCharacterSet() {
+                const characterSet = document.getElementById('characterSet').value;
+                this.rainConfig.characterSet = characterSet;
+                this.addActivity(`🔤 Character set updated to: ${characterSet}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔤 Character set updated: ${characterSet}`);
+            },
+
+            updateRainDirection() {
+                const direction = document.getElementById('rainDirection').value;
+                const oldDirection = this.rainConfig.direction;
+                this.rainConfig.direction = direction;
+
+                // Shared rain positions are preserved when direction changes.
+
+                this.addActivity(`➡️ Rain direction updated to: ${direction}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ➡️ Direction updated: ${direction}`);
+            },
+
+            setSpectrumColor(color, colorElement) {
+                document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
+                if (colorElement) {
+                    colorElement.classList.add('active');
+                }
+                this.rainConfig.primaryColor = color;
+                this.rainConfig.secondaryColor = color;
+                this.addActivity(`🌈 Spectrum color set to: ${color}`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🌈 Spectrum color: ${color}`);
+            },
+
             // === TOOLKIT INTEGRATION FUNCTIONS ===
+            activatePatternAnalysis() {
+                const result = toolkits.kleene.functions.analyzeRecursiveConvergence("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('kleene-result').textContent = result;
+            },
+
+            resurrectVisualData() {
+                const result = toolkits.phoenix.functions.resurrectData("visual_data");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('phoenix-result').textContent = result;
+            },
+
+            harmonizePatterns() {
+                const result = toolkits.harmonic.functions.integratePatterns("matrix_patterns");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('harmonic-result').textContent = result;
+            },
+
+            createEchoChamber() {
+                const result = toolkits.breath.functions.createEchoChamber("matrix_echoes");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('breath-result').textContent = result;
+            },
+
+            interpretSymbols() {
+                const result = toolkits.symbolic.functions.interpretArchetypalSymbol("matrix");
+                MatrixRainEngine.logActivity(result, 'info');
+                document.getElementById('symbolic-result').textContent = result;
+            },
+
+            optimizeFlow() {
+                console.log("⚡ Matrix Rain: Optimizing flow...");
+
+                const optimization = Math.floor(Math.random() * 20) + 80;
+                const efficiency = Math.floor(Math.random() * 15) + 85;
+
+                this.addActivity(`⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] ⚡ Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`);
+
+                return `Flow optimization: ${optimization}% optimized, ${efficiency}% efficient`;
+            },
+
+            backupVisualState() {
+                console.log("💾 Matrix Rain: Backing up visual state...");
+
+                const backupSize = Math.floor(Math.random() * 1000) + 100;
+                const redundancy = Math.floor(Math.random() * 100);
+
+                this.addActivity(`💾 Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 💾 Visual backup: ${backupSize}MB, ${redundancy}% redundancy`);
+
+                return `Visual state backup: ${backupSize}MB (${redundancy}% redundancy)`;
+            },
+
+            restoreVisualState() {
+                console.log("🔄 Matrix Rain: Restoring visual state...");
+
+                const restoreTime = Math.floor(Math.random() * 3000) + 1000;
+
+                this.addActivity(`🔄 Visual state restore initiated (${restoreTime}ms)`, true);
+                this.addAuditEntry(`[🌊 Matrix Rain] 🔄 Visual restore initiated: ${restoreTime}ms`);
+
+                setTimeout(() => {
+                    this.addActivity('🔄 Visual state restore completed', true);
+                    this.addAuditEntry('[🌊 Matrix Rain] 🔄 Visual restore completed');
+                }, restoreTime);
+
+                return `Visual state restore initiated (${restoreTime}ms)`;
+            },
+
+            emergencyStop() {
+                console.log("🚨 Matrix Rain: Emergency stop initiated...");
+
+                this.addActivity('🚨 EMERGENCY STOP INITIATED!', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🚨 Emergency stop protocol executed');
+
+                setTimeout(() => {
+                    alert('Emergency stop completed. All visual patterns safely halted.');
+                }, 2000);
+
+                return 'Emergency stop initiated';
+            },
+
+            // === UTILITY FUNCTIONS ===
+            addActivity(message, isRecent = false) {
+                const activityFeed = document.querySelector('.activity-feed');
+                if (!activityFeed) {
+                    console.log(`🌊 Matrix Rain: ${message} (activity feed not found)`);
+                    return;
+                }
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+                activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+                if (activityFeed.children.length > 20) {
+                    activityFeed.removeChild(activityFeed.lastChild);
+                }
+                if (isRecent) {
+                    setTimeout(() => {
+                        activityItem.classList.remove('recent');
+                    }, 5000);
+                }
+            },
+
+            addAuditEntry(message) {
+                const auditCanvas = document.querySelector('.audit-canvas');
+                if (!auditCanvas) {
+                    console.log(`🌊 Matrix Rain: ${message} (audit canvas not found)`);
+                    return;
+                }
+                const auditEntry = document.createElement('div');
+                auditEntry.className = 'audit-entry';
+                auditEntry.textContent = message;
+                auditCanvas.insertBefore(auditEntry, auditCanvas.firstChild);
+                if (auditCanvas.children.length > 15) {
+                    auditCanvas.removeChild(auditCanvas.lastChild);
+                }
+            },
+
+            // === INITIALIZATION ===
+            init() {
+                this.addActivity('🌊 Matrix Rain Advanced Visual Control Unit initialized', true);
+                this.addAuditEntry('[🌊 Matrix Rain] 🌊 Advanced Visual Control Unit initialized');
+                console.log("🌊 Matrix Rain Advanced Visual Control Unit initialized");
+            }
         };
+
+        // === GLOBAL FUNCTIONS FOR BUTTON INTERACTIONS ===
+        function setRainPattern(pattern, buttonElement) { MatrixRainEngine.setRainPattern(pattern, buttonElement); }
+        function updateRainSpeed() { MatrixRainEngine.updateRainSpeed(); }
+        function updateRainIntensity() { MatrixRainEngine.updateRainIntensity(); }
+        function updateRainDensity() { MatrixRainEngine.updateRainDensity(); }
+        function updateRainColors() { MatrixRainEngine.updateRainColors(); }
+        function updateFontSize() { MatrixRainEngine.updateFontSize(); }
+        function updateCharacterSet() { MatrixRainEngine.updateCharacterSet(); }
+        function updateRainDirection() { MatrixRainEngine.updateRainDirection(); }
+        function setSpectrumColor(color, colorElement) { MatrixRainEngine.setSpectrumColor(color, colorElement); }
+        function activatePatternAnalysis() { MatrixRainEngine.activatePatternAnalysis(); }
+        function resurrectVisualData() { MatrixRainEngine.resurrectVisualData(); }
+        function harmonizePatterns() { MatrixRainEngine.harmonizePatterns(); }
+        function createEchoChamber() { MatrixRainEngine.createEchoChamber(); }
+        function interpretSymbols() { MatrixRainEngine.interpretSymbols(); }
+        function optimizeFlow() { MatrixRainEngine.optimizeFlow(); }
+        function backupVisualState() { MatrixRainEngine.backupVisualState(); }
+        function restoreVisualState() { MatrixRainEngine.restoreVisualState(); }
+        function emergencyStop() { MatrixRainEngine.emergencyStop(); }
+
+        function closeMatrixModal() {
+            const modal = document.querySelector('.matrix-modal');
+            modal.style.display = 'none';
+        }
 
         function toggleMatrixModal() {
             const modal = document.querySelector('.matrix-modal');
@@ -994,43 +1620,80 @@
         window.activeColumnsMask = [];
         window.columnOrder = [];
 
+        function recomputeActiveColumnsMask() {
+            const fontSize = MatrixRainEngine.rainConfig.fontSize;
+            if (!matrixCanvas) return;
+            const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
+            const density = Math.max(1, Math.min(100, Number(MatrixRainEngine.rainConfig.density || 50)));
+
+            // Build or refresh column order when size changes
+            if (!window.columnOrder || window.columnOrder.length !== columns) {
+                window.columnOrder = Array.from({ length: columns }, (_, i) => i);
+                for (let i = window.columnOrder.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [window.columnOrder[i], window.columnOrder[j]] = [window.columnOrder[j], window.columnOrder[i]];
+                }
+            }
+
+            const activeCount = Math.max(1, Math.floor((density / 100) * columns));
+            window.activeColumnsMask = new Array(columns).fill(false);
+            for (let k = 0; k < activeCount; k++) {
+                const col = window.columnOrder[k];
+                window.activeColumnsMask[col] = true;
+            }
+
+            // Always preserve user and Ollama columns
+            if (window.userMessageColumns) {
+                window.userMessageColumns.forEach(col => {
+                    if (col >= 0 && col < window.activeColumnsMask.length) window.activeColumnsMask[col] = true;
+                });
+            }
+            if (window.ollamaMessageColumns) {
+                window.ollamaMessageColumns.forEach(col => {
+                    if (col >= 0 && col < window.activeColumnsMask.length) window.activeColumnsMask[col] = true;
+                });
+            }
+        }
         // Density-based column activation mask and order
         window.activeColumnsMask = null;
         window.columnOrder = null;
-        
+
         function initMatrixRain() {
-            debugLog("🌊 Matrix Rain: Initializing animation...");
+            console.log("🌊 Matrix Rain: Initializing animation...");
             matrixCanvas = document.getElementById('matrixRainCanvas');
             if (!matrixCanvas) {
                 console.error("🌊 Matrix Rain: Canvas element not found!");
                 return;
             }
-            matrixCtx = matrixCanvas.getContext('2d');
+            matrixCtx = matrixCanvas.getContext('2d', { alpha: false });
             if (!matrixCtx) {
                 console.error("🌊 Matrix Rain: Could not get canvas context!");
                 return;
             }
-            debugLog("🌊 Matrix Rain: Canvas initialized successfully");
-            
+            console.log("🌊 Matrix Rain: Canvas initialized successfully");
+
             // Ensure canvas is visible
             matrixCanvas.style.display = 'block';
             matrixCanvas.style.opacity = '0.8';
-            debugLog("🌊 Matrix Rain: Canvas visibility set to:", matrixCanvas.style.display, "opacity:", matrixCanvas.style.opacity);
-            
+            console.log("🌊 Matrix Rain: Canvas visibility set to:", matrixCanvas.style.display, "opacity:", matrixCanvas.style.opacity);
+
             // Set canvas size
             function resizeCanvas() {
                 matrixCanvas.width = window.innerWidth;
                 matrixCanvas.height = window.innerHeight;
+                matrixCtx.globalAlpha = 1;
+                matrixCtx.fillStyle = '#000';
+                matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
                 // Recompute active columns when canvas size changes
                 recomputeActiveColumnsMask();
             }
-            
+
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
-            
+
             // Initialize drops
             const fontSize = MatrixRainEngine.rainConfig.fontSize;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             matrixDrops = [];
             window.dropSpeeds = []; // Per-column speed variation
             window.horizontalYPositions = []; // Y positions for horizontal rain
@@ -1046,11 +1709,8 @@
             // Initialize density-based active columns mask
             recomputeActiveColumnsMask();
 
-            // Initialize density-based active columns mask
-            recomputeActiveColumnsMask();
-            
-            debugLog(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
-            
+            console.log(`🌊 Matrix Rain: Initialized ${columns} columns with font size ${fontSize}`);
+
             // Start animation
             startMatrixAnimation();
         }
@@ -1059,18 +1719,18 @@
             if (matrixInterval) {
                 clearInterval(matrixInterval);
             }
-            
+
             const speed = MatrixRainEngine.rainConfig.speed;
-            debugLog(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
+            console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
             matrixInterval = setInterval(drawMatrixRain, speed);
-            debugLog(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
+            console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
         }
 
         // Recompute active column mask based on current density and canvas size
         function recomputeActiveColumnsMask() {
             if (!matrixCanvas) return;
             const fontSize = MatrixRainEngine.rainConfig.fontSize;
-            const columns = Math.floor(matrixCanvas.width / fontSize);
+            const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             const densityPercent = parseInt(MatrixRainEngine.rainConfig.density) || 100;
             const activeCount = Math.max(1, Math.round(columns * densityPercent / 100));
 
@@ -1090,10 +1750,110 @@
                 window.activeColumnsMask[window.columnOrder[k]] = true;
             }
         }
-        
+
         // Helper function to get random character
-        function getNextCharacter(characters, columnIndex) {
+        function getNextCharacter(characters, columnIndex, isUserColumn) {
             return characters[Math.floor(Math.random() * characters.length)];
+        }
+
+        // Shared motion for the existing rain patterns. Trail marks stay where
+        // they were drawn; only the head advances, including through turns.
+        const rainMotion = { drops: [], planar: 'down', direction: 'down', reverse: 1 };
+        const rainFocalLength = 500;
+
+        function rainPlanarDirection() {
+            const direction = MatrixRainEngine.rainConfig.direction;
+            if (direction !== 'toward' && direction !== 'away') rainMotion.planar = direction === 'diagonal' ? 'down' : direction;
+            return rainMotion.planar;
+        }
+
+        function rainDepthScale(depth) { return rainFocalLength / depth; }
+        function rainDepthAlpha(depth) {
+            const near = rainFocalLength / 8, far = rainFocalLength / 0.25;
+            const edge = Math.max(0, Math.min(1, (depth - near) / 35, (far - depth) / 80));
+            return edge * edge * (3 - 2 * edge);
+        }
+
+        function rainPosition(i, fontSize) {
+            if (!rainMotion.drops[i]) {
+                rainMotion.drops[i] = {
+                    x: i * 10,
+                    y: Number.isFinite(matrixDrops[i]) ? matrixDrops[i] * fontSize : Math.random() * matrixCanvas.height,
+                    // Start mixed sizes throughout the field; each can traverse
+                    // the complete 0.25x to 8x range when depth is active.
+                    depth: rainFocalLength / (0.25 * Math.pow(32, 0.25 + Math.random() * 0.4)),
+                    lastStamp: null
+                };
+            }
+            return rainMotion.drops[i];
+        }
+
+        function advanceRainPosition(i, fontSize, speed) {
+            const p = rainPosition(i, fontSize);
+            const requested = MatrixRainEngine.rainConfig.direction;
+            if (requested === 'toward' || requested === 'away') {
+                // A Z segment changes only world depth. Project that one axis;
+                // do not simultaneously advance the previous X/Y direction.
+                const oldScale = rainDepthScale(p.depth);
+                const cx = matrixCanvas.width / 2, cy = matrixCanvas.height / 2;
+                // The same world-space character pitch drives X, Y and Z.
+                // Growth depends on depth, never screen position or radius.
+                p.depth += fontSize * speed * reverseFlowMultiplier * (requested === 'away' ? 1 : -1);
+                const near = rainFocalLength / 8, far = rainFocalLength / 0.25;
+                const span = far - near;
+                if (p.depth < near || p.depth > far) {
+                    p.depth = near + ((p.depth - near) % span + span) % span;
+                }
+                const ratio = rainDepthScale(p.depth) / oldScale;
+                p.x = cx + (p.x - cx) * ratio;
+                p.y = cy + (p.y - cy) * ratio;
+                return;
+            }
+            const direction = rainPlanarDirection();
+            const step = fontSize * rainDepthScale(p.depth) * speed * reverseFlowMultiplier;
+            if (direction === 'left') p.x -= step;
+            else if (direction === 'right') p.x += step;
+            else if (direction === 'up') p.y -= step;
+            else p.y += step;
+            // The whole viewport is one loop. No per-stream region or radial mask.
+            // Fixed padding avoids moving the wrap boundary as characters grow.
+            const pad = fontSize * 8;
+            const wrap = (v, span) => ((v + pad) % (span + pad * 2) + span + pad * 2) % (span + pad * 2) - pad;
+            if (direction === 'left' || direction === 'right') p.x = wrap(p.x, matrixCanvas.width);
+            else p.y = wrap(p.y, matrixCanvas.height);
+        }
+
+        function paintRainCharacter(char, x, y, i, fontSize) {
+            const p = rainPosition(i, fontSize);
+            const alpha = matrixCtx.globalAlpha;
+            const size = fontSize * rainDepthScale(p.depth);
+            matrixCtx.font = `${size}px monospace`;
+            matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
+            rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
+            if (!rainCamera.enabled) matrixCtx.fillText(char, x, y);
+            matrixCtx.globalAlpha = alpha;
+            p.lastStamp = { x, y, depth: p.depth };
+        }
+
+        function prepareRainMotion(fontSize) {
+            rainPlanarDirection();
+            const direction = MatrixRainEngine.rainConfig.direction;
+            const changed = direction !== rainMotion.direction || reverseFlowMultiplier !== rainMotion.reverse;
+            const count = Math.max(1, Math.floor(matrixCanvas.width / 10));
+            for (let i = 0; i < count; i++) {
+                const p = rainPosition(i, fontSize);
+                // The renderer advances after stamping. On a turn, discard that
+                // not-yet-visible step and use the last visible glyph as the joint.
+                if (changed && p.lastStamp) {
+                    p.x = p.lastStamp.x;
+                    p.y = p.lastStamp.y;
+                    p.depth = p.lastStamp.depth;
+                }
+            }
+            rainMotion.direction = direction;
+            rainMotion.reverse = reverseFlowMultiplier;
+            // Leave every previous glyph untouched. The original black canvas
+            // fade ages its position, size and color in place, across all turns.
         }
 
         function drawMatrixRain() {
@@ -1105,74 +1865,21 @@
             if (!window.drawCount) window.drawCount = 0;
             window.drawCount++;
             if (window.drawCount <= 5) {
-                debugLog(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
-            }
-            
-
-            // === AUTO-CONTRAST BACKGROUND ===
-            // Calculate complementary color based on current character colors
-            function hexToHSL_bg(hex) {
-                hex = hex.replace('#', '');
-                const r = parseInt(hex.substr(0, 2), 16) / 255;
-                const g = parseInt(hex.substr(2, 2), 16) / 255;
-                const b = parseInt(hex.substr(4, 2), 16) / 255;
-                const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                let h, s, l = (max + min) / 2;
-                if (max === min) {
-                    h = s = 0;
-                } else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-                        case g: h = ((b - r) / d + 2) / 6; break;
-                        case b: h = ((r - g) / d + 4) / 6; break;
-                    }
-                }
-                return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+                console.log(`🌊 Matrix Rain: Draw call #${window.drawCount}, pattern: ${config.pattern}, opacity: ${opacity}`);
             }
 
-            // Get average hue from primary and secondary colors
-            let avgHue = 0;
-            let primaryHSL, secondaryHSL;
 
-            if (config.primaryColor) {
-                if (config.primaryColor.includes('#')) {
-                    primaryHSL = hexToHSL_bg(config.primaryColor);
-                } else if (config.primaryColor.includes('hsl')) {
-                    const match = config.primaryColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-                    if (match) primaryHSL = { h: parseInt(match[1]), s: parseInt(match[2]), l: parseInt(match[3]) };
-                }
-            }
-
-            if (config.secondaryColor) {
-                if (config.secondaryColor.includes('#')) {
-                    secondaryHSL = hexToHSL_bg(config.secondaryColor);
-                } else if (config.secondaryColor.includes('hsl')) {
-                    const match = config.secondaryColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-                    if (match) secondaryHSL = { h: parseInt(match[1]), s: parseInt(match[2]), l: parseInt(match[3]) };
-                }
-            }
-
-            // Calculate average hue
-            if (primaryHSL && secondaryHSL) {
-                avgHue = (primaryHSL.h + secondaryHSL.h) / 2;
-            } else if (primaryHSL) {
-                avgHue = primaryHSL.h;
-            } else {
-                avgHue = 120; // Default green
-            }
-
-            // Complementary color (opposite on color wheel)
-            const complementHue = (avgHue + 180) % 360;
-
-            // Clear canvas with auto-contrast background (dark complementary color)
-            matrixCtx.fillStyle = `hsla(${complementHue}, 80%, 8%, 0.12)`;
+            // Fade character trails toward black; audio changes glyph colors only.
+            // Reset alpha left by the 3D renderer before the full-canvas fade.
+            matrixCtx.globalAlpha = 1;
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
             matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-            
+
+            prepareRainMotion(fontSize);
+
             // Set font
             matrixCtx.font = `${fontSize}px monospace`;
-            
+
             // Get character set
             let characters = config.characterSet;
             if (characters === 'matrix') {
@@ -1190,10 +1897,7 @@
             // Draw rain based on DIRECTION first, then pattern
             const direction = config.direction;
 
-            if (direction === 'toward') {
-                // 3D toward camera mode - uses special positioning with any pattern
-                draw3DTowardCamera(characters, fontSize, opacity, config.pattern);
-            } else {
+            { // All rain directions use the existing pattern and character population.
                 // Traditional 2D directional rain
                 if (config.pattern === 'particles') {
                     drawParticleField(characters, fontSize, opacity);
@@ -1209,8 +1913,9 @@
                     drawClassicRain(characters, fontSize, opacity);
                 }
             }
+            rainCamera.render();
         }
-        
+
         // Track animation state for all patterns
         if (!window.geometricState) {
             window.geometricState = {
@@ -1220,311 +1925,336 @@
                 selectedPattern: 0
             };
         }
-        
+
         // Particle system state
         if (!window.particles) {
             window.particles = [];
         }
-        
+
         function drawClassicRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const direction = config.direction || 'down';
-            
+            const direction = rainPlanarDirection();
+
             // Debug: Log drawing info for first few frames
             if (window.drawCount <= 3) {
-                debugLog(`🌊 Matrix Rain: Direction ${direction}, color: ${config.primaryColor}`);
+                console.log(`🌊 Matrix Rain: Direction ${direction}, color: ${config.primaryColor}`);
             }
-            
+
             if (direction === 'left' || direction === 'right') {
                 // HORIZONTAL rain (left/right) - USE ALL DROPS
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    // Apply density mask (do not skip user columns)
-                    if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    // Check if this is a user message column FIRST
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
-                    const x = matrixDrops[i] * fontSize;
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const y = rainPosition(i, fontSize).y;
+                    const x = rainPosition(i, fontSize).x;
 
                     matrixCtx.fillStyle = config.primaryColor;
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, x, y);
+                    paintRainCharacter(char, x, y, i, fontSize);
 
                     // Update horizontal position
                     const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
-                    matrixDrops[i] += dropSpeed * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxCols = matrixCanvas.width / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
-                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                    advanceRainPosition(i, fontSize, dropSpeed);
                 }
             } else if (direction === 'diagonal') {
                 // DIAGONAL rain
-                const streams = Math.floor(matrixCanvas.width / fontSize);
+                const streams = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < streams; i++) {
-                    // Apply density mask (do not skip user columns)
-                    if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    // Check if this is a user message column FIRST
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip streams used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const progress = matrixDrops[i];
-                    const x = i * fontSize + progress * fontSize * 0.5;
-                    const y = progress * fontSize;
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const x = rainPosition(i, fontSize).x;
+                    const y = rainPosition(i, fontSize).y;
 
                     if (x < matrixCanvas.width && y < matrixCanvas.height) {
                         matrixCtx.fillStyle = config.primaryColor;
                         matrixCtx.globalAlpha = opacity;
-                        matrixCtx.fillText(char, x, y);
+                        paintRainCharacter(char, x, y, i, fontSize);
                     }
-                    
+
                     const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
-                    matrixDrops[i] += dropSpeed * reverseFlowMultiplier;
-                    
-                    // Simple wrap around - bulletproof
-                    const maxDiag = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxDiag + 10;
-                    while (matrixDrops[i] > maxDiag) matrixDrops[i] -= maxDiag + 10;
+                    advanceRainPosition(i, fontSize, dropSpeed);
                     }
             } else {
                 // VERTICAL rain (up/down)
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    // Apply density mask (do not skip user columns)
-                    if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    // Check if this is a user message column FIRST
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const x = i * fontSize;
-                    const y = matrixDrops[i] * fontSize;
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const x = rainPosition(i, fontSize).x;
+                    const y = rainPosition(i, fontSize).y;
 
                     matrixCtx.fillStyle = config.primaryColor;
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, x, y);
-                    
+                    paintRainCharacter(char, x, y, i, fontSize);
+
                     // Update vertical position
                     const dropSpeed = window.dropSpeeds && window.dropSpeeds[i] ? window.dropSpeeds[i] : 1;
-                    matrixDrops[i] += dropSpeed * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
-                    
-                    // Simple wrap around - bulletproof
-                    const maxRows = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
-                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                    advanceRainPosition(i, fontSize, dropSpeed);
                 }
             }
         }
-        
+
         function drawRainbowRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const direction = config.direction || 'down';
+            const direction = rainPlanarDirection();
             const colors = ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff', '#ff0080'];
 
             if (direction === 'left' || direction === 'right') {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    // Apply density mask (do not skip user columns)
-                    if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                         continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
-                    const x = matrixDrops[i] * fontSize;
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const y = rainPosition(i, fontSize).y;
+                    const x = rainPosition(i, fontSize).x;
                     const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
 
                     matrixCtx.fillStyle = colors[colorIndex];
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, x, y);
+                    paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxCols = matrixCanvas.width / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
-                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                    advanceRainPosition(i, fontSize, 1);
                 }
             } else {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters, i);
-                const x = i * fontSize;
-                const y = matrixDrops[i] * fontSize;
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                // Skip columns used ONLY by Ollama (don't skip user columns even if Ollama uses them)
+                if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    continue;
+                }
+
+                const char = getNextCharacter(characters, i, isUserColumn);
+                const x = rainPosition(i, fontSize).x;
+                const y = rainPosition(i, fontSize).y;
                 const colorIndex = Math.floor((i + Date.now() / 100) % colors.length);
 
                     matrixCtx.fillStyle = colors[colorIndex];
                 matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(char, x, y);
+                paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxRows = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
-                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                    advanceRainPosition(i, fontSize, 1);
                 }
             }
         }
-        
+
         function drawPentadRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const direction = config.direction || 'down';
+            const direction = rainPlanarDirection();
             const pentadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
 
             if (direction === 'left' || direction === 'right') {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    // Apply density-based mask
-                    if (window.activeColumnsMask && window.activeColumnsMask.length) {
-                        if (!window.activeColumnsMask[i]) continue;
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
-                    const x = matrixDrops[i] * fontSize;
+                    // Apply density-based mask (unless user or Ollama column)
+                    if (window.activeColumnsMask && window.activeColumnsMask.length) {
+                        if (!isUserColumn && (!window.ollamaMessageColumns || !window.ollamaMessageColumns.has(i))) {
+                            if (!window.activeColumnsMask[i]) continue;
+                        }
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const y = rainPosition(i, fontSize).y;
+                    const x = rainPosition(i, fontSize).x;
                     const color = pentadColors[i % 5];
 
                     matrixCtx.fillStyle = color;
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, x, y);
+                    paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxCols = matrixCanvas.width / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
-                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                    advanceRainPosition(i, fontSize, (0.5 + Math.random() * 0.5));
                 }
             } else {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             for (let i = 0; i < columns; i++) {
-                // Apply density mask (do not skip user columns)
-                if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                // Skip columns used ONLY by Ollama
+                if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                     continue;
                 }
 
-                const char = getNextCharacter(characters, i);
-                const x = i * fontSize;
-                const y = matrixDrops[i] * fontSize;
+                // Apply density mask (do not skip user columns)
+                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    continue;
+                }
+
+                const char = getNextCharacter(characters, i, isUserColumn);
+                const x = rainPosition(i, fontSize).x;
+                const y = rainPosition(i, fontSize).y;
                     const color = pentadColors[i % 5];
 
                 matrixCtx.fillStyle = color;
                 matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(char, x, y);
+                paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (0.5 + Math.random() * 0.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxRows = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
-                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                    advanceRainPosition(i, fontSize, (0.5 + Math.random() * 0.5));
                 }
             }
         }
-        
+
         function drawChaosRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const direction = config.direction || 'down';
+            const direction = rainPlanarDirection();
 
             if (direction === 'left' || direction === 'right') {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    const char = getNextCharacter(characters, i);
-                    const y = ((window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize) + (Math.random() - 0.5) * 10;
-                    const x = matrixDrops[i] * fontSize;
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                    // Skip columns used ONLY by Ollama
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const y = (rainPosition(i, fontSize).y) + (Math.random() - 0.5) * 10;
+                    const x = rainPosition(i, fontSize).x;
                     const hue = (Date.now() + i * 50) % 360;
 
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, x, y);
+                    paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxCols = matrixCanvas.width / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
-                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                    advanceRainPosition(i, fontSize, (0.2 + Math.random() * 1.5));
                 }
             } else {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             for (let i = 0; i < columns; i++) {
-                // Apply density mask (do not skip user columns)
-                if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                // Skip columns used ONLY by Ollama
+                if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
                     continue;
                 }
 
-                const char = getNextCharacter(characters, i);
-                    const x = i * fontSize + (Math.random() - 0.5) * 10;
-                const y = matrixDrops[i] * fontSize;
+                // Apply density mask (do not skip user columns)
+                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    continue;
+                }
+
+                const char = getNextCharacter(characters, i, isUserColumn);
+                    const x = rainPosition(i, fontSize).x + (Math.random() - 0.5) * 10;
+                const y = rainPosition(i, fontSize).y;
                 const hue = (Date.now() + i * 50) % 360;
 
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(char, x, y);
+                paintRainCharacter(char, x, y, i, fontSize);
 
-                    matrixDrops[i] += (0.2 + Math.random() * 1.5) * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxRows = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
-                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                    advanceRainPosition(i, fontSize, (0.2 + Math.random() * 1.5));
                 }
             }
         }
-        
+
         function drawHarmonicRain(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
-            const direction = config.direction || 'down';
+            const direction = rainPlanarDirection();
 
             if (direction === 'left' || direction === 'right') {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
                 for (let i = 0; i < columns; i++) {
-                    // Apply density mask
-                    if (window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
                         continue;
                     }
 
-                    const char = getNextCharacter(characters, i);
-                    const y = (window.horizontalYPositions && window.horizontalYPositions[i] ? window.horizontalYPositions[i] : Math.random() * (matrixCanvas.height / fontSize)) * fontSize;
-                    const x = matrixDrops[i] * fontSize;
+                    // Skip columns used ONLY by Ollama
+                    if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                        continue;
+                    }
+
+                    const char = getNextCharacter(characters, i, isUserColumn);
+                    const y = rainPosition(i, fontSize).y;
+                    const x = rainPosition(i, fontSize).x;
                     const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
                     const harmonicX = x + wave;
                     const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
 
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                     matrixCtx.globalAlpha = opacity;
-                    matrixCtx.fillText(char, harmonicX, y);
+                    paintRainCharacter(char, harmonicX, y, i, fontSize);
 
-                    matrixDrops[i] += 0.8 * (direction === 'left' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxCols = matrixCanvas.width / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxCols + 10;
-                    while (matrixDrops[i] > maxCols) matrixDrops[i] -= maxCols + 10;
+                    advanceRainPosition(i, fontSize, 0.8);
                 }
             } else {
-                const columns = Math.floor(matrixCanvas.width / fontSize);
+                const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             for (let i = 0; i < columns; i++) {
-                const char = getNextCharacter(characters, i);
-                const x = i * fontSize;
-                const y = matrixDrops[i] * fontSize;
+                const isUserColumn = window.userMessageColumns && window.userMessageColumns.has(i);
+
+                // Skip columns used ONLY by Ollama
+                if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    continue;
+                }
+
+                const char = getNextCharacter(characters, i, isUserColumn);
+                const x = rainPosition(i, fontSize).x;
+                const y = rainPosition(i, fontSize).y;
                 const wave = Math.sin(Date.now() / 1000 + i * 0.1) * 5;
                 const harmonicY = y + wave;
                 const hue = 120 + Math.sin(Date.now() / 2000 + i * 0.05) * 60;
 
                     matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(char, x, harmonicY);
+                paintRainCharacter(char, x, harmonicY, i, fontSize);
 
-                    matrixDrops[i] += 0.8 * (direction === 'up' ? -1 : 1) * reverseFlowMultiplier;
-
-                    // Simple wrap around - bulletproof
-                    const maxRows = matrixCanvas.height / fontSize;
-                    while (matrixDrops[i] < 0) matrixDrops[i] += maxRows + 10;
-                    while (matrixDrops[i] > maxRows) matrixDrops[i] -= maxRows + 10;
+                    advanceRainPosition(i, fontSize, 0.8);
                 }
             }
         }
@@ -1532,7 +2262,7 @@
         function drawParticleField(characters, fontSize, opacity) {
             const config = MatrixRainEngine.rainConfig;
             const numParticles = Math.floor(config.intensity * 3);
-            
+
             if (window.particles.length === 0) {
                 for (let i = 0; i < numParticles; i++) {
                     window.particles.push({
@@ -1545,44 +2275,44 @@
                     });
                 }
             }
-            
+
             const speedFactor = config.speed / 50;
             const centerX = matrixCanvas.width / 2;
             const centerY = matrixCanvas.height / 2;
-            
+
             for (let i = 0; i < Math.min(window.particles.length, numParticles); i++) {
                 const p = window.particles[i];
-                
+
                 const dx = centerX - p.x;
                 const dy = centerY - p.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const force = (dist / 500) * 0.5;
-                
+
                 p.vx += (dy / dist) * force * speedFactor * reverseFlowMultiplier;
                 p.vy += (-dx / dist) * force * speedFactor * reverseFlowMultiplier;
-                
+
                 p.x += p.vx * reverseFlowMultiplier;
                 p.y += p.vy * reverseFlowMultiplier;
-                
+
                 p.vx *= 0.99;
                 p.vy *= 0.99;
-                
+
                 if (p.x < 0) p.x = matrixCanvas.width;
                 if (p.x > matrixCanvas.width) p.x = 0;
                 if (p.y < 0) p.y = matrixCanvas.height;
                 if (p.y > matrixCanvas.height) p.y = 0;
-                
+
                 p.phase += 0.05 * reverseFlowMultiplier;
                 const pulse = Math.sin(p.phase) * 0.3 + 0.7;
                 const size = fontSize * pulse;
                 const hue = (i * 10 + window.geometricState.time * 20) % 360;
-                
+
                 matrixCtx.font = `${size}px monospace`;
                 matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
                 matrixCtx.globalAlpha = opacity;
                 matrixCtx.fillText(p.char, p.x, p.y);
             }
-            
+
             window.geometricState.time += 0.02 * reverseFlowMultiplier;
         }
 
@@ -1779,12 +2509,12 @@
         // === CONTROL FUNCTIONS ===
         function updateRainConfig() {
             const config = MatrixRainEngine.rainConfig;
-            debugLog('Matrix Rain Config Updated:', config);
+            console.log('Matrix Rain Config Updated:', config);
             MatrixRainEngine.logActivity('Configuration updated', 'info');
 
             // Recompute density-based active column mask whenever config changes
             recomputeActiveColumnsMask();
-            
+
             // Update animation with new settings ONLY if not in audio reactive mode
             // Audio mode controls speed dynamically - don't override it
             if (matrixInterval && !audioReactiveActive) {
@@ -1793,10 +2523,10 @@
                 // Start new animation with current config speed
                 const newSpeed = MatrixRainEngine.rainConfig.speed;
                 matrixInterval = setInterval(drawMatrixRain, newSpeed);
-                debugLog(`🌊 Matrix Rain: Animation restarted with speed ${newSpeed}ms`);
+                console.log(`🌊 Matrix Rain: Animation restarted with speed ${newSpeed}ms`);
             }
         }
-        
+
         function toggleMatrixRain() {
             const canvas = document.getElementById('matrixRainCanvas');
             if (canvas.style.display === 'none') {
@@ -1811,7 +2541,7 @@
                 MatrixRainEngine.logActivity('Matrix rain deactivated', 'warning');
             }
         }
-        
+
         function emergencyStop() {
             const canvas = document.getElementById('matrixRainCanvas');
             canvas.style.display = 'none';
@@ -1822,6 +2552,21 @@
         }
 
         // === REVERSE FLOW TOGGLE ===
+        function toggleReverseFlow() {
+            reverseFlowMultiplier *= -1; // Flip between 1 and -1
+            const btn = document.getElementById('reverseFlowBtn');
+
+            if (reverseFlowMultiplier === -1) {
+                btn.textContent = '⏩ FORWARD FLOW';
+                btn.style.background = '#00ff88';
+                MatrixRainEngine.logActivity('⏪ REVERSE FLOW ACTIVATED - Everything is rewinding!', 'success');
+            } else {
+                btn.textContent = '⏪ REVERSE FLOW';
+                btn.style.background = '#ffaa00';
+                MatrixRainEngine.logActivity('⏩ Forward flow restored', 'info');
+            }
+        }
+
         function setRainPattern(pattern, buttonElement) {
             MatrixRainEngine.rainConfig.pattern = pattern;
             updateRainConfig();
@@ -1832,25 +2577,25 @@
                 buttonElement.classList.add('active');
             }
         }
-        
+
         function updateRainSpeed() {
             const speed = document.getElementById('rainSpeed').value;
             MatrixRainEngine.rainConfig.speed = 101 - speed; // Invert for intuitive control
             updateRainConfig();
         }
-        
+
         function updateRainIntensity() {
             const intensity = document.getElementById('rainIntensity').value;
             MatrixRainEngine.rainConfig.intensity = intensity;
             updateRainConfig();
         }
-        
+
         function updateRainDensity() {
             const density = document.getElementById('rainDensity').value;
             MatrixRainEngine.rainConfig.density = density;
             updateRainConfig();
         }
-        
+
         function updateRainColors() {
             const primary = document.getElementById('primaryColor').value;
             const secondary = document.getElementById('secondaryColor').value;
@@ -1983,6 +2728,12 @@
             }
         }
 
+        function updateFontSize() {
+            const fontSize = document.getElementById('fontSize').value;
+            MatrixRainEngine.rainConfig.fontSize = parseInt(fontSize);
+            updateRainConfig();
+        }
+
         function updateCharacterSet() {
             const characterSet = document.getElementById('characterSet').value;
             const customInput = document.getElementById('customCharacters');
@@ -2000,36 +2751,17 @@
 
             updateRainConfig();
         }
-        
+
         function updateRainDirection() {
             const direction = document.getElementById('rainDirection').value;
             const oldDirection = MatrixRainEngine.rainConfig.direction;
             MatrixRainEngine.rainConfig.direction = direction;
 
-            // Reinitialize drop positions when switching to/from horizontal
-            if (matrixCanvas && matrixDrops) {
-                const fontSize = MatrixRainEngine.rainConfig.fontSize;
-                const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
-                const isHorizontal = (direction === 'left' || direction === 'right');
-
-                if (wasHorizontal !== isHorizontal) {
-                    // Switching orientation - reinitialize all drops
-                    const columns = Math.floor(matrixCanvas.width / fontSize);
-                    for (let i = 0; i < columns; i++) {
-                        if (isHorizontal) {
-                            // Going horizontal: randomize X positions across full width
-                            matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
-                        } else {
-                            // Going vertical: randomize Y positions across full height
-                            matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
-                        }
-                    }
-                }
-            }
+            // Shared rain positions are preserved when direction changes.
 
             updateRainConfig();
         }
-        
+
         function setSpectrumColor(color, colorElement) {
             document.querySelectorAll('.spectrum-color').forEach(btn => btn.classList.remove('active'));
             if (colorElement) {
@@ -2040,8 +2772,33 @@
         }
 
         // === INITIALIZATION ===
+
+        function initializeSettingChoices() {
+            document.querySelectorAll('.setting-choices').forEach(group => {
+                const input = document.getElementById(group.dataset.control);
+                const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+                const refresh = () => group.querySelectorAll('.setting-choice').forEach(button => {
+                    button.setAttribute('aria-pressed', String(button.dataset.value === input.value));
+                });
+                // Keep selections synchronized when presets and orchestration assign .value.
+                Object.defineProperty(input, 'value', {
+                    configurable: true,
+                    get() { return nativeValue.get.call(this); },
+                    set(value) { nativeValue.set.call(this, value); refresh(); }
+                });
+                group.addEventListener('click', event => {
+                    const button = event.target.closest('.setting-choice');
+                    if (!button || !group.contains(button)) return;
+                    input.value = button.dataset.value;
+                    window[group.dataset.handler]();
+                });
+                refresh();
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog("🌊 Matrix Rain: DOM loaded, initializing...");
+            initializeSettingChoices();
+            console.log("🌊 Matrix Rain: DOM loaded, initializing...");
             MatrixRainEngine.init();
 
             // FORCE RIGHT-CLICK TO WORK IN WALLPAPER ENGINE
@@ -2069,9 +2826,9 @@
             // Wait a bit for the engine to initialize, then start the rain
             setTimeout(() => {
                 initMatrixRain();
-                debugLog("🌊 Matrix Rain: Animation engine initialized");
+                console.log("🌊 Matrix Rain: Animation engine initialized");
             }, 100);
-            
+
             // Add keyboard shortcut: Press 'M' to toggle settings modal
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'm' || e.key === 'M') {
@@ -2141,24 +2898,24 @@
 
                     // MASSIVE amplification for Wallpaper Engine audio (remove artificial cap!)
                     // Apply 8x multiplier for ULTRA sensitivity at normal volumes
-                    audioDataArray = new Uint8Array(audioArray.map(v => Math.min(255, Math.floor(Math.max(v, 0) * 8 * 255))));
+                    audioDataArray = new Uint8Array(audioArray.map(v => Math.floor(Math.max(v, 0) * 8 * 255)));
                     audioBufferLength = audioDataArray.length;
                     analyzeAudio();
                 });
             }
         });
-        
+
         // === CHAOS RANDOMIZER ===
         function activateChaosRandomizer() {
-            debugLog("🌀 CHAOS RANDOMIZER ACTIVATED!");
+            console.log("🌀 CHAOS RANDOMIZER ACTIVATED!");
             MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: Initiating complete system chaos!", 'success');
-            
+
             // Randomize all settings with all available patterns!
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
-            
+            const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];
+
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
             MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
@@ -2173,48 +2930,29 @@
             document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
             document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
             document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
-            
+
             // Update pattern button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            const patternBtn = document.querySelector(`[onclick^="setRainPattern('${MatrixRainEngine.rainConfig.pattern}'"]`);
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
             if (patternBtn) patternBtn.classList.add('active');
-            
+
             // Log chaos results
             MatrixRainEngine.logActivity(`🌀 CHAOS: Pattern=${MatrixRainEngine.rainConfig.pattern}, Speed=${MatrixRainEngine.rainConfig.speed}, CharSet=${MatrixRainEngine.rainConfig.characterSet}`, 'success');
-            
+
             // Update animation
             updateRainConfig();
-            
-            // Create visual chaos effect
-            createChaosEffect();
+
+            // Chaos changes the characters without flashing the black backdrop.
         }
-        
-        function createChaosEffect() {
-            // Create temporary visual chaos
-            const canvas = document.getElementById('matrixRainCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Flash effect
-            let flashCount = 0;
-            const flashInterval = setInterval(() => {
-                ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.3)`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                flashCount++;
-                if (flashCount >= 5) {
-                    clearInterval(flashInterval);
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-            }, 100);
-        }
-        
+
         // === AUTO ORCHESTRATOR - Simple RNG automation ===
         let autoOrchestratorInterval = null;
         let autoOrchestratorActive = false;
-        
+        window.autoOrchestratorActive = false; // Expose globally for Ollama integration
+
         function toggleAutoOrchestrator() {
             autoOrchestratorActive = !autoOrchestratorActive;
+            window.autoOrchestratorActive = autoOrchestratorActive; // Sync global
             const btn = document.getElementById('autoOrchestratorBtn');
 
             if (autoOrchestratorActive) {
@@ -2231,46 +2969,46 @@
                 updateModeButtons(null); // Re-enable all buttons
             }
         }
-        
+
         function startAutoOrchestrator() {
             // Run first change immediately
             orchestrateRandomChange();
-            
+
             // Then schedule recurring changes
             scheduleNextChange();
         }
-        
+
         function scheduleNextChange() {
             if (!autoOrchestratorActive) return;
-            
+
             // Random interval: 8-15 seconds (longer to enjoy each scene)
             const interval = 8000 + Math.floor(Math.random() * 7000);
             const seconds = Math.round(interval / 1000);
-            
-            debugLog(`⏱️ Next orchestrator change in ${seconds} seconds...`);
+
+            console.log(`⏱️ Next orchestrator change in ${seconds} seconds...`);
             MatrixRainEngine.logActivity(`⏱️ Next change in ${seconds}s`, 'info');
-            
+
             autoOrchestratorInterval = setTimeout(() => {
                 orchestrateRandomChange();
                 scheduleNextChange(); // Schedule next one
             }, interval);
         }
-        
+
         function orchestrateRandomChange() {
             if (!autoOrchestratorActive) return;
-            
-            debugLog('🎭 ORCHESTRATOR: Running change cycle...');
-            
+
+            console.log('🎭 ORCHESTRATOR: Running change cycle...');
+
             // Store previous pattern to detect changes
             const previousPattern = MatrixRainEngine.rainConfig.pattern;
             const previousDirection = MatrixRainEngine.rainConfig.direction;
-            
+
             // All available patterns
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = ['down', 'up', 'left', 'right', 'diagonal', 'toward'];
-            
+            const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];
+
             // Randomize EVERYTHING
             const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
             const patternChanged = newPattern !== previousPattern;
@@ -2283,26 +3021,7 @@
             MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
             const newDirection = directions[Math.floor(Math.random() * directions.length)];
 
-            // Reinitialize drop positions when switching to/from horizontal
-            if (matrixCanvas && matrixDrops && previousDirection !== newDirection) {
-                const fontSize = MatrixRainEngine.rainConfig.fontSize;
-                const wasHorizontal = (previousDirection === 'left' || previousDirection === 'right');
-                const isHorizontal = (newDirection === 'left' || newDirection === 'right');
-
-                if (wasHorizontal !== isHorizontal) {
-                    // Switching orientation - reinitialize all drops
-                    const columns = Math.floor(matrixCanvas.width / fontSize);
-                    for (let i = 0; i < columns; i++) {
-                        if (isHorizontal) {
-                            // Going horizontal: randomize X positions across full width
-                            matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
-                        } else {
-                            // Going vertical: randomize Y positions across full height
-                            matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
-                        }
-                    }
-                }
-            }
+            // Shared rain positions are preserved when direction changes.
 
             MatrixRainEngine.rainConfig.direction = newDirection;
 
@@ -2316,43 +3035,43 @@
             document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
             document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
             document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
-            
+
             // Update active pattern button
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            const patternBtn = document.querySelector(`[onclick^="setRainPattern('${MatrixRainEngine.rainConfig.pattern}'"]`);
+            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
             if (patternBtn) patternBtn.classList.add('active');
-            
+
             // Log the changes with CLEAR visibility
             const directionChanged = MatrixRainEngine.rainConfig.direction !== previousDirection;
-            debugLog(`\n========================================`);
-            debugLog(`🎭 ORCHESTRATOR CHANGE:`);
-            debugLog(`   Pattern: ${previousPattern} → ${MatrixRainEngine.rainConfig.pattern}`);
-            debugLog(`   Direction: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`);
-            debugLog(`   Reverse Flow: ${reverseFlowMultiplier === -1 ? '⏪ REWINDING' : '⏩ FORWARD'}`);
-            debugLog(`========================================\n`);
-            
+            console.log(`\n========================================`);
+            console.log(`🎭 ORCHESTRATOR CHANGE:`);
+            console.log(`   Pattern: ${previousPattern} → ${MatrixRainEngine.rainConfig.pattern}`);
+            console.log(`   Direction: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`);
+            console.log(`   Reverse Flow: ${reverseFlowMultiplier === -1 ? '⏪ REWINDING' : '⏩ FORWARD'}`);
+            console.log(`========================================\n`);
+
             // Show direction change notification
             if (directionChanged) {
                 MatrixRainEngine.logActivity(`↗️ DIRECTION CHANGED: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`, 'success');
             }
-            
+
             if (patternChanged) {
                 MatrixRainEngine.logActivity(`🎭 NEW Pattern: ${MatrixRainEngine.rainConfig.pattern} | Dir: ${MatrixRainEngine.rainConfig.direction} | ${MatrixRainEngine.rainConfig.characterSet}`, 'success');
             } else {
                 MatrixRainEngine.logActivity(`🔄 Settings update | Dir: ${MatrixRainEngine.rainConfig.direction} | Rev: ${reverseFlowMultiplier === -1 ? 'YES' : 'NO'}`, 'info');
             }
-            
+
             // Always just update config - smooth transitions, no resets!
             updateRainConfig();
         }
-        
+
         function stopAutoOrchestrator() {
             if (autoOrchestratorInterval) {
                 clearTimeout(autoOrchestratorInterval);
                 autoOrchestratorInterval = null;
             }
         }
-        
+
         // === REVERSE FLOW TOGGLE ===
         function toggleReverseFlow() {
             reverseFlowMultiplier *= -1; // Flip between 1 and -1
@@ -2375,6 +3094,7 @@
         let audioDataArray = null;
         let audioBufferLength = 0;
         let audioReactiveActive = false;
+        window.audioReactiveActive = false; // Expose globally for Ollama integration
         let audioAnimationFrame = null;
         let audioStream = null;
 
@@ -2408,6 +3128,7 @@
 
         async function toggleAudioReactive() {
             audioReactiveActive = !audioReactiveActive;
+            window.audioReactiveActive = audioReactiveActive; // Sync global
             const btn = document.getElementById('audioReactiveBtn');
             const status = document.getElementById('audioStatus');
 
@@ -2490,6 +3211,7 @@
                     console.error('Audio capture error:', error);
                     status.textContent = '❌ Audio access denied. Try sharing a tab with audio.';
                     audioReactiveActive = false;
+                    window.audioReactiveActive = false; // Sync global
                     btn.textContent = '🎵 AUDIO REACTIVE MODE';
                     btn.style.background = '#ff1493';
 
@@ -2585,7 +3307,7 @@
             // Overall volume
             const volume = (bass + lowMid + mid + high) / 4 / 255;
 
-            // SYLLABLES = REVERSALS ONLY
+            // Optional syllable-driven right-angle turns
             detectSyllables(volume, mid, high, isWallpaperEngine);
 
             // MUSIC = EVERYTHING ELSE (continuous background control)
@@ -2642,32 +3364,44 @@
             }
         }
 
+        function detectBeats(bass) {
+            const now = Date.now();
+
+            // Update bass history
+            beatDetector.bassHistory.push(bass);
+            if (beatDetector.bassHistory.length > beatDetector.historyLength) {
+                beatDetector.bassHistory.shift();
+            }
+
+            // Calculate average bass
+            beatDetector.avgBass = beatDetector.bassHistory.reduce((a, b) => a + b, 0) / beatDetector.bassHistory.length;
+
+            // Detect bass beats - focus on low frequencies only
+            const isBeat = bass > beatDetector.avgBass * beatDetector.threshold
+                        && bass > beatDetector.minBass
+                        && (now - beatDetector.lastBeatTime) > beatDetector.beatCooldown;
+
+            if (isBeat) {
+                beatDetector.lastBeatTime = now;
+                onBeatDetected(bass);
+            }
+        }
+
         // Rhythm change detection removed - music now controls everything continuously
 
         function onSyllableDetected() {
-            // REVERSE FLOW on EVERY syllable - ONLY if enabled!
+            if (audioReverseEnabled) turnAudioAtBeat();
+        }
+
+        function onBeatDetected(bass) {
             if (!audioReverseEnabled) return;
+            // A bass beat is a backup turn when there was no recent syllable.
+            if (Date.now() - lastSyllableOrBeatReversalTime > 500) turnAudioAtBeat();
+        }
 
-            reverseFlowMultiplier *= -1;
-            lastSyllableOrBeatReversalTime = Date.now(); // Track this reversal
-            const flowStatus = reverseFlowMultiplier === -1 ? '⏪' : '⏩';
-
-            // Update button UI
-            const btn = document.getElementById('reverseFlowBtn');
-            if (btn) {
-                if (reverseFlowMultiplier === -1) {
-                    btn.textContent = '⏩ FORWARD FLOW';
-                    btn.style.background = '#00ff88';
-                } else {
-                    btn.textContent = '⏪ REVERSE FLOW';
-                    btn.style.background = '#ffaa00';
-                }
-            }
-
-            // Log only occasionally to avoid spam
-            if (Math.random() < 0.05) { // 5% logged
-                MatrixRainEngine.logActivity(`${flowStatus} syllable`, 'info');
-            }
+        function onRhythmChange(bass, lowMid, mid, high, changeAmount) {
+            // This function is now REMOVED from active use
+            // Music drives everything continuously via reactToAudio()
         }
 
         // Helper function to convert HSL to HEX for color pickers
@@ -2683,6 +3417,55 @@
             return `#${f(0)}${f(8)}${f(4)}`;
         }
 
+        const oppositeRainDirections = {
+            down: 'up', up: 'down', left: 'right', right: 'left',
+            toward: 'away', away: 'toward'
+        };
+        const audioDirectionState = { peak: 0, sampledAt: 0, changedAt: -Infinity };
+        function turnAudioAtBeat() {
+            const now = performance.now();
+            if (now - audioDirectionState.changedAt < 240) return false;
+            const config = MatrixRainEngine.rainConfig;
+            const directions = audioDiagonalsEnabled
+                ? ['down', 'up', 'left', 'right', 'toward', 'away']
+                : ['down', 'up', 'left', 'right'];
+            const current = config.direction;
+            const choices = directions.filter(direction => direction !== current && direction !== oppositeRainDirections[current]);
+            config.direction = choices[Math.floor(Math.random() * choices.length)];
+            audioDirectionState.changedAt = now;
+            document.getElementById('rainDirection').value = config.direction;
+            lastSyllableOrBeatReversalTime = Date.now();
+            return true;
+        }
+        function chooseAudioDirection(bass, lowMid, high, depthEnabled, current, now) {
+            const state = audioDirectionState;
+            const energy = (bass + lowMid + high) / 3;
+            const elapsed = state.sampledAt ? Math.max(0, now - state.sampledAt) : 0;
+            state.sampledAt = now;
+            // Silence and the trailing noise of speech do not issue a new turn.
+            // Keep travelling on the last selected axis for an unlimited pause.
+            if (energy < Math.max(4, state.peak * 0.18)) return current;
+            // A rolling peak follows playback volume; quiet tracks can use Z too.
+            // Only audible samples age the reference; a long Discord pause must
+            // not itself reset sensitivity or select a direction when speech resumes.
+            state.peak = Math.max(energy, state.peak * Math.exp(-Math.min(elapsed, 100) / 4000), 12);
+            const directions = depthEnabled
+                ? ['down', 'up', 'left', 'right', 'toward', 'away']
+                : ['down', 'up', 'left', 'right'];
+            const normalized = Math.max(0, Math.min(1, (energy / state.peak - 0.18) / 0.82));
+            const candidate = directions[Math.min(directions.length - 1, Math.floor(normalized * directions.length))];
+            // Opposite audio bands keep the current heading until another axis
+            // is selected. Never immediately trace back over the same segment.
+            if (candidate === oppositeRainDirections[current]) return current;
+            // Give each segment time to become visible instead of changing at
+            // audio callback frequency and repeatedly stamping the same joint.
+            if ((!depthEnabled && (current === 'toward' || current === 'away')) || now - state.changedAt >= 240) {
+                if (candidate !== current) state.changedAt = now;
+                return candidate;
+            }
+            return current;
+        }
+
         function reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine = false) {
             const config = MatrixRainEngine.rainConfig;
 
@@ -2692,7 +3475,7 @@
             // FORCE CLASSIC PATTERN (only one that shows color changes properly)
             config.pattern = 'classic';
             document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            const classicBtn = document.querySelector(`[onclick^="setRainPattern('classic'"]`);
+            const classicBtn = document.querySelector(`[onclick="setRainPattern('classic')"]`);
             if (classicBtn) classicBtn.classList.add('active');
 
             // BASS → SPEED (more bass = faster rain)
@@ -2765,37 +3548,10 @@
 
             const directionTrigger = bass > bassThreshold || high > highThreshold || lowMid > lowMidThreshold;
             if (directionTrigger) {
-                // Build directions array based on diagonal setting
-                const directions = audioDiagonalsEnabled
-                    ? ['down', 'up', 'left', 'right', 'diagonal', 'toward']
-                    : ['down', 'up', 'left', 'right']; // No diagonals when disabled
-
-                // Use combined audio energy to pick direction
-                const dirValue = (bass + high + lowMid) / 3;
-                const dirIndex = Math.floor((dirValue / 255) * directions.length);
-                const newDirection = directions[Math.min(dirIndex, directions.length - 1)];
+                const newDirection = chooseAudioDirection(bass, lowMid, high, audioDiagonalsEnabled, config.direction, performance.now());
                 const oldDirection = config.direction;
 
-                // Reinitialize drop positions when switching to/from horizontal
-                if (matrixCanvas && matrixDrops && oldDirection !== newDirection) {
-                    const fontSize = config.fontSize;
-                    const wasHorizontal = (oldDirection === 'left' || oldDirection === 'right');
-                    const isHorizontal = (newDirection === 'left' || newDirection === 'right');
-
-                    if (wasHorizontal !== isHorizontal) {
-                        // Switching orientation - reinitialize all drops
-                        const columns = Math.floor(matrixCanvas.width / fontSize);
-                        for (let i = 0; i < columns; i++) {
-                            if (isHorizontal) {
-                                // Going horizontal: randomize X positions across full width
-                                matrixDrops[i] = Math.random() * (matrixCanvas.width / fontSize);
-                            } else {
-                                // Going vertical: randomize Y positions across full height
-                                matrixDrops[i] = Math.random() * (matrixCanvas.height / fontSize);
-                            }
-                        }
-                    }
-                }
+                // Shared rain positions are preserved when direction changes.
 
                 config.direction = newDirection;
                 document.getElementById('rainDirection').value = config.direction;
@@ -2808,31 +3564,34 @@
 
         function drawAudioVisualizer(bass, lowMid, mid, high) {
             const visualizer = document.getElementById('audioVisualizer');
-            if (!visualizer) return;
-
-            // Create frequency bars
-            const bassHeight = (bass / 255) * 100;
-            const lowMidHeight = (lowMid / 255) * 100;
-            const midHeight = (mid / 255) * 100;
-            const highHeight = (high / 255) * 100;
-
-            visualizer.innerHTML = `
-                <div style="position: absolute; bottom: 0; left: 10%; width: 15%; height: ${bassHeight}%; background: linear-gradient(to top, #ff0000, #ff6060); transition: height 0.05s;"></div>
-                <div style="position: absolute; bottom: 0; left: 30%; width: 15%; height: ${lowMidHeight}%; background: linear-gradient(to top, #ff8000, #ffaa60); transition: height 0.05s;"></div>
-                <div style="position: absolute; bottom: 0; left: 50%; width: 15%; height: ${midHeight}%; background: linear-gradient(to top, #00ff00, #60ff60); transition: height 0.05s;"></div>
-                <div style="position: absolute; bottom: 0; left: 70%; width: 15%; height: ${highHeight}%; background: linear-gradient(to top, #0080ff, #60a0ff); transition: height 0.05s;"></div>
-                <div style="position: absolute; top: 5px; left: 10%; font-size: 10px; color: #ff6060;">BASS→Speed</div>
-                <div style="position: absolute; top: 5px; left: 30%; font-size: 10px; color: #ffaa60;">LOW→Color</div>
-                <div style="position: absolute; top: 5px; left: 50%; font-size: 10px; color: #60ff60;">MID→Color</div>
-                <div style="position: absolute; top: 5px; left: 70%; font-size: 10px; color: #60a0ff;">HIGH→Chars</div>
-            `;
+            const modal = document.querySelector('.matrix-modal');
+            if (!visualizer || !modal || modal.classList.contains('minimized') || modal.style.display === 'none') return;
+            // Build the meter once; update only bar heights while it is visible.
+            if (!visualizer._bars) {
+                const colors = [['#ff0000', '#ff6060'], ['#ff8000', '#ffaa60'], ['#00ff00', '#60ff60'], ['#0080ff', '#60a0ff']];
+                const labels = ['BASS→Speed', 'LOW→Color', 'MID→Color', 'HIGH→Chars'];
+                visualizer._bars = colors.map((colors, i) => {
+                    const bar = document.createElement('div');
+                    bar.style.cssText = `position:absolute;bottom:0;left:${10+i*20}%;width:15%;height:0%;background:linear-gradient(to top,${colors[0]},${colors[1]});transition:height 0.05s;`;
+                    const label = document.createElement('div');
+                    label.style.cssText = `position:absolute;top:5px;left:${10+i*20}%;font-size:10px;color:${colors[1]};`;
+                    label.textContent = labels[i];
+                    visualizer.append(bar, label);
+                    return bar;
+                });
+            }
+            [bass, lowMid, mid, high].forEach((value, i) => {
+                visualizer._bars[i].style.height = `${Math.max(0, Math.min(255, value)) / 255 * 100}%`;
+            });
         }
 
-        
 
-        
+
+
 
     </script>
+<script src="rain-camera-gpu.js"></script>
+<script src="rain-camera.js"></script>
+<script type="module" src="trails/rain-trails.js"></script>
 </body>
 </html>
-

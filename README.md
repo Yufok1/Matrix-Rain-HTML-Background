@@ -1,141 +1,98 @@
 # Matrix Rain HTML Background
 
-A configurable Matrix rain effect in a **single self-contained HTML file** — 6 visual patterns, a 3D toward-camera mode, an autonomous orchestrator, and an audio-reactive synesthesia engine that maps live sound onto colour, speed and motion.
+Matrix rain with six visual patterns, audio reactivity, and a 3D camera you can look around. Streams turn along the X, Y and Z axes while their fading characters stay where they were drawn, leaving connected trails through a repeating volume. The background stays black.
 
-**🌐 [LIVE DEMO](https://yufok1.github.io/Matrix-Rain-HTML-Background/)**
+**[Open the live preview](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** · **[Download the source ZIP](https://github.com/Yufok1/Matrix-Rain-HTML-Background/archive/refs/heads/master.zip)**
 
-No build step, no dependencies, no CDN, no network calls. Open the file and it runs — including from `file://`.
-
----
+The preview runs the same application as `matrix-rain-utility-suite.html`. No build step, third-party libraries, CDN, or account required.
 
 ## Quick start
 
-Download `matrix-rain-utility-suite.html` and open it. That's it.
+Use the live preview, or download and extract the complete ZIP. Keep the HTML, camera scripts and `trails/` folder together. From that folder, start a local server:
 
-The control panel starts **minimized** as a small bar in the top-right corner. Click it — or press **`M`** — to open it.
+```sh
+python -m http.server 8000 --bind 127.0.0.1
+```
 
----
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Use HTTP/HTTPS rather than opening the HTML directly: the trail controls load as JavaScript modules.
 
-## Controls
+Click **M +** in the top-right corner to open settings. **M** also toggles the panel. The shortcut currently fires inside text inputs too; use the button while editing custom characters.
 
-**Keyboard** — `M` toggles the control panel. *(It also fires while you're typing in the custom-characters box, so the panel will vanish if you type an "m" there. Press `M` again to bring it back.)*
+## 3D camera and trails
 
-**Mouse** — click controls normally; the mouse wheel scrolls the panel; dragging near the panel's right edge also scrolls it.
+The camera starts **enabled**, facing forward. **Slow orbit** rotates the view; **Look around** and **Look up / down** let you set the orientation yourself. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D.
 
-### Buttons
+- **Down / Up / Left / Right / Toward Camera / Away from Camera** use the same stream positions. Turning leaves existing characters in place, so the next segment joins the previous trail.
+- Characters at different depths have different apparent sizes. Toward/away movement grows or shrinks them through perspective.
+- The world repeats across its faces, including during orbit, keeping the surrounding rain visible as the view turns.
+- **Variable tail lengths** gives each stream a stable length. Defaults are **12–100 characters**; both bounds can be adjusted between **12 and 160**.
+- Turning off variable lengths restores the original 3D fade. These controls affect the camera renderer; Original View keeps its canvas fade.
 
-| Button | What it does |
-|---|---|
-| **Toggle Matrix Rain** | Start / stop the animation |
-| **Emergency Stop** | Halt everything immediately |
-| **⏪ Reverse Flow** | Flip the direction of motion mid-flight |
-| **🌀 Chaos Once** | Randomize every parameter a single time |
-| **🎭 Auto Orchestrator** | Autonomously evolve the scene every 8–15 seconds |
-| **🎵 Audio Reactive Mode** | Drive the visuals from live audio |
-| **Hard Refresh** | Reload the page back to defaults |
+Trail length preferences are saved locally. The remaining controls reset when the page reloads.
 
-Auto Orchestrator and Audio Reactive Mode are **mutually exclusive** — enabling one greys out the other.
+## Visual controls
 
-### Sliders
-
-| Control | Range | Default |
+| Control | Range / options | Initial value |
 |---|---|---|
-| Rain Speed | 1–100 (right = faster) | 35 |
+| Density | 1–100% | **50%** |
+| Rain Speed | 1–100; higher slider values are faster | Slider: 35 |
 | Intensity | 1–100 | 70 |
-| Density | 1–100 | 100 |
-| Character Size | 1–100, with `−` / `+` buttons | 10 |
+| Character Size | 1–100, with − / + buttons | 10 |
+| Primary / Secondary Color | Color pickers | `#00ff41` / `#00cc33` |
+| Camera | Enable, slow orbit, yaw and pitch | Enabled; orbit off |
+| Shortest / Longest tail | 12–160 characters | **12 / 100** |
 
----
+**Patterns:** Classic Matrix, Rainbow Spectrum, Pentad Prism, Chaos Flow, Harmonic Waves, and Particles.
 
-## Patterns
+**Character sets:** Matrix, Binary, Hexadecimal, Symbols, Katakana, or Custom. Choosing Custom reveals a text field for your own character pool.
 
-| Pattern | Effect |
+**Reverse Flow** manually reverses motion. **Chaos Once** randomizes the scene once. **Auto Orchestrator** changes patterns, colors and movement every 8–15 seconds while leaving density and manual reverse under your control. Auto Orchestrator and Audio Reactive Mode run separately.
+
+## Audio reactive mode
+
+In Chrome or Edge, click **Audio Reactive Mode**, choose the tab or screen playing sound, and enable **Share audio** in the browser's picker. Which sources offer audio depends on your browser and platform. Audio access starts only after you click the button and approve sharing. The screen track required by the capture API is not displayed or recorded by this application.
+
+| Audio | Visual response |
 |---|---|
-| **Classic Matrix** | Traditional green cascade |
-| **Rainbow Spectrum** | Cycling multi-colour waves |
-| **Pentad Prism** | Five-colour rotation across columns |
-| **Chaos Flow** | Turbulent hue drift with positional jitter |
-| **Harmonic Waves** | Sine-wave interference offsets |
-| **💫 Particles** | Centre-attracted orbital particle field |
+| Bass | Rain speed |
+| Low-mid and mid frequencies | Hue |
+| High frequencies | Hue variation and character set |
+| Volume | Intensity and brightness |
+| Changing energy | Direction |
 
-## Directions
+Audio mode uses Classic Matrix and controls its colors, speed, intensity, character set and direction. Density stays manual. Secondary color follows the complement of the primary color.
 
-`Down` · `Up` · `Left` · `Right` · `Diagonal` · **`🚇 Toward Camera (3D)`**
+**Depth** is on by default and includes toward/away movement in the audio direction pool. Turn it off for the four planar headings. Audio-driven turns cannot immediately select the opposite heading, reducing the back-and-forth wavering over the same line. Pauses keep the last heading, and direction changes share a minimum 240 ms interval. Manual Reverse Flow still works.
 
-Toward Camera is a *direction*, but it takes over rendering entirely: a depth-sorted tunnel with parallax, per-character speed variation and aggressive 0.1×→3.6× scaling. It works with every pattern.
+**Beat turns** is optional and off by default. It adds right-angle turns on detected syllables or bass beats instead of reversing a stream onto itself.
 
-## Character sets
+**Hue Reactivity / Saturation Gain / Brightness Depth** each range from 50–200%. Color presets: Neon, Prism, Pastel, Hyperneon, Aurora, Bassstorm, Crystal, Vaporwave, Inferno, and Zen.
 
-`Matrix (A-Z, 0-9, @#$)` · `Binary (01)` · `Hexadecimal (0-F)` · `Symbols (@#$%^&*)` · `Katakana (アイウエオ...)` · `Custom`
+The runtime also supports Wallpaper Engine's built-in audio listener when hosted there; browser sharing is used for this live preview. Speech recognition is not included.
 
-Choosing **Custom** reveals a text field — whatever you type becomes the character pool, live.
+## Compatibility
 
----
-
-## Audio Reactive Mode 🎵
-
-Sound is decomposed into frequency bands, and each band drives exactly one visual parameter:
-
-| Band | Drives |
-|---|---|
-| **Bass** | Speed — kick drums accelerate the rain |
-| **Low-mid** | Hue (30% weight) |
-| **Mid** | Hue (70% weight) — melody and vocals paint the colour |
-| **High** | Hue modulation, and which character set is active |
-| **Volume** | Intensity and lightness |
-| **Peaks** | Direction changes |
-
-The secondary colour is always held at the complement of the primary, so the palette stays balanced as the hue sweeps. A syllable detector watches the mid/high bands and can flip the flow on each detected syllable.
-
-### Getting audio in
-
-Click Audio Reactive Mode, pick the tab or screen playing your audio, and **tick "Share audio"** in the picker. Chrome or Edge required (`getDisplayMedia` audio capture).
-
-### While audio mode is running
-
-- The pattern is **forced to Classic** — it's the only one whose colours aren't already driven by the pattern itself, so it's the only one where the audio's colour response is visible.
-- Speed, intensity, hue, character set and direction are all driven by the audio; your manual settings for those are overridden until you turn it off.
-- The Secondary Colour picker is disabled, since it's computed.
-- **Density is never touched** — it stays fully manual.
-
-### Audio sub-controls
-
-- **Reverse on syllable** — off by default. When on, every detected syllable flips the flow.
-- **Diagonals** — on by default. Allows diagonal directions in the audio-driven direction changes.
-- **Hue Reactivity / Saturation Gain / Brightness Depth** — 50–200% each, scaling how far the audio can push hue, saturation and lightness.
-
-### Colour presets
-
-`Neon` · `Prism` · `Pastel` · `Hyperneon` · `Aurora` · `Bassstorm` · `Crystal` · `Vaporwave` · `Inferno` · `Zen`
-
-Each preset retunes saturation floor, lightness bounds, hue spread and the three reactivity scales together. **They only affect audio-reactive colour response** — with audio mode off, they do nothing.
-
----
-
-## Auto Orchestrator 🎭
-
-Autonomous mode. Every 8–15 seconds it randomizes pattern, both colours, speed, intensity, character set and direction. It deliberately leaves **density** and **reverse flow** alone, so you keep control of the overall look while it improvises everything else.
-
----
-
-## Notes & limitations
-
-- **Nothing persists.** There is no `localStorage` — every reload returns to the defaults (Classic / Down / speed 35 / intensity 70 / density 100 / size 10 / `#00ff41` + `#00cc33`).
-- **Chromium recommended.** Slider and scrollbar styling leans on `-webkit-` pseudo-elements, and browser audio capture needs Chrome or Edge. Firefox renders the rain fine, but the panel looks plainer and there is no audio mode.
-- Rendering is canvas 2D on a `setInterval` loop, so it is not vsync-aligned.
-- **Diagnostics are off by default.** Set `DEBUG = true` near the top of the `<script>` block to surface the internal log in the browser console.
-
----
+The 3D camera needs WebGL with instanced rendering. Chrome or Edge is recommended for the browser audio mode. No microphone, speech model, or companion app is needed. Longer trails and higher density increase rendering load.
 
 ## Project files
 
 | File | Purpose |
 |---|---|
-| `matrix-rain-utility-suite.html` | The application — everything is in here |
-| `index.html` | Identical copy, serving the GitHub Pages demo |
-| `LICENSE` | MIT |
+| `matrix-rain-utility-suite.html` | Main application and controls |
+| `index.html` | Synchronized copy used by GitHub Pages |
+| `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
+| `rain-camera-gpu.js` | Instanced WebGL glyph renderer |
+| `trails/rain-trails.js` | Trail controls and saved preferences |
+| `trails/rain-trail-lengths.js` | Stable per-stream lengths and fade |
+| `tests/` | Runtime packaging, direction behavior, and trail checks |
 
----
+For development, Node.js 18+ can run the checks without installing packages:
+
+```sh
+npm test
+```
+
+After editing the main HTML, run `npm run sync-demo` to update `index.html`. The tests catch a stale demo copy or missing runtime files. GitHub Pages publishes the root of `master` at the live preview link above.
 
 ## License
 

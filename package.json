@@ -1,0 +1,12 @@
+{
+  "name": "matrix-rain-html-background",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-demo": "node tools/sync-demo.cjs",
+    "test": "node tests/runtime.test.cjs && node tests/audio-direction.test.cjs && node tests/rain-trails.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
