@@ -1185,7 +1185,8 @@
         </div>
     </div>
 
-    <script>
+    <script src="rain-audio-motion.js"></script>
+<script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
 
@@ -2966,21 +2967,7 @@
                 });
             }
 
-            // Register Wallpaper Engine audio listener at page load (REQUIRED!)
-            if (window.wallpaperRegisterAudioListener) {
-                audioBufferLength = 64;
-                audioDataArray = new Float32Array(64);
 
-                window.wallpaperRegisterAudioListener(function(audioArray) {
-                    if (!audioReactiveActive) return;
-
-                    // WE supplies 64 frequency bins per channel, not 128
-                    // consecutive frequencies. Pair the channels before analysis.
-                    audioDataArray = readWallpaperSpectrum(audioArray);
-                    audioBufferLength = audioDataArray.length;
-                    analyzeAudio();
-                });
-            }
         });
 
         // === CHAOS RANDOMIZER ===
@@ -3415,69 +3402,12 @@
             return `#${f(0)}${f(8)}${f(4)}`;
         }
 
-        const oppositeRainDirections = {
-            down: 'up', up: 'down', left: 'right', right: 'left',
-            toward: 'away', away: 'toward'
-        };
-        const audioDirectionState = {};
+        const audioMotion = new RainAudioMotion();
+        window.rainAudioMotion = audioMotion;
+        let audioMotionSpectrum = null;
         function resetAudioMotion() {
-            Object.assign(audioDirectionState, {
-                levels: [0, 0, 0], baseline: [0, 0, 0], peaks: [12, 12, 12],
-                sampledAt: null, changedAt: -Infinity, pending: null, pendingAt: 0
-            });
-        }
-        resetAudioMotion();
-        function chooseAudioDirection(bass, body, high, depthEnabled, current, now) {
-            const state = audioDirectionState;
-            const elapsed = state.sampledAt === null ? 33 : Math.max(1, Math.min(100, now - state.sampledAt));
-            state.sampledAt = now;
-            const input = [bass, body, high].map(value => Math.max(0, Math.min(255, value)));
-            if (Math.max(...input) < 4) {
-                state.pending = null;
-                // Quiet gaps retain both heading and the preceding sound's
-                // reference. Elapsed time alone cannot cause a turn.
-                return !depthEnabled && (current === 'toward' || current === 'away') ? 'down' : current;
-            }
-            const positive = [depthEnabled ? 'toward' : 'down', 'down', 'right'];
-            const negative = [depthEnabled ? 'away' : 'up', 'up', 'left'];
-            const events = input.map((value, i) => {
-                const previous = state.levels[i];
-                const smoothing = 1 - Math.exp(-elapsed / (value > previous ? 55 : 110));
-                const level = previous + (value - previous) * smoothing;
-                const peak = Math.max(12, level, state.peaks[i] * Math.exp(-elapsed / 6000));
-                const change = (level - previous) / peak * 33 / elapsed;
-                const contrast = (level - state.baseline[i]) / peak;
-                // Fresh attacks/releases compete by their own band's recent
-                // range, so a quiet voice or cymbal can answer a loud bassline.
-                const score = change * 3 + contrast * 0.5;
-                state.levels[i] = level;
-                state.peaks[i] = peak;
-                state.baseline[i] += (level - state.baseline[i]) * (1 - Math.exp(-elapsed / 900));
-                return {direction: score >= 0 ? positive[i] : negative[i], strength: Math.abs(score), change: Math.abs(change)};
-            });
-            const allowed = events.filter(event => event.direction !== oppositeRainDirections[current]);
-            allowed.sort((a, b) => b.strength - a.strength);
-            const event = allowed[0];
-            const holding = events.find(event => event.direction === current)?.strength || 0;
-            const minimum = audioReverseEnabled ? 0.14 : 0.22;
-            if (!event || event.direction === current || event.strength < minimum || event.strength < holding + 0.1) {
-                state.pending = null;
-                return !depthEnabled && (current === 'toward' || current === 'away') ? 'down' : current;
-            }
-            if (state.pending !== event.direction) {
-                state.pending = event.direction;
-                state.pendingAt = now;
-            }
-            // Small changes need brief, consistent evidence; sharp attacks can
-            // answer immediately. This is a noise guard, never a turn schedule.
-            const sharpAttack = event.change > 0.22;
-            const evidenceTime = audioReverseEnabled ? 30 : 60;
-            if (now - state.changedAt >= 80 && (sharpAttack || now - state.pendingAt >= evidenceTime)) {
-                state.changedAt = now;
-                state.pending = null;
-                return event.direction;
-            }
-            return current;
+            audioMotion.reset();
+            audioMotionSpectrum = null;
         }
 
         function reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine = false) {
@@ -3492,10 +3422,11 @@
             const classicBtn = document.querySelector(`[onclick="setRainPattern('classic')"]`);
             if (classicBtn) classicBtn.classList.add('active');
 
-            // BASS → SPEED (more bass = faster rain)
-            const bassNormalized = bass / 255;
-            const targetDelay = 90 - Math.round(bassNormalized * 75);
-            config.speed = Math.round(config.speed * 0.65 + targetDelay * 0.35);
+            const spectrum = isWallpaperEngine ? audioMotionSpectrum :
+                RainAudioMotion.browserSpectrum(audioDataArray, audioContext.sampleRate / audioAnalyser.fftSize);
+            const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), performance.now(),
+                config.direction, audioDiagonalsEnabled, audioReverseEnabled);
+            config.speed = musicalMotion.speed;
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
             // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
@@ -3556,7 +3487,7 @@
 
             // Frequency changes steer the existing streams. Neither a random
             // choice nor the passage of a cooldown is a reason to turn.
-            config.direction = chooseAudioDirection(bass, (lowMid + mid) / 2, high, audioDiagonalsEnabled, config.direction, performance.now());
+            config.direction = musicalMotion.direction;
             document.getElementById('rainDirection').value = config.direction;
 
             // Update UI sliders
@@ -3571,7 +3502,7 @@
             // Build the meter once; update only bar heights while it is visible.
             if (!visualizer._bars) {
                 const colors = [['#ff0000', '#ff6060'], ['#ff8000', '#ffaa60'], ['#00ff00', '#60ff60'], ['#0080ff', '#60a0ff']];
-                const labels = ['BASS→Speed', 'LOW→Color', 'MID→Color', 'HIGH→Chars'];
+                const labels = ['BASS', 'LOW-MID', 'MID', 'HIGH'];
                 visualizer._bars = colors.map((colors, i) => {
                     const bar = document.createElement('div');
                     bar.style.cssText = `position:absolute;bottom:0;left:${10+i*20}%;width:15%;height:0%;background:linear-gradient(to top,${colors[0]},${colors[1]});transition:height 0.05s;`;
@@ -3591,6 +3522,17 @@
 
 
 
+
+        // Register directly after initialization, outside page-load events.
+        if (window.wallpaperRegisterAudioListener) {
+            window.wallpaperRegisterAudioListener(function(audioArray) {
+                if (!audioReactiveActive) return;
+                audioMotionSpectrum = RainAudioMotion.wallpaperSpectrum(audioArray);
+                audioDataArray = readWallpaperSpectrum(audioArray);
+                audioBufferLength = audioDataArray.length;
+                analyzeAudio();
+            });
+        }
     </script>
 <script src="rain-camera-gpu.js"></script>
 <script src="rain-camera.js"></script>

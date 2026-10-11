@@ -1,107 +1,90 @@
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-const html = fs.readFileSync(path.join(__dirname, '..', 'matrix-rain-utility-suite.html'), 'utf8');
-function source(name) {
-    const matches = html.match(new RegExp('^        function ' + name + '\\([^\\n]*\\) \\{[\\s\\S]*?^        \\}', 'gm'));
-    assert.ok(matches?.length, name + ' exists in the application');
-    return matches.at(-1);
-}
-const start = html.indexOf('        const oppositeRainDirections =');
-const end = html.indexOf('        function reactToAudio(', start);
-let clock = 1000, timerId = 0;
-const timers = new Map(), elements = new Map();
-const context = vm.createContext({
-    performance: {now: () => clock},
-    Math: Object.assign(Object.create(Math), {random() {throw Error('Audio steering must not pick random headings');}}),
-    Float32Array, console: {log() {}},
-    setTimeout(fn, delay) {const id = ++timerId; timers.set(id, {fn, delay}); return id;},
-    clearTimeout(id) {timers.delete(id);},
-    document: {getElementById(id) {
-        if (!elements.has(id)) elements.set(id, {value:'', textContent:'', style:{}});
-        return elements.get(id);
-    }},
-    MatrixRainEngine: {rainConfig: {direction:'down', speed:35}, logActivity() {}},
-    drawMatrixRain() {context.frames++;}, frames:0
-});
-vm.runInContext('let audioReverseEnabled=false, reverseFlowMultiplier=1, matrixInterval=null;\n' +
-    html.slice(start, end) + '\n' + ['readWallpaperSpectrum','startMatrixAnimation','toggleReverseFlow'].map(source).join('\n') +
-    '\nglobalThis.control={state:audioDirectionState, choose:chooseAudioDirection, reset:resetAudioMotion, spectrum:readWallpaperSpectrum, start:startMatrixAnimation, manual:toggleReverseFlow, ' +
-    'configure(enabled, reverse=1){audioReverseEnabled=enabled;reverseFlowMultiplier=reverse;},reverse(){return reverseFlowMultiplier;}};', context);
-const control = context.control;
-const opposite = {down:'up', up:'down', left:'right', right:'left', toward:'away', away:'toward'};
-const axes = Object.keys(opposite);
-function step(levels, current, depth=true, elapsed=33) {
-    clock += elapsed;
-    const next = control.choose(...levels, depth, current, clock);
-    assert.notEqual(next, opposite[current], 'Audio must not retrace the immediately preceding segment');
-    assert.equal(control.reverse(), 1, 'Audio cannot secretly flip physical movement');
-    if (!depth) assert.ok(!['toward','away'].includes(next), 'Disabled depth always uses planar headings');
-    return next;
-}
-function hold(levels, current, ms, depth=true) {
-    for (let t=0; t<ms; t+=33) current=step(levels,current,depth);
-    return current;
-}
-for (const enabled of [false,true]) for (const levels of [[60,160,30],[180,20,10],[20,40,180],[90,90,90]]) {
-    control.configure(enabled);control.reset();
-    let current=hold(levels,'down',3000);
-    const heading=current;
-    for (let frame=0;frame<900;frame++) {
-        current=step(levels.map((v,i)=>v+Math.sin(frame*.21+i)*1.5),current);
-        assert.equal(current,heading,'A held sound does not produce regular right turns');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const audioModule={};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../rain-audio-motion.js'),'utf8'),audioModule);
+const RainAudioMotion=audioModule.RainAudioMotion;
+const opposite={toward:'away',away:'toward',down:'up',up:'down',left:'right',right:'left'};
+function run(generate,{frames=1200,depth=true,beatTurns=false,scale=1}={}) {
+    const motion=new RainAudioMotion();let heading='down';
+    const outputs=[];
+    for(let frame=0;frame<frames;frame++) {
+        const mono=generate(frame).map(value=>value*scale);
+        const output=motion.update(RainAudioMotion.wallpaperSpectrum(mono.concat(mono)),frame*1000/30,heading,depth,beatTurns);
+        heading=output.direction;outputs.push({...output});
+        assert.ok(output.speed>=15 && output.speed<=85);
+        if(!depth) assert.ok(!['toward','away'].includes(heading));
     }
-    assert.equal(step([0,0,0],current,true,90000),heading,'Silence holds any heading indefinitely');
+    return {motion,outputs};
 }
-// Frequency attacks and releases steer the rain without a timed direction cycle.
-const reached = new Set();
-let changes=0;
-for (const depth of [false,true]) for (const enabled of [false,true]) for (const initial of axes) {
-    control.configure(enabled);control.reset();
-    let current=initial;
-    for (let frame=0;frame<2400;frame++) {
-        const segment=Math.floor(frame/47)%6;
-        const level=[30,80,190,60,140,15][Math.floor(frame/13)%6];
-        const bands=[15,15,15];bands[segment%3]=level;
-        const next=step(bands,current,depth);
-        if(next!==current){changes++;reached.add(next);}
-        current=next;
-    }
+const movedBins=frame=>{
+    const mono=Array(64).fill(.015);mono[Math.floor(frame/6)%2 ? 24 : 34]=.35;return mono;
+};
+const bassPulses=frame=>{const mono=Array(64).fill(0);mono.fill(frame%15<4 ? .35 : .015,0,8);return mono;};
+const allHeadings=frame=>{const mono=Array(64).fill(.015);mono[[2,14,25,35,46,60][Math.floor(frame/15)%6]]=.35;return mono;};
+const summary=[];
+for(const beatTurns of [false,true]) {
+    const moved=run(movedBins,{beatTurns});
+    assert.ok(moved.motion.turnCount>=150,'Within-band changes must reach the motion controller');
+    const pulses=run(bassPulses,{beatTurns});
+    assert.ok(pulses.motion.eventCount>=70,'Repeated same-band attacks must keep producing accents');
+    const speeds=pulses.outputs.slice(90).map(value=>value.speed);
+    assert.ok(Math.max(...speeds)-Math.min(...speeds)>=12,'Same-heading percussion must visibly accelerate and ease');
+    const held=run(frame=>Array.from({length:64},(_,i)=>.12+Math.sin(frame*.2+i)*.0007),{beatTurns});
+    assert.equal(held.motion.turnCount,0,'A steady sound plus tiny noise must not invent periodic corners');
+    assert.equal(held.motion.eventCount,0);
+    const melody=run(allHeadings,{beatTurns});
+    assert.deepEqual(new Set(melody.motion.trace.map(event=>event.to)),new Set(Object.keys(opposite)),'Full spectral evolution can use all six headings');
+    const planar=run(allHeadings,{beatTurns,depth:false});
+    assert.equal(planar.outputs.length,1200);
+    const vibrating=run(frame=>{
+        const mono=Array(64).fill(.01);mono[Math.floor(frame/3)%2 ? 24 : 25]=.3;return mono;
+    },{beatTurns});
+    assert.equal(vibrating.motion.turnCount,0,'Adjacent vibrato-like shifts should not be interpreted as new attacks');
+    const retracing=run(frame=>{
+        const mono=Array(64).fill(.015);mono[Math.floor(frame/6)%2 ? 2 : 35]=.35;return mono;
+    },{beatTurns});
+    const reversals=retracing.motion.trace.filter(event=>event.to===opposite[event.from]);
+    assert.ok(reversals.length>0,'Reversals are permitted, rather than banned forever');
+    for(let i=1;i<reversals.length;i++) assert.ok(reversals[i].time-reversals[i-1].time>=1399,'Repeated same-line oscillation is restrained');
+    const heading=melody.outputs.at(-1).direction;
+    let after;
+    for(let frame=0;frame<100;frame++) after=melody.motion.update(new Float32Array(64),50000+frame*33,heading,true,beatTurns);
+    assert.equal(after.direction,heading,'Silence cannot advance an automatic direction sequence');
+    const quiet=run(movedBins,{beatTurns,scale:.1});
+    assert.ok(quiet.motion.turnCount>=150,'Lower playback volume retains sensitivity');
+    assert.deepEqual(run(movedBins,{beatTurns}).outputs,moved.outputs,'Identical audio creates reproducible decisions');
+    summary.push({beatTurns,withinBandTurns:moved.motion.turnCount,bassAccents:pulses.motion.eventCount,bassSpeedRange:[Math.min(...speeds),Math.max(...speeds)],sixHeadings:[...new Set(melody.motion.trace.map(event=>event.to))],heldTurns:held.motion.turnCount,vibratoTurns:vibrating.motion.turnCount,legitimateReversals:reversals.length,quietTurns:quiet.motion.turnCount});
 }
-for (const direction of axes) assert.ok(reached.has(direction),'Changing audio can select '+direction);
-assert.ok(changes>50,'The reversal guard must not freeze meaningful audio responses');
-// Different frequency content matters even at identical overall volume.
-control.configure(false);control.reset();
-let current=hold([180,20,20],'down',3000);
-const bassHeading=current;
-current=hold([20,20,180],current,300);
-assert.notEqual(current,bassHeading,'Treble can answer bass at the same total loudness');
-// Stereo order must not masquerade as frequency content or wrap loud samples.
-let previous=-1;
-for(let level=0;level<=1;level+=.005) {
-    const value=control.spectrum(Array(128).fill(level))[0];
-    assert.ok(value>=previous && value>=0 && value<=255,'Louder WE samples remain louder and bounded');
-    previous=value;
+// Exercise actual HTML integration and rendering clock, not just the model.
+const preview=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(preview,'matrix-rain-utility-suite.html'),'utf8');
+let scripts=0;
+for(const [,attributes,body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const source=attributes.match(/src="([^"]+)"/)?.[1];
+    if(source) {
+        assert.ok(fs.existsSync(path.join(preview,source)),source+' is packaged');
+        if(!attributes.includes('module')) new vm.Script(fs.readFileSync(path.join(preview,source),'utf8'));
+    } else {new vm.Script(body);scripts++;}
 }
-const stereo=Array(128).fill(0);stereo[0]=.2;stereo[127]=.3;
-const mono=control.spectrum(stereo);
-assert.ok(mono[0]>0 && mono[63]>0 && mono[32]===0);
-const swapped=stereo.slice(64).concat(stereo.slice(0,64));
-assert.deepEqual(control.spectrum(swapped),mono,'Channel swapping preserves frequency analysis');
-for(const value of control.spectrum(Array(128).fill(100))) assert.ok(Number.isFinite(value) && value<=255);
-// Audio speed changes must reach the real animation without restarting it.
-control.start();assert.equal(timers.size,1);
-let [id,timer]=timers.entries().next().value;assert.equal(timer.delay,35);
-context.MatrixRainEngine.rainConfig.speed=18;timers.delete(id);timer.fn();
-assert.equal(context.frames,1);assert.equal(timers.size,1);
-[id,timer]=timers.entries().next().value;assert.equal(timer.delay,18,'Bass acceleration changes the actual next frame');
-context.MatrixRainEngine.rainConfig.speed=80;timers.delete(id);timer.fn();
-assert.equal(timers.values().next().value.delay,80,'Easing audio slows the real streams');
-control.start();assert.equal(timers.size,1,'Starting again never duplicates the render loop');
-control.manual();assert.equal(control.reverse(),-1,'Explicit manual reverse remains available');
-control.manual();assert.equal(control.reverse(),1);
-assert.doesNotMatch(html.slice(start,end),/Math\.random/);
-assert.doesNotMatch(html,/detectSyllables|turnAudioAtBeat|detectBeats/,'No competing clock-triggered direction controller');
-assert.doesNotMatch(html,/<(select|option)\b/i,'Keep CEF-safe settings');
-console.log('Held/noisy sound, six audio headings, 57,600 mixed frames, stereo isolation, monotonic gain, no U-turns and adaptive animation timing passed.');
+assert.equal(scripts,1);
+assert.doesNotMatch(html,/<(select|option)\b/i,'Preserve CEF-safe settings');
+assert.equal((html.match(/window\.wallpaperRegisterAudioListener\(function/g)||[]).length,1);
+assert.doesNotMatch(html,/chooseAudioDirection|audioDirectionState/,'Remove the previous competing selector');
+const start=html.indexOf('        const audioMotion =');
+const end=html.indexOf('        function drawAudioVisualizer(',start);
+const hsl=html.match(/^        function hslToHex\([^\n]*\) \{[\s\S]*?^        \}/m)[0];
+let now=0;
+const fake={RainAudioMotion,Float32Array,Math,window:{},performance:{now:()=>now},
+    audioDiagonalsEnabled:true,audioReverseEnabled:false,audioDataArray:new Float32Array(64),
+    MatrixRainEngine:{rainConfig:{direction:'down',speed:35}},audioHueSpread:.8,audioHighModRange:30,
+    hueReactivityScale:1,satGainScale:1,satFloor:80,brightnessMax:85,brightnessMin:30,brightnessDepthScale:1,
+    document:{querySelectorAll:()=>[],querySelector:()=>null,getElementById:()=>({value:0,classList:{add(){}}})}};
+vm.runInNewContext(hsl+'\n'+html.slice(start,end)+'\nglobalThis.drive=(spectrum)=>{audioMotionSpectrum=spectrum;reactToAudio(40,30,30,20,.15,true);};',fake);
+for(let frame=0;frame<100;frame++) {now=frame*33;fake.drive(Float32Array.from(movedBins(frame)));}
+assert.ok(fake.window.rainAudioMotion.turnCount>5,'HTML feeds real full spectra to the new controller');
+assert.equal(fake.MatrixRainEngine.rainConfig.direction,fake.window.rainAudioMotion.snapshot.direction);
+assert.equal(fake.MatrixRainEngine.rainConfig.speed,fake.window.rainAudioMotion.snapshot.speed);
+console.log(JSON.stringify(summary,null,2));
+console.log('HTML integration, script packaging, CEF settings, native listener, unchanged geometry/trails, and deterministic audio behavior passed.');

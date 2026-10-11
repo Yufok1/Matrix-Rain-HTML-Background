@@ -8,7 +8,7 @@ The preview runs the same application as `matrix-rain-utility-suite.html`. No bu
 
 ## Quick start
 
-Use the live preview, or download and extract the complete ZIP. Keep the HTML, camera scripts and `trails/` folder together. From that folder, start a local server:
+Use the live preview, or download and extract the complete ZIP. Keep the HTML, JavaScript files and `trails/` folder together. From that folder, start a local server:
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
@@ -58,17 +58,19 @@ Audio settings stay gray and disabled until audio mode starts successfully. Brow
 
 | Audio | Visual response |
 |---|---|
-| Bass | Rain speed |
+| Ongoing energy and fresh musical accents | Rain speed and acceleration |
 | Low-mid and mid frequencies | Hue |
 | High frequencies | Hue variation and character set |
 | Volume | Intensity and brightness |
-| Attacks, releases and changes across frequency ranges | Direction |
+| New attacks and changes within the frequency spectrum | Direction |
 
 Audio mode uses Classic Matrix and controls its colors, speed, intensity, character set and direction. Density stays manual. Secondary color follows the complement of the primary color.
 
-**Depth** is on by default and includes toward/away movement. Turn it off for the four planar headings. Bass changes steer depth, midrange changes steer vertical movement, and treble changes steer horizontal movement. The controller compares each range with its recent envelope, so a held sound keeps its course while a new attack or release can answer it. A short evidence filter rejects small fluctuations; there is no scheduled or random audio turn. Audio cannot immediately select the opposite heading and retrace its last segment. Pauses keep the last heading. Manual Reverse Flow still works.
+**Depth** is on by default and includes toward/away movement. Turn it off for the four planar headings. The controller retains individual frequency changes, so sounds can change the path even when average volume stays steady. Fresh attacks accent the current path or select a new heading according to the emerging frequency content; evolving texture can also turn the rain. Ongoing energy controls propulsion, and repeated beats keep accelerating and easing the streams even when the heading stays the same. There is no scheduled or random audio direction cycle.
 
-**Beat turns** is optional and off by default. It lowers the evidence threshold for reacting to smaller musical attacks and releases; sustained vocals do not repeatedly trigger turns.
+Small neighboring frequency shifts are filtered to reduce vibrato-triggered corners. Rapid repeated reversals are restrained, while later musical events can reverse direction. Pauses keep the last heading. Manual Reverse Flow still works.
+
+**Beat turns** is optional and off by default. It increases sensitivity to smaller and more closely spaced attacks; it does not introduce a fixed beat schedule.
 
 **Hue Reactivity / Saturation Gain / Brightness Depth** each range from 50–200%. Color presets: Neon, Prism, Pastel, Hyperneon, Aurora, Bassstorm, Crystal, Vaporwave, Inferno, and Zen.
 
@@ -84,6 +86,7 @@ The 3D camera needs WebGL with instanced rendering. Chrome or Edge is recommende
 |---|---|
 | `matrix-rain-utility-suite.html` | Main application and controls |
 | `index.html` | Synchronized copy used by GitHub Pages |
+| `rain-audio-motion.js` | Spectrum changes, continuous propulsion, musical accents, and reversal restraint |
 | `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
 | `rain-camera-gpu.js` | Instanced WebGL glyph renderer |
 | `settings-panel.js` | Draggable settings panel with viewport bounds |
