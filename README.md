@@ -18,6 +18,8 @@ Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Use HTTP/
 
 Click **M +** in the top-right corner to open settings. **M** also toggles the panel. The shortcut currently fires inside text inputs too; use the button while editing custom characters.
 
+On phones, settings fit the screen with wrapping buttons, larger tap targets and a scrolling panel.
+
 ## 3D camera and trails
 
 The camera starts **enabled**, facing forward. **Slow orbit** rotates the view; **Look around** and **Look up / down** let you set the orientation yourself. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D.

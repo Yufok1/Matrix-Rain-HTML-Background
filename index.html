@@ -912,6 +912,47 @@
         .setting-choice { padding: 8px 10px; border: 1px solid #00aa33; border-radius: 5px; background: #101810; color: #aaffbb; font: inherit; font-size: 12px; }
         .setting-choice[aria-pressed="true"] { background: #00ff41; color: #000; border-color: #00ff41; }
         .setting-choice:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+        .audio-reactivity-control { display: contents; }
+
+        @media (max-width: 700px), (max-height: 500px) and (max-width: 950px) {
+            .matrix-modal:not(.minimized) {
+                width: calc(100vw - 24px); max-width: none;
+                height: calc(100vh - 24px); height: calc(100dvh - 24px);
+            }
+            .matrix-modal.minimized {
+                top: max(12px, env(safe-area-inset-top)) !important;
+                right: max(12px, env(safe-area-inset-right)) !important;
+                width: min(350px, calc(100vw - 24px)) !important;
+                min-width: 0; height: 58px !important;
+            }
+            .modal-header { padding: 10px 12px; font-size: 14px; }
+            .matrix-modal.minimized .modal-header { padding: 4px 8px; }
+            .full-header-text { min-width: 0; overflow-wrap: anywhere; }
+            .full-header-text span { display: none; }
+            .minimized-header-text span { font-size: 14px !important; }
+            .minimize-btn { min-width: 44px; min-height: 44px; margin-right: 0; flex-shrink: 0; }
+            .modal-content { min-height: 0; padding: 10px; overscroll-behavior: contain; }
+            .modal-content.scrollbar { scrollbar-width: thin; scrollbar-color: #00cc33 #071009; }
+            .modal-content::-webkit-scrollbar { width: 6px; }
+            .modal-content::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track:hover { background: #071009; border: 0; box-shadow: none; }
+            .modal-content::-webkit-scrollbar-thumb { background: #00cc33; border: 0; box-shadow: none; }
+            .section { padding: 12px; margin-bottom: 12px; min-width: 0; }
+            .rain-action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+            .rain-action-row > div { width: 100%; min-width: 0; }
+            .audio-color-controls { grid-template-columns: minmax(0, 1fr) !important; }
+            .audio-reactivity-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; text-align: left; }
+            .audio-reactivity-control input { grid-column: 1 / -1; grid-row: 2; width: 100%; min-width: 0; }
+            .audio-reactivity-control span { grid-column: 2; grid-row: 1; }
+            .rain-controls { grid-template-columns: minmax(0, 1fr); }
+            .section .btn {
+                min-height: 44px; max-width: 100%; margin: 0 !important;
+                padding: 10px 12px !important; font-size: 14px !important;
+            }
+            .setting-choice { min-height: 44px; }
+            .pattern-btn, .zoom-btn { min-height: 44px; }
+            .matrix-modal input[type="range"] { min-height: 32px; }
+            .matrix-modal input[type="text"] { font-size: 16px; }
+        }
 </style>
 </head>
 <body>
@@ -945,7 +986,7 @@
                 <!-- Rain Pattern Controls -->
                 <div class="section">
                     <h3>🌧️ Rain Pattern Controls</h3>
-                    <div style="margin-bottom: 15px; text-align: center;">
+                    <div class="rain-action-row" style="margin-bottom: 15px; text-align: center;">
                         <button class="btn" onclick="toggleMatrixRain()" style="background: #00ff41; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🌊 Toggle Matrix Rain
                         </button>
@@ -956,7 +997,7 @@
                             ⏪ REVERSE FLOW
                         </button>
                     </div>
-                    <div style="margin-bottom: 15px; text-align: center;">
+                    <div class="rain-action-row" style="margin-bottom: 15px; text-align: center;">
                         <button class="btn" onclick="activateChaosRandomizer()" style="background: #ff00ff; color: black; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🌀 CHAOS ONCE
                         </button>
@@ -964,7 +1005,7 @@
                             🎭 AUTO ORCHESTRATOR
                         </button>
                     </div>
-                    <div style="margin-bottom: 15px; text-align: center;">
+                    <div class="rain-action-row" style="margin-bottom: 15px; text-align: center;">
                         <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🎵 AUDIO REACTIVE MODE
                         </button>
@@ -984,18 +1025,24 @@
                                     🔄 Hard Refresh
                                 </button>
                             </div>
-                            <div style="margin-top: 8px; display: grid; grid-template-columns: auto 220px auto; align-items: center; gap: 10px; justify-content: center;">
+                            <div class="audio-color-controls" style="margin-top: 8px; display: grid; grid-template-columns: auto 220px auto; align-items: center; gap: 10px; justify-content: center;">
+                                <div class="audio-reactivity-control">
                                 <label for="hueReactSlider" style="font-size: 12px; color: #ccc;">Hue Reactivity</label>
                                 <input type="range" id="hueReactSlider" min="50" max="200" value="100" oninput="updateHueReactivity()">
                                 <span id="hueReactDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
 
+                                <div class="audio-reactivity-control">
                                 <label for="satGainSlider" style="font-size: 12px; color: #ccc;">Saturation Gain</label>
                                 <input type="range" id="satGainSlider" min="50" max="200" value="100" oninput="updateSaturationGain()">
                                 <span id="satGainDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
 
+                                <div class="audio-reactivity-control">
                                 <label for="brightDepthSlider" style="font-size: 12px; color: #ccc;">Brightness Depth</label>
                                 <input type="range" id="brightDepthSlider" min="50" max="200" value="100" oninput="updateBrightnessDepth()">
                                 <span id="brightDepthDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
+                                </div>
                             </div>
                             <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                                 <button class="btn" onclick="setColorPreset('neon')" style="background:#00ff88; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Neon</button>
@@ -2860,8 +2907,8 @@
 
                 modalContent.addEventListener('mousedown', function(e) {
                     const rect = modalContent.getBoundingClientRect();
-                    const scrollbarWidth = 40; // Match our scrollbar width
-                    const isInScrollbar = (e.clientX > rect.right - scrollbarWidth);
+                    const scrollbarWidth = modalContent.offsetWidth - modalContent.clientWidth;
+                    const isInScrollbar = e.target === modalContent && e.clientX > rect.right - scrollbarWidth;
 
                     if (isInScrollbar) {
                         isDragging = true;
