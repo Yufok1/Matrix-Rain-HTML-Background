@@ -1,6 +1,6 @@
 # Matrix Rain HTML Background
 
-Matrix rain with six visual patterns, audio reactivity, and a 3D camera you can look around. Streams turn along the X, Y and Z axes while their fading characters stay where they were drawn, leaving connected trails through a repeating volume. The background stays black.
+Matrix rain with five visual patterns, audio reactivity, and a 3D camera you can look around. Streams turn along the X, Y and Z axes while their fading characters stay where they were drawn, leaving connected trails through a repeating volume. The background stays black.
 
 **[Open the live preview](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** · **[Download the source ZIP](https://github.com/Yufok1/Matrix-Rain-HTML-Background/archive/refs/heads/master.zip)**
 
@@ -8,7 +8,7 @@ The preview runs the same application as `matrix-rain-utility-suite.html`. No bu
 
 ## Quick start
 
-Use the live preview, or download and extract the complete ZIP. Keep the HTML, JavaScript files and `trails/` folder together. From that folder, start a local server:
+Use the live preview, or download and extract the complete ZIP. Keep the HTML, JavaScript files, `assets/` and `trails/` folders together. From that folder, start a local server:
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
@@ -28,9 +28,26 @@ The camera starts **enabled**, facing forward. **Slow orbit** rotates the view; 
 - Characters at different depths have different apparent sizes. Toward/away movement grows or shrinks them through perspective.
 - The world repeats across its faces, including during orbit, keeping the surrounding rain visible as the view turns.
 - **Variable tail lengths** gives each stream a stable length. Defaults are **12–100 characters**; both bounds can be adjusted between **12 and 160**.
-- Turning off variable lengths restores the original 3D fade. These controls affect the camera renderer; Original View keeps its canvas fade.
+- **Stepped fade** is on by default: each character holds one of eight brightness levels, then switches off at the end of its life. Uncheck it for a smooth fade.
+- Turning off variable lengths gives all streams a 40-character lifetime. Turn off both variable lengths and stepped fade to compare with the original 3D fade. These controls affect the camera renderer; Original View keeps its canvas fade.
 
-Trail length preferences are saved locally. The remaining controls reset when the page reloads.
+Trail and rendering preferences are saved locally. The remaining controls reset when the page reloads.
+
+## Rendering quality
+
+**Sharp letters** uses a bundled MSDF font atlas to keep letters clear as perspective changes their size. ASCII and Katakana are covered; other custom characters use the browser's font fallback. No fonts need to be installed.
+
+**Smooth motion** follows the display refresh rate between simulation steps. Only the current head moves between steps; historical characters remain locked in the world. Direction changes and audio timing keep their existing behavior.
+
+| Quality | Behavior |
+|---|---|
+| **Balanced** (default) | Adapts render resolution to the screen, with a smaller pixel budget on phones |
+| **High clarity** | Allows a larger pixel budget for sharper output on high-resolution screens |
+| **Low power** | Uses standard-resolution output and caps 3D presentation at 30 FPS; audio and simulation timing stay the same |
+
+**Glow** starts at 15% and can be switched off. **Color contrast** starts at 100%, adjustable from 75–150%. Empty background remains black. These controls apply to the 3D camera view.
+
+The renderer uploads new characters incrementally and skips repeated world cells outside the view. Sharp letters, glow, higher resolution and more frequent presentation also cost GPU time; choose Low power or reduce glow, density and trail lengths if needed.
 
 ## Visual controls
 
@@ -78,7 +95,7 @@ The runtime also supports Wallpaper Engine's built-in audio listener when hosted
 
 ## Compatibility
 
-The 3D camera needs WebGL with instanced rendering. Chrome or Edge is recommended for the browser audio mode. No microphone, speech model, or companion app is needed. Longer trails and higher density increase rendering load.
+The 3D camera needs WebGL with instanced rendering. The original 2D renderer remains available when WebGL is unavailable or its context is lost. Chrome or Edge is recommended for the browser audio mode. No microphone, speech model, or companion app is needed. Longer trails and higher density increase rendering load.
 
 ## Project files
 
@@ -88,11 +105,14 @@ The 3D camera needs WebGL with instanced rendering. Chrome or Edge is recommende
 | `index.html` | Synchronized copy used by GitHub Pages |
 | `rain-audio-motion.js` | Spectrum changes, continuous propulsion, musical accents, and reversal restraint |
 | `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
-| `rain-camera-gpu.js` | Instanced WebGL glyph renderer |
+| `rain-camera-gpu.js` | Instanced WebGL glyph renderer, incremental uploads and optional glow |
+| `rain-animation-clock.js` | Display-refresh presentation with independent simulation timing |
+| `render-settings.js` | Rendering quality controls and saved preferences |
+| `assets/` | Bundled MSDF font atlas, metadata and third-party license notices |
 | `settings-panel.js` | Draggable settings panel with viewport bounds |
 | `trails/rain-trails.js` | Trail controls and saved preferences |
-| `trails/rain-trail-lengths.js` | Stable per-stream lengths and fade |
-| `tests/` | Runtime packaging, direction behavior, and trail checks |
+| `trails/rain-trail-lengths.js` | Stable per-stream lengths and stepped or smooth brightness |
+| `tests/` | Runtime packaging, direction, trails, animation timing and font coverage checks |
 
 For development, Node.js 18+ can run the checks without installing packages:
 
@@ -105,3 +125,5 @@ After editing the main HTML, run `npm run sync-demo` to update `index.html`. The
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+Bundled font assets use the SIL Open Font License 1.1. Font credits, MSDF shader attribution and their license notices are in [assets/THIRD-PARTY.md](assets/THIRD-PARTY.md).

@@ -4,15 +4,23 @@ const trails = new RainTrailLengths();
 const lengths = Array.from({length:192},(_,id)=>trails.lengthFor(id));
 assert.equal(trails.minimum,12);
 assert.equal(trails.maximum,100);
+assert.equal(trails.stepped,true);
 assert.ok(lengths.every(length=>length>=12&&length<=100));
 assert.ok(new Set(lengths).size>40,'Drops have visibly different lengths');
 assert.deepEqual(lengths, lengths.map((_,id)=>trails.lengthFor(id)), 'Repeated frames never reroll a drop');
 for(const length of lengths) {
     assert.equal(trails.alpha(length,0),1,'The head stays fully bright');
-    assert.equal(trails.alpha(length,length),0,'The tail ends smoothly at black');
+    assert.equal(trails.alpha(length,length),0,'The tail switches off at its lifetime');
     if (length>=48) assert.ok(trails.alpha(length,20)>Math.pow(.88,20),'Longer drops stay visible farther behind the head');
 }
 assert.ok(trails.alpha(96,40)>trails.alpha(32,40),'Longer drops retain more of the trail');
+const stages=Array.from({length:800},(_,i)=>trails.alpha(100,i/8));
+assert.equal(new Set(stages).size,8,'Digital fade holds eight distinct brightness levels');
+assert.ok(stages.every((alpha,i)=>i===0||alpha<=stages[i-1]),'Brightness never rises along an aging tail');
+assert.equal(trails.alpha(100,99.99),.032,'The last visible stage holds until switch-off');
+assert.equal(trails.alpha(100,100),0);
+trails.stepped=false;
+assert.ok(trails.alpha(100,20)>trails.alpha(100,20.1),'Smooth comparison fades continuously');
 trails.configure(80,20);
 assert.equal(trails.minimum,80);assert.equal(trails.maximum,80,'Bounds cannot cross');
 trails.configure(12,160);
@@ -20,4 +28,7 @@ assert.ok(Array.from({length:192},(_,id)=>trails.lengthFor(id)).every(length=>le
 trails.enabled=false;
 assert.equal(trails.lengthFor(0),40);
 assert.equal(trails.alpha(40,20),Math.pow(.88,20),'Disabling variation restores the original fade');
-console.log('Stable variable trail lengths, bounded controls, gradual fade, and original fade fallback passed.');
+trails.stepped=true;
+assert.equal(trails.alpha(40,39.99),.032,'Uniform trails can also use digital fade');
+assert.equal(trails.alpha(40,40),0);
+console.log('Stable variable lengths, eight held brightness levels, exact switch-off, and smooth comparison passed.');

@@ -1,7 +1,7 @@
 // The 3D camera is enabled by default; Original View restores the base renderer.
 const rainCamera = {
     enabled: true, orbit: false, yaw: 0, pitch: 0, frame: 0, marks: [], lastTime: 0,
-    streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
+    pending: [], bounds: null, streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
     },
@@ -20,7 +20,8 @@ const rainCamera = {
         // rather than repeating a mostly empty 1,937-unit chamber.
         this.volume = { width, height, x: width + 160, y: height + 160,
             z: rainFocalLength, zMin: rainFocalLength / 8 };
-        this.streams.clear(); this.marks.length = 0;
+        this.streams.clear(); this.marks.length = 0; this.pending.length = 0;
+        if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
     capture(char, x, y, depth, fontSize, alpha, color, streamId) {
         this.ensureVolume();
@@ -33,7 +34,7 @@ const rainCamera = {
         if (head) {
             let stream = this.streams.get(streamId);
             if (!stream || this.frame - stream.frame > 40) {
-                stream = { x: raw.x, y: raw.y, z: raw.z, raw, frame: this.frame };
+                stream = { x: raw.x, y: raw.y, z: raw.z, raw, frame: this.frame, delta: [0, 0, 0] };
                 this.streams.set(streamId, stream);
             } else {
                 const direction = MatrixRainEngine.rainConfig.direction;
@@ -43,6 +44,7 @@ const rainCamera = {
                 if (direction === 'toward' || direction === 'away') dz = this.wrap(dz, rainFocalLength / .25 - rainFocalLength / 8);
                 else if (direction === 'left' || direction === 'right') dx = this.unwrapStep(dx, (box.width + fontSize * 16) / scale, (direction === 'left' ? -1 : 1) * reverseFlowMultiplier);
                 else dy = this.unwrapStep(dy, (box.height + fontSize * 16) / scale, (direction === 'up' ? -1 : 1) * reverseFlowMultiplier);
+                if (stream.frame !== this.frame) stream.delta = [dx, dy, dz];
                 stream.x += dx; stream.y += dy; stream.z += dz;
                 stream.raw = raw; stream.frame = this.frame;
             }
@@ -50,19 +52,27 @@ const rainCamera = {
         }
         // Pattern offsets remain attached to their stream. Historical glyphs
         // never move when the head changes direction or crosses a box face.
-        this.marks.push({ char,
+        const mark = { char,
             x: this.wrap(position.x + (x - hx) / scale, box.x),
             y: this.wrap(position.y + (y - hy) / scale, box.y),
             z: this.wrap(position.z, box.z, box.zMin),
             fontSize, alpha, color, frame: this.frame, streamId,
-            trailLength: window.matrixRainTrails?.lengthFor(streamId) ?? 40 });
+            trailLength: window.matrixRainTrails?.lengthFor(streamId) ?? 40,
+            delta: position.delta || [0, 0, 0] };
+        this.marks.push(mark); this.pending.push(mark);
     },
     prepareView() {
         this.ensureVolume();
+        // The repeating world is unchanged while the camera stands still.
+        const pad = Math.max(150, (this.bounds?.pad || 0) + (this.bounds?.motionMargin || 0));
+        const cached = this._viewState;
+        if (cached && cached.volume === this.volume && cached.yaw === this.yaw
+            && cached.pitch === this.pitch && cached.near === this.near && cached.far === this.far && cached.pad === pad) return;
+        this._viewState = { volume: this.volume, yaw: this.yaw, pitch: this.pitch, near: this.near, far: this.far, pad };
         const yaw = this.yaw * Math.PI / 180, pitch = this.pitch * Math.PI / 180;
         const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
         this.rotation = [cy, 0, -sy, -sp * sy, cp, -sp * cy, cp * sy, sp, cp * cy];
-        const box = this.volume, pad = 150;
+        const box = this.volume;
         const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         // Inverse-project all frustum corners to select whatever cells this
         // orientation needs, including behind the original viewing direction.
@@ -109,21 +119,44 @@ const rainCamera = {
         return { x: matrixCanvas.width / 2 + x * scale,
             y: matrixCanvas.height / 2 + y * scale, size: mark.fontSize * scale, z };
     },
-    render() {
-        const now = performance.now();
-        const dt = this.lastTime ? Math.min(0.1, (now - this.lastTime) / 1000) : 0;
-        this.lastTime = now;
-        this.marks = this.marks.filter(mark => this.frame - mark.frame < (window.matrixRainTrails?.enabled ? mark.trailLength : 40));
-        if (this.enabled) {
-            if (this.orbit) {
-                this.yaw = ((this.yaw + dt * 8 + 180) % 360) - 180;
-                document.getElementById('cameraYaw').value = this.yaw;
-            }
-            this.prepareView();
-            rainCameraGPU.render(this);
-        } else rainCameraGPU.hide();
+    advanceFrame() {
+        // Compact history in place once per character step, never per repaint.
+        if(!this.enabled || (typeof rainCameraGPU!=='undefined' && (rainCameraGPU.failed || rainCameraGPU.lost))){
+            this.pending.length=0;
+            if(typeof rainCameraGPU!=='undefined')rainCameraGPU.invalidate=true;
+        }
+        let write = 0;
+        let x0=Infinity,y0=Infinity,z0=Infinity,x1=-Infinity,y1=-Infinity,z1=-Infinity,pad=0,motionMargin=0;
+        for (const mark of this.marks) {
+            const lifetime=window.matrixRainTrails?.enabled?mark.trailLength:40;
+            if (this.frame-mark.frame>=lifetime) continue;
+            this.marks[write++]=mark;
+            const px=mark.x-mark.delta[0],py=mark.y-mark.delta[1],pz=mark.z-mark.delta[2];
+            x0=Math.min(x0,mark.x,px);y0=Math.min(y0,mark.y,py);z0=Math.min(z0,mark.z,pz);
+            x1=Math.max(x1,mark.x,px);y1=Math.max(y1,mark.y,py);z1=Math.max(z1,mark.z,pz);
+            pad=Math.max(pad,mark.fontSize*1.6);
+            motionMargin=Math.max(motionMargin,Math.abs(mark.delta[0]),Math.abs(mark.delta[1]),Math.abs(mark.delta[2]));
+        }
+        this.marks.length=write;
+        this.bounds=write?{center:[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2],half:[(x1-x0)/2,(y1-y0)/2,(z1-z0)/2],pad,motionMargin}:null;
         this.frame++;
-    }
+    },
+    present(now = performance.now(), phase = 1) {
+        const dt=this.lastTime?Math.min(.1,(now-this.lastTime)/1000):0;this.lastTime=now;
+        if(this.enabled){
+            if(this.orbit){
+                this.yaw=((this.yaw+dt*8+180)%360)-180;
+                const input=document.getElementById('cameraYaw');if(input)input.value=this.yaw;
+            }
+            const quality=window.matrixRainRendering?.quality;
+            if(quality==='low'&&this.lastQuality==='low'&&now-(this.lastPaint||0)<1000/30)return;
+            this.lastQuality=quality;this.lastPaint=now;
+            this.prepareView();rainCameraGPU.render(this,phase);
+        }else rainCameraGPU.hide();
+    },
+    // Diagnostic compatibility: one complete simulation step and presentation.
+    render() {this.advanceFrame();this.present(performance.now(),1);}
+
 };
 
 window.addEventListener('DOMContentLoaded', () => {

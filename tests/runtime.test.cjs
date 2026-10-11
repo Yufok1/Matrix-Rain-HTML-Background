@@ -24,7 +24,7 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ['rain-audio-motion.js', 'rain-camera-gpu.js', 'rain-camera.js', 'settings-panel.js', 'trails/rain-trails.js']);
+assert.deepEqual([...assets].sort(), ['assets/rain-font-msdf.js', 'rain-animation-clock.js', 'rain-audio-motion.js', 'rain-camera-gpu.js', 'rain-camera.js', 'render-settings.js', 'settings-panel.js', 'trails/rain-trails.js']);
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
     assert.ok(fs.existsSync(path.resolve(root, 'trails', imported)), 'Missing trail module: ' + imported);

@@ -1797,17 +1797,20 @@
             startMatrixAnimation();
         }
 
+        function stopMatrixAnimation() {
+            if (matrixInterval instanceof RainAnimationClock) matrixInterval.stop();
+            else if (matrixInterval) clearTimeout(matrixInterval);
+            matrixInterval = null;
+        }
+
         function startMatrixAnimation() {
-            if (matrixInterval) {
-                clearTimeout(matrixInterval);
-            }
-            // Read the live delay after every step. Audio can accelerate or ease
-            // the same streams without resetting a timer on every audio callback.
-            function step() {
-                drawMatrixRain();
-                matrixInterval = setTimeout(step, MatrixRainEngine.rainConfig.speed);
-            }
-            matrixInterval = setTimeout(step, MatrixRainEngine.rainConfig.speed);
+            stopMatrixAnimation();
+            matrixInterval = new RainAnimationClock({
+                step: drawMatrixRain,
+                render: (now, phase) => rainCamera.present(now, phase),
+                getDelay: () => MatrixRainEngine.rainConfig.speed
+            });
+            matrixInterval.start();
         }
 
         // Recompute active column mask based on current density and canvas size
@@ -1837,7 +1840,15 @@
 
         // Helper function to get random character
         function getNextCharacter(characters, columnIndex, isUserColumn) {
-            return characters[Math.floor(Math.random() * characters.length)];
+            const cache = window.rainCharacterPools || (window.rainCharacterPools = new Map());
+            let pool = cache.get(characters);
+            if (!pool) {
+                pool = Array.from(characters);
+                if (cache.size > 16) cache.clear();
+                cache.set(characters, pool);
+            }
+            return pool[Math.floor(Math.random() * pool.length)] || ' ';
+
         }
 
         // Shared motion for the existing rain patterns. Trail marks stay where
@@ -1914,7 +1925,7 @@
             matrixCtx.font = `${size}px monospace`;
             matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
             rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
-            if (!rainCamera.enabled) matrixCtx.fillText(char, x, y);
+            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) matrixCtx.fillText(char, x, y);
             matrixCtx.globalAlpha = alpha;
             p.lastStamp = { x, y, depth: p.depth };
         }
@@ -1957,7 +1968,7 @@
             // Reset alpha left by the 3D renderer before the full-canvas fade.
             matrixCtx.globalAlpha = 1;
             matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
-            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
             prepareRainMotion(fontSize);
 
@@ -1995,7 +2006,7 @@
                     drawClassicRain(characters, fontSize, opacity);
                 }
             }
-            rainCamera.render();
+            rainCamera.advanceFrame();
         }
 
         // Track animation state for all patterns
@@ -2546,8 +2557,8 @@
             } else {
                 canvas.style.display = 'none';
                 if (matrixInterval) {
-                    clearTimeout(matrixInterval);
-                    matrixInterval = null;
+                    stopMatrixAnimation();
+                    rainCameraGPU.hide();
                 }
                 MatrixRainEngine.logActivity('Matrix rain deactivated', 'warning');
             }
@@ -2557,8 +2568,8 @@
             const canvas = document.getElementById('matrixRainCanvas');
             canvas.style.display = 'none';
             if (matrixInterval) {
-                clearTimeout(matrixInterval);
-                matrixInterval = null;
+                stopMatrixAnimation();
+                rainCameraGPU.hide();
             }
             MatrixRainEngine.logActivity('EMERGENCY STOP: Matrix rain terminated', 'error');
         }
@@ -3468,6 +3479,9 @@
             });
         }
     </script>
+<script src="rain-animation-clock.js"></script>
+<script src="render-settings.js"></script>
+<script src="assets/rain-font-msdf.js"></script>
 <script src="rain-camera-gpu.js"></script>
 <script src="rain-camera.js"></script>
 <script src="settings-panel.js"></script>

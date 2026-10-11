@@ -1,6 +1,8 @@
+const DIGITAL_LEVELS = [1, .68, .45, .29, .18, .105, .06, .032];
 export class RainTrailLengths {
     constructor() {
         this.enabled = true;
+        this.stepped = true;
         this.minimum = 12;
         this.maximum = 100;
         this.lengths = new Map();
@@ -24,6 +26,12 @@ export class RainTrailLengths {
         return this.lengths.get(id);
     }
     alpha(length, age) {
+        if (this.stepped) {
+            const lifetime = this.enabled ? Math.max(1, length) : 40;
+            if (age >= lifetime) return 0;
+            const stage = Math.floor(Math.max(0, age) / lifetime * DIGITAL_LEVELS.length);
+            return DIGITAL_LEVELS[Math.min(stage, DIGITAL_LEVELS.length - 1)];
+        }
         if (!this.enabled) return Math.pow(.88, age);
         const progress = Math.max(0, Math.min(1, age / length));
         return Math.exp(-4 * progress) * (1 - progress);
