@@ -18,7 +18,7 @@ Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Use HTTP/
 
 Click **M +** in the top-right corner to open settings. **M** also toggles the panel. The shortcut currently fires inside text inputs too; use the button while editing custom characters.
 
-Settings float beside the rain on desktop and cover only the lower 45% of the screen on phones. In phone landscape, they dock to one side. Drag the header to move the panel; keyboard users can focus the header and use arrow keys. Buttons wrap, sliders stack, and the panel scrolls without sideways overflow.
+Desktop settings use a roomy 600px panel with larger controls. On phones, settings cover only the lower 45% of the screen; in landscape, they dock to one side. Drag the header to move the panel; keyboard users can focus the header and use arrow keys. Buttons wrap, sliders stack, and the panel scrolls without sideways overflow.
 
 ## 3D camera and trails
 
@@ -54,19 +54,21 @@ Trail length preferences are saved locally. The remaining controls reset when th
 
 In Chrome or Edge, click **Audio Reactive Mode**, choose the tab or screen playing sound, and enable **Share audio** in the browser's picker. Which sources offer audio depends on your browser and platform. Audio access starts only after you click the button and approve sharing. The screen track required by the capture API is not displayed or recorded by this application.
 
+Audio settings stay gray and disabled until audio mode starts successfully. Browsers without the required capture API also get a disabled Audio Reactive Mode button and a short explanation; regular rain controls and Auto Orchestrator remain available. A canceled share or a source without audio leaves audio settings disabled.
+
 | Audio | Visual response |
 |---|---|
 | Bass | Rain speed |
 | Low-mid and mid frequencies | Hue |
 | High frequencies | Hue variation and character set |
 | Volume | Intensity and brightness |
-| Changing energy | Direction |
+| Attacks, releases and changes across frequency ranges | Direction |
 
 Audio mode uses Classic Matrix and controls its colors, speed, intensity, character set and direction. Density stays manual. Secondary color follows the complement of the primary color.
 
-**Depth** is on by default and includes toward/away movement in the audio direction pool. Turn it off for the four planar headings. Audio-driven turns cannot immediately select the opposite heading, reducing the back-and-forth wavering over the same line. Pauses keep the last heading, and direction changes share a minimum 240 ms interval. Manual Reverse Flow still works.
+**Depth** is on by default and includes toward/away movement. Turn it off for the four planar headings. Bass changes steer depth, midrange changes steer vertical movement, and treble changes steer horizontal movement. The controller compares each range with its recent envelope, so a held sound keeps its course while a new attack or release can answer it. A short evidence filter rejects small fluctuations; there is no scheduled or random audio turn. Audio cannot immediately select the opposite heading and retrace its last segment. Pauses keep the last heading. Manual Reverse Flow still works.
 
-**Beat turns** is optional and off by default. It adds right-angle turns on detected syllables or bass beats instead of reversing a stream onto itself.
+**Beat turns** is optional and off by default. It lowers the evidence threshold for reacting to smaller musical attacks and releases; sustained vocals do not repeatedly trigger turns.
 
 **Hue Reactivity / Saturation Gain / Brightness Depth** each range from 50–200%. Color presets: Neon, Prism, Pastel, Hyperneon, Aurora, Bassstorm, Crystal, Vaporwave, Inferno, and Zen.
 

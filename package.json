@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "sync-demo": "node tools/sync-demo.cjs",
-    "test": "node tests/runtime.test.cjs && node tests/audio-direction.test.cjs && node tests/rain-trails.test.mjs"
+    "test": "node tests/runtime.test.cjs && node tests/audio-direction.test.cjs && node tests/rain-trails.test.mjs && node tests/audio-controls.test.cjs"
   },
   "engines": {
     "node": ">=18"

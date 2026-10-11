@@ -25,9 +25,9 @@
             position: fixed;
             bottom: 16px;
             right: 16px;
-            width: min(420px, calc(100vw - 32px));
-            height: min(60vh, 620px);
-            height: min(60dvh, 620px);
+            width: min(600px, calc(100vw - 32px));
+            height: min(75vh, 800px);
+            height: min(75dvh, 800px);
             max-height: calc(100dvh - 32px);
             background: rgba(0, 0, 0, 0.85);
             border: 3px solid #00ff41;
@@ -928,6 +928,19 @@
         .modal-content::-webkit-scrollbar { width: 6px; }
         .modal-content::-webkit-scrollbar-track, .modal-content::-webkit-scrollbar-track:hover { background: #071009; border: 0; box-shadow: none; }
         .modal-content::-webkit-scrollbar-thumb { background: #00cc33; border: 0; box-shadow: none; }
+        #audioModeSettings { border: 0; min-width: 0; width: 100%; }
+        #audioModeSettings:disabled { opacity: .45; filter: grayscale(1); }
+        #audioReactiveBtn:disabled { opacity: .45; filter: grayscale(1); cursor: not-allowed; }
+        #audioModeSettings :disabled { cursor: not-allowed; }
+        @media (min-width: 701px) and (min-height: 501px), (min-width: 951px) {
+            .full-header-text { font-size: 18px; }
+            .panel-drag-hint { font-size: 13px; }
+            .section h3 { font-size: 18px; }
+            .control-group h4 { font-size: 16px; }
+            .control-item label { font-size: 14px; }
+            .section .btn, .pattern-btn, .setting-choice { min-height: 44px; font-size: 14px !important; padding: 10px 12px !important; }
+            .matrix-modal input[type="range"] { min-height: 26px; }
+        }
 
         @media (max-width: 700px), (max-height: 500px) and (max-width: 950px) {
             .matrix-modal:not(.minimized) {
@@ -1021,7 +1034,7 @@
 
                         <div id="audioStatus" style="margin-top: 10px; font-size: 12px; color: #00ff41;"></div>
                         <div id="audioVisualizer" style="margin-top: 10px; height: 60px; background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 5px; position: relative; overflow: hidden;"></div>
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
+                        <fieldset id="audioModeSettings" aria-label="Audio Mode Settings" disabled style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; text-align: center;">
                             <div style="font-size: 12px; color: #999; margin-bottom: 10px;">Audio Mode Settings</div>
                             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                                 <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
@@ -1065,7 +1078,7 @@
                                 <button class="btn" onclick="setColorPreset('inferno')" style="background:#ff3b3b; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Inferno</button>
                                 <button class="btn" onclick="setColorPreset('zen')" style="background:#b6ffb3; color:#000; font-weight:bold; font-size:12px; padding:8px 12px;">Zen</button>
                             </div>
-                        </div>
+                        </fieldset>
                     </div>
                     <div class="pattern-grid">
                         <button class="pattern-btn active" onclick="setRainPattern('classic', this)">Classic Matrix</button>
@@ -1240,12 +1253,25 @@
         }
 
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
+        function canCaptureRainAudio() {
+            return typeof window.wallpaperRegisterAudioListener === 'function' ||
+                (window.isSecureContext && typeof navigator.mediaDevices?.getDisplayMedia === 'function' &&
+                    typeof (window.AudioContext || window.webkitAudioContext) === 'function');
+        }
+
         function updateModeButtons(activeMode) {
             const orchestratorBtn = document.getElementById('autoOrchestratorBtn');
             const audioBtn = document.getElementById('audioReactiveBtn');
 
             orchestratorBtn.disabled = false;
-            audioBtn.disabled = false;
+            audioBtn.disabled = !canCaptureRainAudio();
+            document.getElementById('audioModeSettings').disabled = activeMode !== 'audio';
+            if (!canCaptureRainAudio()) {
+                document.getElementById('audioStatus').textContent = 'Tab audio capture is unavailable in this browser. Try Auto Orchestrator for changing visuals.';
+                audioBtn.title = 'This browser cannot share tab audio';
+            } else {
+                audioBtn.title = '';
+            }
 
             if (activeMode === 'orchestrator') {
                 audioBtn.disabled = true;
@@ -1773,13 +1799,15 @@
 
         function startMatrixAnimation() {
             if (matrixInterval) {
-                clearInterval(matrixInterval);
+                clearTimeout(matrixInterval);
             }
-
-            const speed = MatrixRainEngine.rainConfig.speed;
-            console.log(`🌊 Matrix Rain: Starting animation with speed ${speed}ms`);
-            matrixInterval = setInterval(drawMatrixRain, speed);
-            console.log(`🌊 Matrix Rain: Animation interval set: ${matrixInterval}`);
+            // Read the live delay after every step. Audio can accelerate or ease
+            // the same streams without resetting a timer on every audio callback.
+            function step() {
+                drawMatrixRain();
+                matrixInterval = setTimeout(step, MatrixRainEngine.rainConfig.speed);
+            }
+            matrixInterval = setTimeout(step, MatrixRainEngine.rainConfig.speed);
         }
 
         // Recompute active column mask based on current density and canvas size
@@ -2571,16 +2599,7 @@
             // Recompute density-based active column mask whenever config changes
             recomputeActiveColumnsMask();
 
-            // Update animation with new settings ONLY if not in audio reactive mode
-            // Audio mode controls speed dynamically - don't override it
-            if (matrixInterval && !audioReactiveActive) {
-                // Clear current interval first
-                clearInterval(matrixInterval);
-                // Start new animation with current config speed
-                const newSpeed = MatrixRainEngine.rainConfig.speed;
-                matrixInterval = setInterval(drawMatrixRain, newSpeed);
-                console.log(`🌊 Matrix Rain: Animation restarted with speed ${newSpeed}ms`);
-            }
+            // The running animation reads config.speed on its next step.
         }
 
         function toggleMatrixRain() {
@@ -2592,7 +2611,8 @@
             } else {
                 canvas.style.display = 'none';
                 if (matrixInterval) {
-                    clearInterval(matrixInterval);
+                    clearTimeout(matrixInterval);
+                    matrixInterval = null;
                 }
                 MatrixRainEngine.logActivity('Matrix rain deactivated', 'warning');
             }
@@ -2602,7 +2622,8 @@
             const canvas = document.getElementById('matrixRainCanvas');
             canvas.style.display = 'none';
             if (matrixInterval) {
-                clearInterval(matrixInterval);
+                clearTimeout(matrixInterval);
+                matrixInterval = null;
             }
             MatrixRainEngine.logActivity('EMERGENCY STOP: Matrix rain terminated', 'error');
         }
@@ -2853,6 +2874,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            updateModeButtons(null);
             initializeSettingChoices();
             console.log("🌊 Matrix Rain: DOM loaded, initializing...");
             MatrixRainEngine.init();
@@ -2946,15 +2968,15 @@
 
             // Register Wallpaper Engine audio listener at page load (REQUIRED!)
             if (window.wallpaperRegisterAudioListener) {
-                audioBufferLength = 128;
-                audioDataArray = new Uint8Array(128);
+                audioBufferLength = 64;
+                audioDataArray = new Float32Array(64);
 
                 window.wallpaperRegisterAudioListener(function(audioArray) {
                     if (!audioReactiveActive) return;
 
-                    // MASSIVE amplification for Wallpaper Engine audio (remove artificial cap!)
-                    // Apply 8x multiplier for ULTRA sensitivity at normal volumes
-                    audioDataArray = new Uint8Array(audioArray.map(v => Math.floor(Math.max(v, 0) * 8 * 255)));
+                    // WE supplies 64 frequency bins per channel, not 128
+                    // consecutive frequencies. Pair the channels before analysis.
+                    audioDataArray = readWallpaperSpectrum(audioArray);
                     audioBufferLength = audioDataArray.length;
                     analyzeAudio();
                 });
@@ -3154,41 +3176,15 @@
         let audioAnimationFrame = null;
         let audioStream = null;
 
-        // Syllable detection state (for reversals)
-        let syllableDetector = {
-            threshold: 0.3,         // ULTRA sensitive - catch tiny audio movements
-            minVolume: 0.02,        // Very low but not zero
-            lastSyllableTime: 0,
-            syllableCooldown: 120,  // 120ms = ~8 syllables/sec (prevents double-reversals)
-            volumeHistory: [],
-            historyLength: 12,      // Balanced history
-            avgVolume: 0
-        };
-
-        // Beat detection state (for color changes AND reversal backup)
-        let beatDetector = {
-            threshold: 0.3,         // ULTRA sensitive - catch even small beats
-            minBass: 40,           // Trigger on tiny bass movements
-            lastBeatTime: 0,
-            beatCooldown: 150,      // Allow more frequent beat reactions
-            bassHistory: [],
-            historyLength: 15,
-            avgBass: 0
-        };
-
-        // Track when last syllable was detected (for beat reversal backup)
-        let lastSyllableOrBeatReversalTime = 0;
-
-        // Rhythm detection and direction bursts removed
-        // Music now controls everything continuously
-
         async function toggleAudioReactive() {
+            if (!canCaptureRainAudio()) { updateModeButtons(null); return; }
             audioReactiveActive = !audioReactiveActive;
             window.audioReactiveActive = audioReactiveActive; // Sync global
             const btn = document.getElementById('audioReactiveBtn');
             const status = document.getElementById('audioStatus');
 
             if (audioReactiveActive) {
+                resetAudioMotion();
                 btn.textContent = '⏸️ STOP AUDIO MODE';
                 btn.style.background = '#ff4444';
 
@@ -3218,7 +3214,8 @@
                 }
 
                 // BROWSER MODE - Request desktop/tab audio capture
-                status.textContent = '🎤 Requesting audio access...';
+                status.textContent = 'Choose a tab or screen and enable Share audio.';
+                btn.disabled = true;
 
                 try {
                     audioStream = await navigator.mediaDevices.getDisplayMedia({
@@ -3231,6 +3228,9 @@
                     });
 
                     // Set up Web Audio API
+                    if (!audioStream.getAudioTracks().length) {
+                        throw new Error('No shared audio track. Choose a source with Share audio enabled.');
+                    }
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     audioAnalyser = audioContext.createAnalyser();
                     audioAnalyser.fftSize = 2048;
@@ -3263,9 +3263,16 @@
 
                     updateModeButtons('audio'); // Disable other mode buttons
 
+                    audioStream.getTracks().forEach(track => track.addEventListener('ended', () => {
+                        if (audioReactiveActive) toggleAudioReactive();
+                    }, {once: true}));
+
                 } catch (error) {
                     console.error('Audio capture error:', error);
-                    status.textContent = '❌ Audio access denied. Try sharing a tab with audio.';
+                    stopAudioReactive();
+                    status.textContent = error.name === 'NotAllowedError' ? 'Audio sharing was canceled or denied.' :
+                        error.name === 'NotSupportedError' ? 'Audio sharing is unavailable in this browser.' :
+                        error.message.startsWith('No shared audio track.') ? error.message : 'Audio sharing could not start. Choose a source with Share audio enabled.';
                     audioReactiveActive = false;
                     window.audioReactiveActive = false; // Sync global
                     btn.textContent = '🎵 AUDIO REACTIVE MODE';
@@ -3342,31 +3349,26 @@
             }
             // In Wallpaper Engine mode, data is already populated by the listener callback
 
-            // Calculate different frequency ranges based on mode
+            // WE bins run low-to-high in each channel. Browser FFT bins instead
+            // have a known Hz spacing, derived from the actual sample rate.
             let bass, lowMid, mid, high;
 
             if (isWallpaperEngine) {
-                // WALLPAPER ENGINE: 128 samples (64 left + 64 right)
-                // Scale down the ranges proportionally: 128 is ~12.5% of 1024
-                bass = getAverageFrequency(0, 10);       // ~0-80 scaled to 128 → 0-10
-                lowMid = getAverageFrequency(10, 25);    // ~80-200 → 10-25
-                mid = getAverageFrequency(25, 75);       // ~200-600 → 25-75
-                high = getAverageFrequency(75, 128);     // ~600-1024 → 75-128
+                bass = getAverageFrequency(0, 8);
+                lowMid = getAverageFrequency(8, 20);
+                mid = getAverageFrequency(20, 40);
+                high = getAverageFrequency(40, 64);
             } else {
-                // BROWSER MODE: 1024+ bins
-                bass = getAverageFrequency(0, 80);       // 0-80: Bass/kick
-                lowMid = getAverageFrequency(80, 200);   // 80-200: Low-mid (music body)
-                mid = getAverageFrequency(200, 600);     // 200-600: Mid (vocals)
-                high = getAverageFrequency(600, 1024);   // 600+: High frequencies (consonants)
+                bass = getBrowserAudioBand(20, 180);
+                lowMid = getBrowserAudioBand(180, 800);
+                mid = getBrowserAudioBand(800, 3500);
+                high = getBrowserAudioBand(3500, 16000);
             }
 
             // Overall volume
             const volume = (bass + lowMid + mid + high) / 4 / 255;
 
-            // Optional syllable-driven right-angle turns
-            detectSyllables(volume, mid, high, isWallpaperEngine);
-
-            // MUSIC = EVERYTHING ELSE (continuous background control)
+            // One controller owns direction; sustained levels are not beats.
             reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine);
 
             // Draw visualizer
@@ -3382,82 +3384,22 @@
             }
             return count > 0 ? sum / count : 0;
         }
-
-        function detectSyllables(volume, mid, high, isWallpaperEngine = false) {
-            const now = Date.now();
-
-            // Update volume history
-            syllableDetector.volumeHistory.push(volume);
-            if (syllableDetector.volumeHistory.length > syllableDetector.historyLength) {
-                syllableDetector.volumeHistory.shift();
+        function readWallpaperSpectrum(stereo) {
+            const mono = new Float32Array(64);
+            for (let i = 0; i < 64; i++) {
+                const left = Math.min(1, Math.max(0, Number(stereo[i]) || 0));
+                const right = Math.min(1, Math.max(0, Number(stereo[i + 64]) || 0));
+                const gain = (left + right) * 4;
+                // Retain sensitivity with a soft limit: louder samples stay
+                // louder, including above the old byte-overflow boundary.
+                mono[i] = 255 * gain / (1 + gain);
             }
-
-            // Calculate average volume
-            syllableDetector.avgVolume = syllableDetector.volumeHistory.reduce((a, b) => a + b, 0) / syllableDetector.volumeHistory.length;
-
-            // Adjust thresholds based on mode
-            const midThreshold = isWallpaperEngine ? 15 : 40;       // Much lower for WE
-            const consonantThreshold = isWallpaperEngine ? 30 : 100; // Much lower for WE
-            const vocalThreshold = isWallpaperEngine ? 35 : 120;     // Much lower for WE
-
-            // Detect syllables - HYPER SENSITIVE to catch EVERYTHING
-            const isSyllable = volume > syllableDetector.avgVolume * syllableDetector.threshold
-                            && volume > syllableDetector.minVolume
-                            && mid > midThreshold
-                            && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
-
-            // Also catch consonant pops (high frequency spikes) - LOWER threshold
-            const isConsonant = high > consonantThreshold
-                             && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
-
-            // ALSO catch any significant mid-frequency activity (vocals)
-            const isVocal = mid > vocalThreshold
-                         && (now - syllableDetector.lastSyllableTime) > syllableDetector.syllableCooldown;
-
-            if (isSyllable || isConsonant || isVocal) {
-                syllableDetector.lastSyllableTime = now;
-                onSyllableDetected();
-            }
+            return mono;
         }
-
-        function detectBeats(bass) {
-            const now = Date.now();
-
-            // Update bass history
-            beatDetector.bassHistory.push(bass);
-            if (beatDetector.bassHistory.length > beatDetector.historyLength) {
-                beatDetector.bassHistory.shift();
-            }
-
-            // Calculate average bass
-            beatDetector.avgBass = beatDetector.bassHistory.reduce((a, b) => a + b, 0) / beatDetector.bassHistory.length;
-
-            // Detect bass beats - focus on low frequencies only
-            const isBeat = bass > beatDetector.avgBass * beatDetector.threshold
-                        && bass > beatDetector.minBass
-                        && (now - beatDetector.lastBeatTime) > beatDetector.beatCooldown;
-
-            if (isBeat) {
-                beatDetector.lastBeatTime = now;
-                onBeatDetected(bass);
-            }
-        }
-
-        // Rhythm change detection removed - music now controls everything continuously
-
-        function onSyllableDetected() {
-            if (audioReverseEnabled) turnAudioAtBeat();
-        }
-
-        function onBeatDetected(bass) {
-            if (!audioReverseEnabled) return;
-            // A bass beat is a backup turn when there was no recent syllable.
-            if (Date.now() - lastSyllableOrBeatReversalTime > 500) turnAudioAtBeat();
-        }
-
-        function onRhythmChange(bass, lowMid, mid, high, changeAmount) {
-            // This function is now REMOVED from active use
-            // Music drives everything continuously via reactToAudio()
+        function getBrowserAudioBand(fromHz, toHz) {
+            const hzPerBin = audioContext.sampleRate / audioAnalyser.fftSize;
+            const from = Math.max(1, Math.floor(fromHz / hzPerBin));
+            return getAverageFrequency(from, Math.max(from + 1, Math.ceil(toHz / hzPerBin)));
         }
 
         // Helper function to convert HSL to HEX for color pickers
@@ -3477,47 +3419,63 @@
             down: 'up', up: 'down', left: 'right', right: 'left',
             toward: 'away', away: 'toward'
         };
-        const audioDirectionState = { peak: 0, sampledAt: 0, changedAt: -Infinity };
-        function turnAudioAtBeat() {
-            const now = performance.now();
-            if (now - audioDirectionState.changedAt < 240) return false;
-            const config = MatrixRainEngine.rainConfig;
-            const directions = audioDiagonalsEnabled
-                ? ['down', 'up', 'left', 'right', 'toward', 'away']
-                : ['down', 'up', 'left', 'right'];
-            const current = config.direction;
-            const choices = directions.filter(direction => direction !== current && direction !== oppositeRainDirections[current]);
-            config.direction = choices[Math.floor(Math.random() * choices.length)];
-            audioDirectionState.changedAt = now;
-            document.getElementById('rainDirection').value = config.direction;
-            lastSyllableOrBeatReversalTime = Date.now();
-            return true;
+        const audioDirectionState = {};
+        function resetAudioMotion() {
+            Object.assign(audioDirectionState, {
+                levels: [0, 0, 0], baseline: [0, 0, 0], peaks: [12, 12, 12],
+                sampledAt: null, changedAt: -Infinity, pending: null, pendingAt: 0
+            });
         }
-        function chooseAudioDirection(bass, lowMid, high, depthEnabled, current, now) {
+        resetAudioMotion();
+        function chooseAudioDirection(bass, body, high, depthEnabled, current, now) {
             const state = audioDirectionState;
-            const energy = (bass + lowMid + high) / 3;
-            const elapsed = state.sampledAt ? Math.max(0, now - state.sampledAt) : 0;
+            const elapsed = state.sampledAt === null ? 33 : Math.max(1, Math.min(100, now - state.sampledAt));
             state.sampledAt = now;
-            // Silence and the trailing noise of speech do not issue a new turn.
-            // Keep travelling on the last selected axis for an unlimited pause.
-            if (energy < Math.max(4, state.peak * 0.18)) return current;
-            // A rolling peak follows playback volume; quiet tracks can use Z too.
-            // Only audible samples age the reference; a long Discord pause must
-            // not itself reset sensitivity or select a direction when speech resumes.
-            state.peak = Math.max(energy, state.peak * Math.exp(-Math.min(elapsed, 100) / 4000), 12);
-            const directions = depthEnabled
-                ? ['down', 'up', 'left', 'right', 'toward', 'away']
-                : ['down', 'up', 'left', 'right'];
-            const normalized = Math.max(0, Math.min(1, (energy / state.peak - 0.18) / 0.82));
-            const candidate = directions[Math.min(directions.length - 1, Math.floor(normalized * directions.length))];
-            // Opposite audio bands keep the current heading until another axis
-            // is selected. Never immediately trace back over the same segment.
-            if (candidate === oppositeRainDirections[current]) return current;
-            // Give each segment time to become visible instead of changing at
-            // audio callback frequency and repeatedly stamping the same joint.
-            if ((!depthEnabled && (current === 'toward' || current === 'away')) || now - state.changedAt >= 240) {
-                if (candidate !== current) state.changedAt = now;
-                return candidate;
+            const input = [bass, body, high].map(value => Math.max(0, Math.min(255, value)));
+            if (Math.max(...input) < 4) {
+                state.pending = null;
+                // Quiet gaps retain both heading and the preceding sound's
+                // reference. Elapsed time alone cannot cause a turn.
+                return !depthEnabled && (current === 'toward' || current === 'away') ? 'down' : current;
+            }
+            const positive = [depthEnabled ? 'toward' : 'down', 'down', 'right'];
+            const negative = [depthEnabled ? 'away' : 'up', 'up', 'left'];
+            const events = input.map((value, i) => {
+                const previous = state.levels[i];
+                const smoothing = 1 - Math.exp(-elapsed / (value > previous ? 55 : 110));
+                const level = previous + (value - previous) * smoothing;
+                const peak = Math.max(12, level, state.peaks[i] * Math.exp(-elapsed / 6000));
+                const change = (level - previous) / peak * 33 / elapsed;
+                const contrast = (level - state.baseline[i]) / peak;
+                // Fresh attacks/releases compete by their own band's recent
+                // range, so a quiet voice or cymbal can answer a loud bassline.
+                const score = change * 3 + contrast * 0.5;
+                state.levels[i] = level;
+                state.peaks[i] = peak;
+                state.baseline[i] += (level - state.baseline[i]) * (1 - Math.exp(-elapsed / 900));
+                return {direction: score >= 0 ? positive[i] : negative[i], strength: Math.abs(score), change: Math.abs(change)};
+            });
+            const allowed = events.filter(event => event.direction !== oppositeRainDirections[current]);
+            allowed.sort((a, b) => b.strength - a.strength);
+            const event = allowed[0];
+            const holding = events.find(event => event.direction === current)?.strength || 0;
+            const minimum = audioReverseEnabled ? 0.14 : 0.22;
+            if (!event || event.direction === current || event.strength < minimum || event.strength < holding + 0.1) {
+                state.pending = null;
+                return !depthEnabled && (current === 'toward' || current === 'away') ? 'down' : current;
+            }
+            if (state.pending !== event.direction) {
+                state.pending = event.direction;
+                state.pendingAt = now;
+            }
+            // Small changes need brief, consistent evidence; sharp attacks can
+            // answer immediately. This is a noise guard, never a turn schedule.
+            const sharpAttack = event.change > 0.22;
+            const evidenceTime = audioReverseEnabled ? 30 : 60;
+            if (now - state.changedAt >= 80 && (sharpAttack || now - state.pendingAt >= evidenceTime)) {
+                state.changedAt = now;
+                state.pending = null;
+                return event.direction;
             }
             return current;
         }
@@ -3536,7 +3494,8 @@
 
             // BASS → SPEED (more bass = faster rain)
             const bassNormalized = bass / 255;
-            config.speed = 15 + Math.floor(bassNormalized * 75); // 15-90
+            const targetDelay = 90 - Math.round(bassNormalized * 75);
+            config.speed = Math.round(config.speed * 0.65 + targetDelay * 0.35);
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
             // HYPER ENHANCED: Each note in a scale (do-re-mi-fa-so-la-ti-do) gets its own color!
@@ -3595,23 +3554,10 @@
 
 
 
-            // BASS + HIGH COMBO → DIRECTION (bass OR high energy changes direction)
-            // Adjust thresholds based on mode - MUCH LOWER for Wallpaper Engine!
-            // ULTRA SENSITIVE: Respond to even tiny audio movements
-            const bassThreshold = isWallpaperEngine ? 3 : 10;
-            const highThreshold = isWallpaperEngine ? 4 : 15;
-            const lowMidThreshold = isWallpaperEngine ? 5 : 20;
-
-            const directionTrigger = bass > bassThreshold || high > highThreshold || lowMid > lowMidThreshold;
-            if (directionTrigger) {
-                const newDirection = chooseAudioDirection(bass, lowMid, high, audioDiagonalsEnabled, config.direction, performance.now());
-                const oldDirection = config.direction;
-
-                // Shared rain positions are preserved when direction changes.
-
-                config.direction = newDirection;
-                document.getElementById('rainDirection').value = config.direction;
-            }
+            // Frequency changes steer the existing streams. Neither a random
+            // choice nor the passage of a cooldown is a reason to turn.
+            config.direction = chooseAudioDirection(bass, (lowMid + mid) / 2, high, audioDiagonalsEnabled, config.direction, performance.now());
+            document.getElementById('rainDirection').value = config.direction;
 
             // Update UI sliders
             document.getElementById('rainSpeed').value = 101 - config.speed;
