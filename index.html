@@ -1086,7 +1086,6 @@
                         <button class="pattern-btn" onclick="setRainPattern('pentad', this)">Pentad Prism</button>
                         <button class="pattern-btn" onclick="setRainPattern('chaos', this)">Chaos Flow</button>
                         <button class="pattern-btn" onclick="setRainPattern('harmonic', this)">Harmonic Waves</button>
-                        <button class="pattern-btn" onclick="setRainPattern('particles', this)">💫 Particles</button>
                     </div>
                 </div>
 
@@ -1984,9 +1983,7 @@
 
             { // All rain directions use the existing pattern and character population.
                 // Traditional 2D directional rain
-                if (config.pattern === 'particles') {
-                    drawParticleField(characters, fontSize, opacity);
-                } else if (config.pattern === 'rainbow') {
+                if (config.pattern === 'rainbow') {
                     drawRainbowRain(characters, fontSize, opacity);
                 } else if (config.pattern === 'pentad') {
                     drawPentadRain(characters, fontSize, opacity);
@@ -2009,11 +2006,6 @@
                 pulsePhase: 0,
                 selectedPattern: 0
             };
-        }
-
-        // Particle system state
-        if (!window.particles) {
-            window.particles = [];
         }
 
         function drawClassicRain(characters, fontSize, opacity) {
@@ -2343,64 +2335,6 @@
                 }
             }
         }
-        // === PARTICLE FIELD ===
-        function drawParticleField(characters, fontSize, opacity) {
-            const config = MatrixRainEngine.rainConfig;
-            const numParticles = Math.floor(config.intensity * 3);
-
-            if (window.particles.length === 0) {
-                for (let i = 0; i < numParticles; i++) {
-                    window.particles.push({
-                        x: Math.random() * matrixCanvas.width,
-                        y: Math.random() * matrixCanvas.height,
-                        vx: (Math.random() - 0.5) * 2,
-                        vy: (Math.random() - 0.5) * 2,
-                        char: getNextCharacter(characters, i, false),
-                        phase: Math.random() * Math.PI * 2
-                    });
-                }
-            }
-
-            const speedFactor = config.speed / 50;
-            const centerX = matrixCanvas.width / 2;
-            const centerY = matrixCanvas.height / 2;
-
-            for (let i = 0; i < Math.min(window.particles.length, numParticles); i++) {
-                const p = window.particles[i];
-
-                const dx = centerX - p.x;
-                const dy = centerY - p.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const force = (dist / 500) * 0.5;
-
-                p.vx += (dy / dist) * force * speedFactor * reverseFlowMultiplier;
-                p.vy += (-dx / dist) * force * speedFactor * reverseFlowMultiplier;
-
-                p.x += p.vx * reverseFlowMultiplier;
-                p.y += p.vy * reverseFlowMultiplier;
-
-                p.vx *= 0.99;
-                p.vy *= 0.99;
-
-                if (p.x < 0) p.x = matrixCanvas.width;
-                if (p.x > matrixCanvas.width) p.x = 0;
-                if (p.y < 0) p.y = matrixCanvas.height;
-                if (p.y > matrixCanvas.height) p.y = 0;
-
-                p.phase += 0.05 * reverseFlowMultiplier;
-                const pulse = Math.sin(p.phase) * 0.3 + 0.7;
-                const size = fontSize * pulse;
-                const hue = (i * 10 + window.geometricState.time * 20) % 360;
-
-                matrixCtx.font = `${size}px monospace`;
-                matrixCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-                matrixCtx.globalAlpha = opacity;
-                matrixCtx.fillText(p.char, p.x, p.y);
-            }
-
-            window.geometricState.time += 0.02 * reverseFlowMultiplier;
-        }
-
         // === 3D TUNNEL EFFECT (Hackers Gibson Scene) ===
         // Initialize tunnel characters
         if (!window.tunnelChars) {
@@ -2976,7 +2910,7 @@
             MatrixRainEngine.logActivity("🌀 CHAOS RANDOMIZER: Initiating complete system chaos!", 'success');
 
             // Randomize all settings with all available patterns!
-            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];
@@ -3069,7 +3003,7 @@
             const previousDirection = MatrixRainEngine.rainConfig.direction;
 
             // All available patterns
-            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic', 'particles'];
+            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
             const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];

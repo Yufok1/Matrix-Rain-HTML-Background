@@ -44,7 +44,7 @@ Trail length preferences are saved locally. The remaining controls reset when th
 | Camera | Enable, slow orbit, yaw and pitch | Enabled; orbit off |
 | Shortest / Longest tail | 12–160 characters | **12 / 100** |
 
-**Patterns:** Classic Matrix, Rainbow Spectrum, Pentad Prism, Chaos Flow, Harmonic Waves, and Particles.
+**Patterns:** Classic Matrix, Rainbow Spectrum, Pentad Prism, Chaos Flow, and Harmonic Waves.
 
 **Character sets:** Matrix, Binary, Hexadecimal, Symbols, Katakana, or Custom. Choosing Custom reveals a text field for your own character pool.
 
