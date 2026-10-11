@@ -18,7 +18,7 @@ Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Use HTTP/
 
 Click **M +** in the top-right corner to open settings. **M** also toggles the panel. The shortcut currently fires inside text inputs too; use the button while editing custom characters.
 
-On phones, settings fit the screen with wrapping buttons, larger tap targets and a scrolling panel.
+Settings float beside the rain on desktop and cover only the lower 45% of the screen on phones. In phone landscape, they dock to one side. Drag the header to move the panel; keyboard users can focus the header and use arrow keys. Buttons wrap, sliders stack, and the panel scrolls without sideways overflow.
 
 ## 3D camera and trails
 
@@ -84,6 +84,7 @@ The 3D camera needs WebGL with instanced rendering. Chrome or Edge is recommende
 | `index.html` | Synchronized copy used by GitHub Pages |
 | `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
 | `rain-camera-gpu.js` | Instanced WebGL glyph renderer |
+| `settings-panel.js` | Draggable settings panel with viewport bounds |
 | `trails/rain-trails.js` | Trail controls and saved preferences |
 | `trails/rain-trail-lengths.js` | Stable per-stream lengths and fade |
 | `tests/` | Runtime packaging, direction behavior, and trail checks |
