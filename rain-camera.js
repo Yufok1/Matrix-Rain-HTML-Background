@@ -1,9 +1,20 @@
 // The 3D camera is enabled by default; Original View restores the base renderer.
 const rainCamera = {
-    enabled: true, orbit: false, yaw: 0, pitch: 0, frame: 0, marks: [], lastTime: 0,
+    enabled: true, orbit: false, yaw: 0, pitch: 0, roll: 0, frame: 0, marks: [], lastTime: null,
+    mode: 'fixed', motionTime: 0, motionBase: {yaw: 0, pitch: 0, roll: 0},
     pending: [], bounds: null, streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
+    },
+    setMode(mode) {
+        if (!window.RainCameraMotion.modes.includes(mode)) return;
+        this.mode = mode; this.orbit = mode === 'showcase'; this.motionTime = 0; this.lastTime = null;
+        this.motionBase = {yaw: this.yaw, pitch: this.pitch, roll: this.roll};
+        this.refreshControls?.();
+    },
+    viewRotation() {
+        const radians = Math.PI / 180;
+        return window.RainCameraMotion.rotation(this.yaw * radians, this.pitch * radians, this.roll * radians);
     },
     unwrapStep(delta, span, sign) {
         if (Math.abs(delta) < 1e-7) return 0;
@@ -67,11 +78,9 @@ const rainCamera = {
         const pad = Math.max(150, (this.bounds?.pad || 0) + (this.bounds?.motionMargin || 0));
         const cached = this._viewState;
         if (cached && cached.volume === this.volume && cached.yaw === this.yaw
-            && cached.pitch === this.pitch && cached.near === this.near && cached.far === this.far && cached.pad === pad) return;
-        this._viewState = { volume: this.volume, yaw: this.yaw, pitch: this.pitch, near: this.near, far: this.far, pad };
-        const yaw = this.yaw * Math.PI / 180, pitch = this.pitch * Math.PI / 180;
-        const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
-        this.rotation = [cy, 0, -sy, -sp * sy, cp, -sp * cy, cp * sy, sp, cp * cy];
+            && cached.pitch === this.pitch && cached.roll === this.roll && cached.near === this.near && cached.far === this.far && cached.pad === pad) return;
+        this._viewState = { volume: this.volume, yaw: this.yaw, pitch: this.pitch, roll: this.roll, near: this.near, far: this.far, pad };
+        this.rotation = this.viewRotation();
         const box = this.volume;
         const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         // Inverse-project all frustum corners to select whatever cells this
@@ -80,8 +89,12 @@ const rainCamera = {
             const x = xs * (box.width / 2 * z / rainFocalLength + pad);
             const y = ys * (box.height / 2 * z / rainFocalLength + pad);
             const dz = z - rainFocalLength;
-            const wy = cp * y + sp * dz, z1 = -sp * y + cp * dz;
-            const world = [cy * x + sy * z1, wy, -sy * x + cy * z1 + rainFocalLength];
+            // Transpose the complete orthonormal rotation, including roll.
+            // Tile selection and GPU projection must describe the same view.
+            const r = this.rotation;
+            const world = [r[0] * x + r[3] * y + r[6] * dz,
+                r[1] * x + r[4] * y + r[7] * dz,
+                r[2] * x + r[5] * y + r[8] * dz + rainFocalLength];
             for (let axis = 0; axis < 3; axis++) { min[axis] = Math.min(min[axis], world[axis]); max[axis] = Math.max(max[axis], world[axis]); }
         }
         const spans = [box.x, box.y, box.z], base = [0, 0, box.zMin + box.z / 2];
@@ -107,13 +120,12 @@ const rainCamera = {
         this.tiles = tiles.sort((a, b) => b.depth - a.depth);
     },
     project(mark) {
-        const yaw = this.yaw * Math.PI / 180, pitch = this.pitch * Math.PI / 180;
         // Orbit around the point 500 units ahead of the original camera.
         const dz = mark.z - rainFocalLength;
-        const x = Math.cos(yaw) * mark.x - Math.sin(yaw) * dz;
-        const z1 = Math.sin(yaw) * mark.x + Math.cos(yaw) * dz;
-        const y = Math.cos(pitch) * mark.y - Math.sin(pitch) * z1;
-        const z = Math.sin(pitch) * mark.y + Math.cos(pitch) * z1 + rainFocalLength;
+        const r = this.viewRotation();
+        const x = r[0] * mark.x + r[1] * mark.y + r[2] * dz;
+        const y = r[3] * mark.x + r[4] * mark.y + r[5] * dz;
+        const z = r[6] * mark.x + r[7] * mark.y + r[8] * dz + rainFocalLength;
         if (z <= 25) return null;
         const scale = rainFocalLength / z;
         return { x: matrixCanvas.width / 2 + x * scale,
@@ -142,11 +154,14 @@ const rainCamera = {
         this.frame++;
     },
     present(now = performance.now(), phase = 1) {
-        const dt=this.lastTime?Math.min(.1,(now-this.lastTime)/1000):0;this.lastTime=now;
+        const gap=this.lastTime===null?0:Math.max(0,now-this.lastTime);
+        const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
         if(this.enabled){
-            if(this.orbit){
-                this.yaw=((this.yaw+dt*8+180)%360)-180;
-                const input=document.getElementById('cameraYaw');if(input)input.value=this.yaw;
+            if(this.mode!=='fixed'){
+                this.motionTime+=dt;
+                const angles=window.RainCameraMotion.angles(this.mode,this.motionTime),degrees=180/Math.PI;
+                for(const axis of ['yaw','pitch','roll'])this[axis]=this.wrap(this.motionBase[axis]+angles[axis]*degrees,360);
+                if(now-(this.lastControlUpdate||0)>100){this.refreshControls?.(true);this.lastControlUpdate=now;}
             }
             const quality=window.matrixRainRendering?.quality;
             if(quality==='low'&&this.lastQuality==='low'&&now-(this.lastPaint||0)<1000/30)return;
@@ -161,30 +176,54 @@ const rainCamera = {
 
 window.addEventListener('DOMContentLoaded', () => {
     const panel = document.createElement('div');
-    panel.style.cssText = 'border:1px solid #00ff41;padding:12px;margin:12px 0;background:#071009';
+    panel.id = 'rain-camera-panel';
+    panel.style.cssText = 'border:1px solid #00ff41;padding:12px;margin:12px 0;background:#071009;text-align:left';
     panel.innerHTML = `<strong>3D Camera</strong>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin:10px 0">
         <label><input id="cameraEnabled" type="checkbox"> Enable camera</label>
-        <label><input id="cameraOrbit" type="checkbox"> Slow orbit</label>
         <button id="cameraReset" type="button" class="btn">Original View</button></div>
+        <div role="group" aria-label="Camera movement" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <button type="button" class="btn" data-camera-mode="fixed">Fixed</button>
+        <button type="button" class="btn" data-camera-mode="showcase">Showcase</button>
+        <button type="button" class="btn" data-camera-mode="corkscrew">Corkscrew</button>
+        <button type="button" class="btn" data-camera-mode="gyroscope">Gyroscope</button></div>
+        <small style="display:block;margin-bottom:10px">View movement works with manual rain, audio mode and Auto Orchestrator.</small>
         <label for="cameraYaw">Look around</label>
         <input id="cameraYaw" type="range" min="-180" max="180" value="0" step="1" style="width:100%">
         <label for="cameraPitch">Look up / down</label>
-        <input id="cameraPitch" type="range" min="-85" max="85" value="0" step="1" style="width:100%">`;
+        <input id="cameraPitch" type="range" min="-180" max="180" value="0" step="1" style="width:100%">
+        <label for="cameraRoll">Roll</label>
+        <input id="cameraRoll" type="range" min="-180" max="180" value="0" step="1" style="width:100%">`;
     document.getElementById('audioReactiveBtn').parentElement.before(panel);
     const enabled = document.getElementById('cameraEnabled');
-    const orbit = document.getElementById('cameraOrbit');
     const yaw = document.getElementById('cameraYaw');
     const pitch = document.getElementById('cameraPitch');
-    enabled.checked = rainCamera.enabled;
-    enabled.onchange = () => { rainCamera.enabled = enabled.checked; };
-    orbit.onchange = () => { rainCamera.orbit = orbit.checked; if (orbit.checked) rainCamera.enabled = enabled.checked = true; };
-    yaw.oninput = () => { rainCamera.yaw = Number(yaw.value); rainCamera.enabled = enabled.checked = true; };
-    pitch.oninput = () => { rainCamera.pitch = Number(pitch.value); rainCamera.enabled = enabled.checked = true; };
+    const roll = document.getElementById('cameraRoll');
+    rainCamera.refreshControls = (onlyVisible = false) => {
+        const modal = document.querySelector('.matrix-modal');
+        if (onlyVisible && (!modal || modal.classList.contains('minimized') || modal.style.display === 'none')) return;
+        enabled.checked = rainCamera.enabled;
+        yaw.value = rainCamera.yaw; pitch.value = rainCamera.pitch; roll.value = rainCamera.roll;
+        for (const button of panel.querySelectorAll('[data-camera-mode]')) {
+            const active = button.dataset.cameraMode === rainCamera.mode;
+            button.setAttribute('aria-pressed', String(active));
+            button.style.outline = active ? '2px solid #00ff41' : '';
+        }
+    };
+    enabled.onchange = () => { rainCamera.enabled = enabled.checked; rainCamera.lastTime = null; };
+    for (const button of panel.querySelectorAll('[data-camera-mode]')) button.onclick = () => {
+        rainCamera.enabled = true; rainCamera.setMode(button.dataset.cameraMode);
+    };
+    for (const [axis, input] of [['yaw', yaw], ['pitch', pitch], ['roll', roll]]) input.oninput = () => {
+        const value = Number(input.value);
+        rainCamera.setMode('fixed'); rainCamera[axis] = value;
+        rainCamera.enabled = true; rainCamera.refreshControls();
+    };
     document.getElementById('cameraReset').onclick = () => {
-        rainCamera.enabled = rainCamera.orbit = enabled.checked = orbit.checked = false;
-        rainCamera.yaw = rainCamera.pitch = 0; yaw.value = pitch.value = 0;
+        rainCamera.enabled = false; rainCamera.setMode('fixed');
+        rainCamera.yaw = rainCamera.pitch = rainCamera.roll = 0; rainCamera.refreshControls();
         matrixCtx.globalAlpha = 1; matrixCtx.fillStyle = '#000';
         matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
     };
+    rainCamera.refreshControls();
 });

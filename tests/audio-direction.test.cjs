@@ -76,7 +76,10 @@ const start=html.indexOf('        const audioMotion =');
 const end=html.indexOf('        function drawAudioVisualizer(',start);
 const hsl=html.match(/^        function hslToHex\([^\n]*\) \{[\s\S]*?^        \}/m)[0];
 let now=0;
+const colorContext = {window: {}};
+vm.runInNewContext(fs.readFileSync(path.join(preview, 'rain-color-fluctuation.js'), 'utf8'), colorContext);
 const fake={RainAudioMotion,Float32Array,Math,window:{},performance:{now:()=>now},
+    colorFluctuationPercent:300,audioColorPreset:'default',audioColorFluctuation:new colorContext.window.RainColorFluctuation(),
     audioDiagonalsEnabled:true,audioReverseEnabled:false,audioDataArray:new Float32Array(64),
     MatrixRainEngine:{rainConfig:{direction:'down',speed:35}},audioHueSpread:.8,audioHighModRange:30,
     hueReactivityScale:1,satGainScale:1,satFloor:80,brightnessMax:85,brightnessMin:30,brightnessDepthScale:1,

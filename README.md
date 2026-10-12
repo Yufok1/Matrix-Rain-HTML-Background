@@ -22,7 +22,9 @@ Desktop settings use a roomy 600px panel with larger controls. On phones, settin
 
 ## 3D camera and trails
 
-The camera starts **enabled**, facing forward. **Slow orbit** rotates the view; **Look around** and **Look up / down** let you set the orientation yourself. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D.
+The camera starts **enabled**, facing forward. Choose **Fixed**, **Showcase**, **Corkscrew**, or **Gyroscope** in the 3D Camera panel. Showcase is a slow orbit with gentle pitch; Corkscrew adds rolling motion; Gyroscope tumbles through all three axes using the same animated paths as the Android APK. These modes work independently of Manual, Audio Reactive Mode and Auto Orchestrator.
+
+**Look around**, **Look up / down**, and **Roll** set the view manually and switch movement to Fixed. Switching movement modes keeps the world and existing trails in place, starting the new movement from the current orientation. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D. Gyroscope here is an animated depiction: desktop builds do not access device sensors, camera hardware, or GPS.
 
 - **Down / Up / Left / Right / Toward Camera / Away from Camera** use the same stream positions. Turning leaves existing characters in place, so the next segment joins the previous trail.
 - Characters at different depths have different apparent sizes. Toward/away movement grows or shrinks them through perspective.
@@ -58,7 +60,7 @@ The renderer uploads new characters incrementally and skips repeated world cells
 | Intensity | 1–100 | 70 |
 | Character Size | 1–100, with − / + buttons | 10 |
 | Primary / Secondary Color | Color pickers | `#00ff41` / `#00cc33` |
-| Camera | Enable, slow orbit, yaw and pitch | Enabled; orbit off |
+| Camera | Fixed, Showcase, Corkscrew, Gyroscope; yaw, pitch and roll | Enabled; Fixed |
 | Shortest / Longest tail | 12–160 characters | **12 / 100** |
 
 **Patterns:** Classic Matrix, Rainbow Spectrum, Pentad Prism, Chaos Flow, and Harmonic Waves.
@@ -91,6 +93,8 @@ Small neighboring frequency shifts are filtered to reduce vibrato-triggered corn
 
 **Hue Reactivity / Saturation Gain / Brightness Depth** each range from 50–200%. Color presets: Neon, Prism, Pastel, Hyperneon, Aurora, Bassstorm, Crystal, Vaporwave, Inferno, and Zen.
 
+**Color fluctuation sensitivity** matches the APK and defaults to **300%**, adjustable from **100–500%**. It amplifies successive changes in audio hue while a held input keeps its color. **100%** restores the previous hue mapping. Selecting a preset starts from that preset's actual hue; saturation, brightness, intensity, characters and the audio-motion controller retain their existing mappings.
+
 The runtime also supports Wallpaper Engine's built-in audio listener when hosted there; browser sharing is used for this live preview. Speech recognition is not included.
 
 ## Compatibility
@@ -105,6 +109,8 @@ The 3D camera needs WebGL with instanced rendering. The original 2D renderer rem
 | `index.html` | Synchronized copy used by GitHub Pages |
 | `rain-audio-motion.js` | Spectrum changes, continuous propulsion, musical accents, and reversal restraint |
 | `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
+| `rain-camera-motion.js` | APK-matched animated camera paths and full yaw/pitch/roll matrices |
+| `rain-color-fluctuation.js` | APK-matched amplification of successive audio hues |
 | `rain-camera-gpu.js` | Instanced WebGL glyph renderer, incremental uploads and optional glow |
 | `rain-animation-clock.js` | Display-refresh presentation with independent simulation timing |
 | `render-settings.js` | Rendering quality controls and saved preferences |

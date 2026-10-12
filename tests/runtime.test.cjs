@@ -24,7 +24,7 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ['assets/rain-font-msdf.js', 'rain-animation-clock.js', 'rain-audio-motion.js', 'rain-camera-gpu.js', 'rain-camera.js', 'render-settings.js', 'settings-panel.js', 'trails/rain-trails.js']);
+assert.deepEqual([...assets].sort(), ['assets/rain-font-msdf.js', 'rain-animation-clock.js', 'rain-audio-motion.js', 'rain-camera-gpu.js', 'rain-camera-motion.js', 'rain-camera.js', 'rain-color-fluctuation.js', 'render-settings.js', 'settings-panel.js', 'trails/rain-trails.js']);
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
     assert.ok(fs.existsSync(path.resolve(root, 'trails', imported)), 'Missing trail module: ' + imported);
@@ -33,6 +33,8 @@ assert.match(main, /id="rainDensity"[^>]*value="50"/);
 assert.match(main, /density:\s*50\b/);
 assert.match(fs.readFileSync(path.join(root, 'rain-camera.js'), 'utf8'), /enabled:\s*true,\s*orbit:\s*false/);
 assert.doesNotMatch(main, /matrixSpeech|speech\/rain-speech|data-speech-test/);
+for (const name of ['matrix-rain-utility-suite.html', 'rain-camera.js', 'rain-camera-motion.js', 'rain-color-fluctuation.js'])
+    assert.doesNotMatch(fs.readFileSync(path.join(root, name), 'utf8'), /DeviceOrientation|DeviceMotion|navigator\.geolocation|GenericSensor|Gyroscope\(/, 'PC builds contain no device-sensor route');
 assert.doesNotMatch(main, /<(select|option)\b/i, 'Preserve the CEF-safe settings controls');
 assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /https:\/\/yufok1\.github\.io\/Matrix-Rain-HTML-Background\//);
 console.log('Demo parity, bundled runtime paths, script syntax, release defaults, and settings guards passed.');

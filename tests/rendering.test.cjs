@@ -40,6 +40,7 @@ const cameraContext = vm.createContext({
     rainCameraGPU: {render() {paints++;}, hide() {}},
     matrixCanvas: {width: 1320, height: 900}, rainFocalLength: 500, performance
 });
+vm.runInContext(read('rain-camera-motion.js'), cameraContext);
 const camera = vm.runInContext(read('rain-camera.js').split("window.addEventListener('DOMContentLoaded'")[0]
     + ';rainCamera;', cameraContext);
 for (let time = 0; time <= 1000; time += 1000 / 120) camera.present(time, 0);
