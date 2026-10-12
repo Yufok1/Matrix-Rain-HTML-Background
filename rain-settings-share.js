@@ -92,7 +92,7 @@
         const blob=el('rain-share-blob'),name=el('rain-share-name'),status=el('rain-share-status');
         const wallpaper=typeof window.wallpaperRegisterAudioListener==='function';
         el('rain-share-wallpaper-help').hidden=!wallpaper;
-        let revision=0;
+        let revision=0,cancelPaste;
         blob.addEventListener('input',()=>revision++);
         const stage=(text,message)=>{
             // Decode completely before replacing the box; malformed input cannot
@@ -100,6 +100,13 @@
             RainSettingsCodec.decode(text);
             revision++;blob.value=text.trim();status.textContent=message;
         };
+        blob.addEventListener('paste',event=>{
+            const text=event.clipboardData?.getData('text/plain');
+            if (typeof text!=='string') return;
+            event.preventDefault();revision++;
+            try {stage(text,'Code pasted. Click Import to apply.');}
+            catch(error){status.textContent='Clipboard code: '+error.message;}
+        });
         receiveProperty=text=>{
             revision++;
             if (!text.trim()) return;
@@ -110,17 +117,29 @@
         el('rain-share-export').onclick=()=>{revision++;try{blob.value=rainSettingsShare.export(name.value);status.textContent='Exported. Copy the code to save or share it.';}catch(error){status.textContent=error.message;}};
         el('rain-share-import').onclick=()=>{revision++;try{const s=rainSettingsShare.import(blob.value);name.value=s.name;status.textContent='Imported'+(s.name?' “'+s.name+'”':'')+'. Audio access is unchanged.';}catch(error){status.textContent=error.message;}};
         el('rain-share-paste').onclick=async()=>{
+            cancelPaste?.();
             const button=el('rain-share-paste'),requested=++revision;
             const fallback=wallpaper?'Clipboard paste is unavailable here. Paste into Configuration code in Wallpaper Engine’s Installed tab, then click Import here.':'Clipboard paste is unavailable. Paste the code into the box, then click Import.';
-            button.disabled=true;
+            // A host may leave its permission/read promise pending indefinitely.
+            // Keep retry available and retire the old attempt before starting another.
+            let timer,retire;
+            const deadline=new Promise((_,reject)=>{
+                timer=setTimeout(()=>reject(Error('Clipboard response timed out')),4000);
+                retire=()=>reject(Error('Clipboard request replaced'));
+            });
+            cancelPaste=retire;button.setAttribute('aria-busy','true');
+            status.textContent='Reading clipboard…';
             try {
                 if (!navigator.clipboard?.readText) throw Error('Clipboard API unavailable');
-                const text=await navigator.clipboard.readText();
+                const text=await Promise.race([navigator.clipboard.readText(),deadline]);
                 if (requested!==revision) return;
                 try {stage(text,'Code pasted. Click Import to apply.');}
                 catch(error){status.textContent='Clipboard code: '+error.message;}
             } catch (_) {if(requested===revision)status.textContent=fallback;}
-            finally {button.disabled=false;}
+            finally {
+                clearTimeout(timer);
+                if(cancelPaste===retire){cancelPaste=null;button.removeAttribute('aria-busy');}
+            }
         };
         el('rain-share-copy').onclick=async()=>{
             if (!blob.value) el('rain-share-export').onclick();
