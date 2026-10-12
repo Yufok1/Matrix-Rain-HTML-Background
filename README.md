@@ -26,6 +26,8 @@ The camera starts **enabled**, facing forward. Choose **Fixed**, **Showcase**, *
 
 **Look around**, **Look up / down**, and **Roll** set the view manually and switch movement to Fixed. Switching movement modes keeps the world and existing trails in place, starting the new movement from the current orientation. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D. Gyroscope here is an animated depiction: desktop builds do not access device sensors, camera hardware, or GPS.
 
+**Motion speed** ranges from **0–100%** and is saved separately for each animated mode. Gyroscope starts at **25%** of the APK path's speed for a gentler ride; Showcase and Corkscrew start at 100%. Set 0% to hold the current viewpoint while the rain continues moving. This slider changes view movement only, not audio response or rain speed.
+
 - **Down / Up / Left / Right / Toward Camera / Away from Camera** use the same stream positions. Turning leaves existing characters in place, so the next segment joins the previous trail.
 - Characters at different depths have different apparent sizes. Toward/away movement grows or shrinks them through perspective.
 - The world repeats across its faces, including during orbit, keeping the surrounding rain visible as the view turns.
@@ -33,7 +35,7 @@ The camera starts **enabled**, facing forward. Choose **Fixed**, **Showcase**, *
 - **Stepped fade** is on by default: each character holds one of eight brightness levels, then switches off at the end of its life. Uncheck it for a smooth fade.
 - Turning off variable lengths gives all streams a 40-character lifetime. Turn off both variable lengths and stepped fade to compare with the original 3D fade. These controls affect the camera renderer; Original View keeps its canvas fade.
 
-Trail and rendering preferences are saved locally. The remaining controls reset when the page reloads.
+Trail, rendering and camera-speed preferences are saved locally. The remaining controls reset when the page reloads.
 
 ## Rendering quality
 

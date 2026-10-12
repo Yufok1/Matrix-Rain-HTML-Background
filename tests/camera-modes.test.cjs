@@ -18,12 +18,15 @@ for(const mode of ['showcase','corkscrew','gyroscope']){
     camera.yaw=camera.pitch=camera.roll=0;camera.setMode(mode);
     camera.present(0,1);
     for(let frame=1;frame<=240;frame++)camera.present(frame*1000/60,1);
+    assert.ok(Math.abs(camera.motionTime-4*(mode==='gyroscope'?.25:1))<1e-8,'Gyroscope defaults to quarter speed; other movement paths retain their speed');
     assert.ok(camera.yaw!==0&&camera.pitch!==0);if(mode!=='showcase')assert.ok(camera.roll!==0);
     const before=[camera.yaw,camera.pitch,camera.roll];camera.present(60000,1);
     assert.deepEqual([camera.yaw,camera.pitch,camera.roll],before,'A hidden interval cannot advance the automatic view');
     assert.equal(JSON.stringify(camera.marks),history,'Animated view leaves historical trail marks fixed');
     assert.equal(camera.volume,volume,'Mode selection retains the repeating world');
 }
+camera.speeds.gyroscope=0;const paused=[camera.yaw,camera.pitch,camera.roll];camera.present(60016,1);
+assert.deepEqual([camera.yaw,camera.pitch,camera.roll],paused,'Zero motion speed pauses the viewpoint without changing rain motion');
 camera.setMode('fixed');
 for(let i=0;i<75;i++){
     camera.yaw=i*37%360-180;camera.pitch=i*53%360-180;camera.roll=i*71%360-180;camera.prepareView();

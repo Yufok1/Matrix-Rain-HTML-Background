@@ -2,6 +2,7 @@
 const rainCamera = {
     enabled: true, orbit: false, yaw: 0, pitch: 0, roll: 0, frame: 0, marks: [], lastTime: null,
     mode: 'fixed', motionTime: 0, motionBase: {yaw: 0, pitch: 0, roll: 0},
+    speeds: {showcase: 1, corkscrew: 1, gyroscope: .25},
     pending: [], bounds: null, streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
@@ -158,7 +159,7 @@ const rainCamera = {
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
         if(this.enabled){
             if(this.mode!=='fixed'){
-                this.motionTime+=dt;
+                this.motionTime+=dt*this.speeds[this.mode];
                 const angles=window.RainCameraMotion.angles(this.mode,this.motionTime),degrees=180/Math.PI;
                 for(const axis of ['yaw','pitch','roll'])this[axis]=this.wrap(this.motionBase[axis]+angles[axis]*degrees,360);
                 if(now-(this.lastControlUpdate||0)>100){this.refreshControls?.(true);this.lastControlUpdate=now;}
@@ -187,6 +188,8 @@ window.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="btn" data-camera-mode="showcase">Showcase</button>
         <button type="button" class="btn" data-camera-mode="corkscrew">Corkscrew</button>
         <button type="button" class="btn" data-camera-mode="gyroscope">Gyroscope</button></div>
+        <label for="cameraSpeed">Motion speed: <span id="cameraSpeedValue">100%</span></label>
+        <input id="cameraSpeed" type="range" min="0" max="100" value="100" step="1" style="width:100%">
         <small style="display:block;margin-bottom:10px">View movement works with manual rain, audio mode and Auto Orchestrator.</small>
         <label for="cameraYaw">Look around</label>
         <input id="cameraYaw" type="range" min="-180" max="180" value="0" step="1" style="width:100%">
@@ -199,11 +202,20 @@ window.addEventListener('DOMContentLoaded', () => {
     const yaw = document.getElementById('cameraYaw');
     const pitch = document.getElementById('cameraPitch');
     const roll = document.getElementById('cameraRoll');
+    const speed = document.getElementById('cameraSpeed');
+    try {
+        const saved = JSON.parse(localStorage.getItem('matrixRain.cameraSpeeds') || 'null');
+        for (const mode of Object.keys(rainCamera.speeds))
+            if (typeof saved?.[mode] === 'number' && Number.isFinite(saved[mode])) rainCamera.speeds[mode] = Math.max(0, Math.min(1, saved[mode]));
+    } catch (_) {}
     rainCamera.refreshControls = (onlyVisible = false) => {
         const modal = document.querySelector('.matrix-modal');
         if (onlyVisible && (!modal || modal.classList.contains('minimized') || modal.style.display === 'none')) return;
         enabled.checked = rainCamera.enabled;
         yaw.value = rainCamera.yaw; pitch.value = rainCamera.pitch; roll.value = rainCamera.roll;
+        speed.disabled = rainCamera.mode === 'fixed';
+        speed.value = Math.round((rainCamera.speeds[rainCamera.mode] ?? 1) * 100);
+        document.getElementById('cameraSpeedValue').textContent = speed.value + '%';
         for (const button of panel.querySelectorAll('[data-camera-mode]')) {
             const active = button.dataset.cameraMode === rainCamera.mode;
             button.setAttribute('aria-pressed', String(active));
@@ -211,6 +223,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     };
     enabled.onchange = () => { rainCamera.enabled = enabled.checked; rainCamera.lastTime = null; };
+    speed.oninput = () => {
+        if (rainCamera.mode === 'fixed') return;
+        rainCamera.speeds[rainCamera.mode] = Number(speed.value) / 100;
+        try { localStorage.setItem('matrixRain.cameraSpeeds', JSON.stringify(rainCamera.speeds)); } catch (_) {}
+        rainCamera.refreshControls();
+    };
     for (const button of panel.querySelectorAll('[data-camera-mode]')) button.onclick = () => {
         rainCamera.enabled = true; rainCamera.setMode(button.dataset.cameraMode);
     };
