@@ -2,6 +2,16 @@
     'use strict';
     const el=id=>document.getElementById(id), num=id=>Number(el(id).value);
     const rounded=value=>Math.round(value*1000)/1000;
+    // Wallpaper properties arrive once at startup, sometimes before the panel exists.
+    // Receiving a code only stages it; Import remains the explicit apply action.
+    let propertyCode='',receiveProperty;
+    const listener=window.wallpaperPropertyListener||(window.wallpaperPropertyListener={});
+    const previousProperties=listener.applyUserProperties;
+    listener.applyUserProperties=function(properties){
+        if (previousProperties) previousProperties.call(this,properties);
+        const value=properties?.configurationcode?.value;
+        if (typeof value==='string') {propertyCode=value;receiveProperty?.(value);}
+    };
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
@@ -75,18 +85,49 @@
             <input id="rain-share-name" type="text" maxlength="60" style="width:100%;margin:6px 0 10px;background:#000;color:#00ff41;border:1px solid #29753d;padding:7px;box-sizing:border-box">
             <label for="rain-share-blob">Configuration code</label>
             <textarea id="rain-share-blob" rows="4" spellcheck="false" autocapitalize="off" aria-describedby="rain-share-status" style="width:100%;box-sizing:border-box;background:#000;color:#a7f8bc;border:1px solid #29753d;margin:6px 0;padding:8px;font:12px monospace;resize:vertical"></textarea>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="rain-share-export" type="button">Export</button><button class="btn" id="rain-share-copy" type="button">Copy code</button><button class="btn" id="rain-share-import" type="button">Import</button></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="rain-share-export" type="button">Export</button><button class="btn" id="rain-share-copy" type="button">Copy code</button><button class="btn" id="rain-share-paste" type="button">Paste code</button><button class="btn" id="rain-share-import" type="button">Import</button></div>
+            <p id="rain-share-wallpaper-help" hidden style="font-size:12px;margin:10px 0">If clipboard paste is unavailable, paste into <strong>Configuration code</strong> in Wallpaper Engine’s Installed tab, then click Import here.</p>
             <p id="rain-share-status" role="status" aria-live="polite" style="font-size:12px;margin:10px 0 0">Export your settings, or paste a code and import it.</p>`;
         el('rain-camera-panel').before(panel);
         const blob=el('rain-share-blob'),name=el('rain-share-name'),status=el('rain-share-status');
+        const wallpaper=typeof window.wallpaperRegisterAudioListener==='function';
+        el('rain-share-wallpaper-help').hidden=!wallpaper;
+        let revision=0;
+        blob.addEventListener('input',()=>revision++);
+        const stage=(text,message)=>{
+            // Decode completely before replacing the box; malformed input cannot
+            // destroy a saved/exported code or apply a partial configuration.
+            RainSettingsCodec.decode(text);
+            revision++;blob.value=text.trim();status.textContent=message;
+        };
+        receiveProperty=text=>{
+            revision++;
+            if (!text.trim()) return;
+            try {stage(text,'Code received from Wallpaper Engine. Click Import to apply.');}
+            catch(error){status.textContent='Wallpaper Engine code: '+error.message;}
+        };
         for (const input of [blob,name]) input.addEventListener('keydown',event=>event.stopPropagation());
-        el('rain-share-export').onclick=()=>{try{blob.value=rainSettingsShare.export(name.value);status.textContent='Exported. Copy the code to save or share it.';}catch(error){status.textContent=error.message;}};
-        el('rain-share-import').onclick=()=>{try{const s=rainSettingsShare.import(blob.value);name.value=s.name;status.textContent='Imported'+(s.name?' “'+s.name+'”':'')+'. Audio access is unchanged.';}catch(error){status.textContent=error.message;}};
+        el('rain-share-export').onclick=()=>{revision++;try{blob.value=rainSettingsShare.export(name.value);status.textContent='Exported. Copy the code to save or share it.';}catch(error){status.textContent=error.message;}};
+        el('rain-share-import').onclick=()=>{revision++;try{const s=rainSettingsShare.import(blob.value);name.value=s.name;status.textContent='Imported'+(s.name?' “'+s.name+'”':'')+'. Audio access is unchanged.';}catch(error){status.textContent=error.message;}};
+        el('rain-share-paste').onclick=async()=>{
+            const button=el('rain-share-paste'),requested=++revision;
+            const fallback=wallpaper?'Clipboard paste is unavailable here. Paste into Configuration code in Wallpaper Engine’s Installed tab, then click Import here.':'Clipboard paste is unavailable. Paste the code into the box, then click Import.';
+            button.disabled=true;
+            try {
+                if (!navigator.clipboard?.readText) throw Error('Clipboard API unavailable');
+                const text=await navigator.clipboard.readText();
+                if (requested!==revision) return;
+                try {stage(text,'Code pasted. Click Import to apply.');}
+                catch(error){status.textContent='Clipboard code: '+error.message;}
+            } catch (_) {if(requested===revision)status.textContent=fallback;}
+            finally {button.disabled=false;}
+        };
         el('rain-share-copy').onclick=async()=>{
             if (!blob.value) el('rain-share-export').onclick();
             if (!blob.value) return;
             try {await navigator.clipboard.writeText(blob.value);status.textContent='Configuration code copied.';}
             catch (_) {blob.focus();blob.select();status.textContent='Code selected. Use Copy or Ctrl+C.';}
         };
+        if (propertyCode.trim()) receiveProperty(propertyCode);
     });
 })();

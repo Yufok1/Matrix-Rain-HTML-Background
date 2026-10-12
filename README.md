@@ -22,7 +22,7 @@ Audio motion responds to new spectral content and evolving layers, with restrain
 
 ## Audio and platforms
 
-**Wallpaper Engine:** uses the built-in desktop audio listener. No microphone or media-access setting is needed for reactivity.
+**Wallpaper Engine:** uses the built-in desktop audio listener. No microphone or media-access setting is needed for reactivity. In Configurations, **Paste code** reads the clipboard when the host permits it; **Import** applies the validated code. If the desktop host denies clipboard reading, paste into the **Configuration code** field on the Wallpaper Engine Installed tab, then click Import in the wallpaper. This field uses Wallpaper Engine’s documented text user property and needs no companion app.
 
 **Desktop browser:** use a compatible Chrome/Edge screen or tab share with audio. The browser requires a screen/video track for this API; this application only analyzes the audio and saves/uploads nothing. Unsupported browsers have the audio controls disabled. Phones can view the demo, but browser system-audio sharing may be unavailable.
 
