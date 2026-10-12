@@ -62,7 +62,7 @@ const preview=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(preview,'matrix-rain-utility-suite.html'),'utf8');
 let scripts=0;
 for(const [,attributes,body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
-    const source=attributes.match(/src="([^"]+)"/)?.[1];
+    const source=attributes.match(/src="([^"]+)"/)?.[1]?.split('?')[0];
     if(source) {
         assert.ok(fs.existsSync(path.join(preview,source)),source+' is packaged');
         if(!attributes.includes('module')) new vm.Script(fs.readFileSync(path.join(preview,source),'utf8'));
@@ -78,9 +78,11 @@ const hsl=html.match(/^        function hslToHex\([^\n]*\) \{[\s\S]*?^        \}
 let now=0;
 const colorContext = {window: {}};
 vm.runInNewContext(fs.readFileSync(path.join(preview, 'rain-color-fluctuation.js'), 'utf8'), colorContext);
-const fake={RainAudioMotion,Float32Array,Math,window:{},performance:{now:()=>now},
+const Color=require('./load-runtime.cjs')('rain-audio-color.js');
+const Choreography=require('./load-runtime.cjs')('beat-turns-policy.js');
+const fake={RainAudioMotion,RainAudioColor:Color,RainChoreographyComparison:Choreography,rainCamera:{enabled:true},Float32Array,Math,window:{rainMelodyColor:new Color(),rainAudioPalette:{active:false},rainColorMode:'cohesive'},performance:{now:()=>now},
     colorFluctuationPercent:300,audioColorPreset:'default',audioColorFluctuation:new colorContext.window.RainColorFluctuation(),
-    audioDiagonalsEnabled:true,audioReverseEnabled:false,audioDataArray:new Float32Array(64),
+    audioDiagonalsEnabled:true,audioReverseEnabled:true,audioDataArray:new Float32Array(64),
     MatrixRainEngine:{rainConfig:{direction:'down',speed:35}},audioHueSpread:.8,audioHighModRange:30,
     hueReactivityScale:1,satGainScale:1,satFloor:80,brightnessMax:85,brightnessMin:30,brightnessDepthScale:1,
     document:{querySelectorAll:()=>[],querySelector:()=>null,getElementById:()=>({value:0,classList:{add(){}}})}};

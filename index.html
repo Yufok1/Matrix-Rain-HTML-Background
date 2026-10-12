@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌊 Matrix Rain - Advanced Visual Control Unit</title>
+    <title>Matrix Rain Omni</title>
+    <meta name="matrix-rain-revision" content="9">
     <style>
         * {
             margin: 0;
@@ -979,6 +980,7 @@
             }
         }
 </style>
+<link rel="stylesheet" href="rain-settings-ui.css?v=a59e2ed2ec3f">
 </head>
 <body>
     <!-- Matrix Rain Canvas - Dual Layer System -->
@@ -1027,6 +1029,7 @@
                             🎭 AUTO ORCHESTRATOR
                         </button>
                     </div>
+
                     <div class="rain-action-row" style="margin-bottom: 15px; text-align: center;">
                         <button class="btn" id="audioReactiveBtn" onclick="toggleAudioReactive()" style="background: #ff1493; color: white; font-weight: bold; font-size: 16px; padding: 12px 24px;">
                             🎵 AUDIO REACTIVE MODE
@@ -1040,9 +1043,7 @@
                                 <button class="btn" id="toggleAudioReverseBtn" onclick="toggleAudioReverse()" style="background: #333; color: #666; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     ❌ Beat turns
                                 </button>
-                                <button class="btn" id="toggleAudioDiagonalsBtn" onclick="toggleAudioDiagonals()" style="background: #00ff41; color: #000; font-weight: bold; font-size: 12px; padding: 8px 12px;">
-                                    ✅ Depth
-                                </button>
+
                                 <button class="btn" onclick="hardRefresh()" style="background: #ff6600; color: white; font-weight: bold; font-size: 12px; padding: 8px 12px;">
                                     🔄 Hard Refresh
                                 </button>
@@ -1050,8 +1051,8 @@
                             <div class="audio-color-controls" style="margin-top: 8px; display: grid; grid-template-columns: auto 220px auto; align-items: center; gap: 10px; justify-content: center;">
                                 <div class="audio-reactivity-control">
                                 <label for="colorFluctuationSlider" style="font-size: 12px; color: #ccc;">Color fluctuation sensitivity</label>
-                                <input type="range" id="colorFluctuationSlider" min="100" max="500" value="300" oninput="updateColorFluctuation()">
-                                <span id="colorFluctuationDisplay" style="color: #00ff41; font-size: 12px;">300%</span>
+                                <input type="range" id="colorFluctuationSlider" min="100" max="500" value="100" oninput="updateColorFluctuation()">
+                                <span id="colorFluctuationDisplay" style="color: #00ff41; font-size: 12px;">100%</span>
                                 </div>
                                 <div class="audio-reactivity-control">
                                 <label for="hueReactSlider" style="font-size: 12px; color: #ccc;">Hue Reactivity</label>
@@ -1191,6 +1192,12 @@
 
     <script src="rain-audio-motion.js"></script>
     <script src="rain-color-fluctuation.js"></script>
+    <script src="rain-audio-choreography.js"></script>
+    <script src="beat-turns-policy.js?v=ee8bcb5f1763"></script>
+    <script src="choreography-preview.js?v=41f2cf9303be"></script>
+    <script src="rain-audio-color.js?v=b25075caaa69"></script>
+    <script src="color-preview.js?v=100dbeab2b31"></script>
+    <script src="rain-settings-codec.js?v=6108f43efa67"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1200,11 +1207,14 @@
 
         // === AUDIO MODE SETTINGS ===
         let audioReverseEnabled = false;  // Default: disabled per user request
-        let audioDiagonalsEnabled = true; // Default: disabled per user request
+        // The camera owns depth, sizing and available headings.
 
         function toggleAudioReverse() {
             audioReverseEnabled = !audioReverseEnabled;
             const btn = document.getElementById('toggleAudioReverseBtn');
+            btn.setAttribute('aria-pressed', String(audioReverseEnabled));
+            const policy = document.getElementById('beatTurnPolicyStatus');
+            if (policy) policy.textContent = audioReverseEnabled ? 'On: accents can turn immediately' : 'Off: turns follow sustained changes';
 
             if (audioReverseEnabled) {
                 btn.textContent = '✅ Beat turns';
@@ -1216,23 +1226,6 @@
                 btn.style.background = '#333';
                 btn.style.color = '#666';
                 MatrixRainEngine.logActivity('Audio beat turns disabled', 'info');
-            }
-        }
-
-        function toggleAudioDiagonals() {
-            audioDiagonalsEnabled = !audioDiagonalsEnabled;
-            const btn = document.getElementById('toggleAudioDiagonalsBtn');
-
-            if (audioDiagonalsEnabled) {
-                btn.textContent = '✅ Depth';
-                btn.style.background = '#00ff41';
-                btn.style.color = '#000';
-                MatrixRainEngine.logActivity('Audio angles enabled', 'info');
-            } else {
-                btn.textContent = '❌ Depth';
-                btn.style.background = '#333';
-                btn.style.color = '#666';
-                MatrixRainEngine.logActivity('Audio angles disabled', 'info');
             }
         }
 
@@ -1513,7 +1506,9 @@
             },
 
             updateRainDirection() {
-                const direction = document.getElementById('rainDirection').value;
+                const input = document.getElementById('rainDirection');
+            if (!rainCamera.enabled && ['toward','away'].includes(input.value)) input.value = 'down';
+            const direction = input.value;
                 const oldDirection = this.rainConfig.direction;
                 this.rainConfig.direction = direction;
 
@@ -1689,17 +1684,9 @@
 
         function toggleMatrixModal() {
             const modal = document.querySelector('.matrix-modal');
-            const minimizeBtn = document.getElementById('minimizeBtn');
-
-            if (modal.classList.contains('minimized')) {
-                modal.classList.remove('minimized');
-                minimizeBtn.textContent = '−';
-                minimizeBtn.title = 'Minimize utilities to see matrix rain';
-            } else {
-                modal.classList.add('minimized');
-                minimizeBtn.textContent = 'M +';
-                minimizeBtn.title = 'Press M or click to maximize';
-            }
+            modal.style.display = 'flex';
+            modal.classList.toggle('minimized');
+            window.rainSettingsUI?.refresh();
         }
 
         // === MATRIX RAIN ANIMATION ENGINE ===
@@ -1868,8 +1855,9 @@
             return rainMotion.planar;
         }
 
-        function rainDepthScale(depth) { return rainFocalLength / depth; }
+        function rainDepthScale(depth) { return rainCamera.enabled ? rainFocalLength / depth : 1; }
         function rainDepthAlpha(depth) {
+            if (!rainCamera.enabled) return 1;
             const near = rainFocalLength / 8, far = rainFocalLength / 0.25;
             const edge = Math.max(0, Math.min(1, (depth - near) / 35, (far - depth) / 80));
             return edge * edge * (3 - 2 * edge);
@@ -1892,7 +1880,7 @@
         function advanceRainPosition(i, fontSize, speed) {
             const p = rainPosition(i, fontSize);
             const requested = MatrixRainEngine.rainConfig.direction;
-            if (requested === 'toward' || requested === 'away') {
+            if (rainCamera.enabled && (requested === 'toward' || requested === 'away')) {
                 // A Z segment changes only world depth. Project that one axis;
                 // do not simultaneously advance the previous X/Y direction.
                 const oldScale = rainDepthScale(p.depth);
@@ -1911,7 +1899,7 @@
                 return;
             }
             const direction = rainPlanarDirection();
-            const step = fontSize * rainDepthScale(p.depth) * speed * reverseFlowMultiplier;
+            const step = (rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize) * speed * reverseFlowMultiplier;
             if (direction === 'left') p.x -= step;
             else if (direction === 'right') p.x += step;
             else if (direction === 'up') p.y -= step;
@@ -1927,10 +1915,10 @@
         function paintRainCharacter(char, x, y, i, fontSize) {
             const p = rainPosition(i, fontSize);
             const alpha = matrixCtx.globalAlpha;
-            const size = fontSize * rainDepthScale(p.depth);
+            const size = rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize;
             matrixCtx.font = `${size}px monospace`;
             matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
-            rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
+            if (rainCamera.enabled) rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
             if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) matrixCtx.fillText(char, x, y);
             matrixCtx.globalAlpha = alpha;
             p.lastStamp = { x, y, depth: p.depth };
@@ -2645,7 +2633,7 @@
         // New audio tunables for hue spread and high-frequency modulation
         let audioHueSpread = 2.5;     // overall hue spread multiplier
         let audioHighModRange = 50;   // degrees range for high-frequency hue modulation
-        let colorFluctuationPercent = 300;
+        let colorFluctuationPercent = 100;
         let audioColorPreset = 'default';
         const audioColorFluctuation = new RainColorFluctuation();
 
@@ -2872,20 +2860,6 @@
                 console.log("🌊 Matrix Rain: Animation engine initialized");
             }, 100);
 
-            // Add keyboard shortcut: Press 'M' to toggle settings modal
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'm' || e.key === 'M') {
-                    const modal = document.querySelector('.matrix-modal');
-                    if (modal.style.display === 'none') {
-                        modal.style.display = 'flex';
-                        MatrixRainEngine.logActivity('⌨️ Settings opened (M key)', 'info');
-                    } else {
-                        modal.style.display = 'none';
-                        MatrixRainEngine.logActivity('⌨️ Settings closed (M key)', 'info');
-                    }
-                }
-            });
-
             // Enable mousewheel scrolling for settings menu in Wallpaper Engine
             const modalContent = document.querySelector('.modal-content');
             if (modalContent) {
@@ -2943,7 +2917,7 @@
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];
+            const directions = rainCamera.enabled ? ['down', 'up', 'left', 'right', 'toward', 'away'] : ['down', 'up', 'left', 'right'];
 
             // Apply random settings
             MatrixRainEngine.rainConfig.pattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -3036,7 +3010,7 @@
             const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
             const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
             const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = ['down', 'up', 'left', 'right', 'toward', 'away'];
+            const directions = rainCamera.enabled ? ['down', 'up', 'left', 'right', 'toward', 'away'] : ['down', 'up', 'left', 'right'];
 
             // Randomize EVERYTHING
             const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -3126,6 +3100,7 @@
         window.audioReactiveActive = false; // Expose globally for Ollama integration
         let audioAnimationFrame = null;
         let audioStream = null;
+        let rainAudioRequestVersion = 0;
 
         async function toggleAudioReactive() {
             if (!canCaptureRainAudio()) { updateModeButtons(null); return; }
@@ -3135,6 +3110,7 @@
             const status = document.getElementById('audioStatus');
 
             if (audioReactiveActive) {
+                const requestVersion = ++rainAudioRequestVersion;
                 resetAudioMotion();
                 btn.textContent = '⏸️ STOP AUDIO MODE';
                 btn.style.background = '#ff4444';
@@ -3169,7 +3145,7 @@
                 btn.disabled = true;
 
                 try {
-                    audioStream = await navigator.mediaDevices.getDisplayMedia({
+                    const requestedStream = await navigator.mediaDevices.getDisplayMedia({
                         video: true,
                         audio: {
                             echoCancellation: false,
@@ -3178,6 +3154,11 @@
                         }
                     });
 
+                    if (requestVersion !== rainAudioRequestVersion || !audioReactiveActive || window.rainSessionControls?.stopped) {
+                        requestedStream.getTracks().forEach(track => track.stop());
+                        return;
+                    }
+                    audioStream = requestedStream;
                     // Set up Web Audio API
                     if (!audioStream.getAudioTracks().length) {
                         throw new Error('No shared audio track. Choose a source with Share audio enabled.');
@@ -3219,6 +3200,7 @@
                     }, {once: true}));
 
                 } catch (error) {
+                    if (requestVersion !== rainAudioRequestVersion || !audioReactiveActive || window.rainSessionControls?.stopped) return;
                     console.error('Audio capture error:', error);
                     stopAudioReactive();
                     status.textContent = error.name === 'NotAllowedError' ? 'Audio sharing was canceled or denied.' :
@@ -3270,6 +3252,8 @@
         }
 
         function stopAudioReactive() {
+            rainAudioRequestVersion++;
+            window.rainAudioPalette.active = false;
             if (audioAnimationFrame) {
                 cancelAnimationFrame(audioAnimationFrame);
                 audioAnimationFrame = null;
@@ -3366,13 +3350,15 @@
             return `#${f(0)}${f(8)}${f(4)}`;
         }
 
-        const audioMotion = new RainAudioMotion();
+        const audioMotion = new RainChoreographyComparison();
         window.rainAudioMotion = audioMotion;
         let audioMotionSpectrum = null;
         function resetAudioMotion() {
             audioMotion.reset();
             audioMotionSpectrum = null;
             audioColorFluctuation.reset();
+            window.rainMelodyColor.reset();
+            window.rainAudioPalette.active = false;
         }
 
         function reactToAudio(bass, lowMid, mid, high, volume, isWallpaperEngine = false) {
@@ -3390,7 +3376,7 @@
             const spectrum = isWallpaperEngine ? audioMotionSpectrum :
                 RainAudioMotion.browserSpectrum(audioDataArray, audioContext.sampleRate / audioAnalyser.fftSize);
             const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), performance.now(),
-                config.direction, audioDiagonalsEnabled, audioReverseEnabled);
+                config.direction, rainCamera.enabled, audioReverseEnabled);
             config.speed = musicalMotion.speed;
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
@@ -3427,15 +3413,24 @@
             const lightnessRange = brightnessMax - brightnessMin;
             const lightness = Math.round(brightnessMin + lightnessRange * Math.min(1, Math.max(0, volume * brightnessDepthScale)));
 
-            config.primaryColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-            const compHue = (hue + 180) % 360;
-            config.secondaryColor = `hsl(${compHue}, ${saturation}%, ${lightness}%)`;
+            const cohesive = window.rainMelodyColor.update(spectrum || new Float32Array(64), performance.now(), {
+                source: isWallpaperEngine ? 'wallpaper' : 'browser', preset: audioColorPreset,
+                sensitivity: colorFluctuationPercent, hueScale: hueReactivityScale,
+                satFloor, satGain: satGainScale, brightnessMin, brightnessMax, brightnessDepth: brightnessDepthScale
+            });
+            window.rainAudioPalette.colorA = cohesive.colorA;
+            window.rainAudioPalette.colorB = cohesive.colorB;
+            window.rainAudioPalette.active = window.rainColorMode === 'cohesive' && cohesive.ready;
+            const useCohesive = window.rainAudioPalette.active;
+            const displayHue = useCohesive ? cohesive.hue : hue;
+            const displaySat = useCohesive ? cohesive.saturation : saturation;
+            const displayLight = useCohesive ? cohesive.lightness : (window.rainColorMode === 'cohesive' ? RainAudioColor.inkLightness(lightness) : lightness);
+            const compHue = useCohesive ? (displayHue + 4) % 360 : (hue + 180) % 360;
+            config.primaryColor = `hsl(${displayHue}, ${displaySat}%, ${displayLight}%)`;
+            config.secondaryColor = `hsl(${compHue}, ${displaySat}%, ${displayLight}%)`;
+            document.getElementById('primaryColor').value = hslToHex(displayHue, displaySat, displayLight);
+            document.getElementById('secondaryColor').value = hslToHex(compHue, displaySat, displayLight);
 
-            // Update color pickers
-            const primaryHex = hslToHex(hue, saturation, lightness);
-            const secondaryHex = hslToHex(compHue, saturation, lightness);
-            document.getElementById('primaryColor').value = primaryHex;
-            document.getElementById('secondaryColor').value = secondaryHex;
 
 
 
@@ -3503,10 +3498,13 @@
 <script src="rain-animation-clock.js"></script>
 <script src="render-settings.js"></script>
 <script src="assets/rain-font-msdf.js"></script>
-<script src="rain-camera-gpu.js"></script>
+<script src="rain-camera-gpu.js?v=4c0a1e1f7646"></script>
 <script src="rain-camera-motion.js"></script>
-<script src="rain-camera.js"></script>
+<script src="rain-camera.js?v=a0f3b57474a0"></script>
 <script src="settings-panel.js"></script>
+<script src="rain-settings-share.js?v=2a5d585a8399"></script>
+<script src="rain-session-controls.js?v=85c4efde86b4"></script>
 <script type="module" src="trails/rain-trails.js"></script>
+<script type="module" src="rain-settings-ui.js?v=010481163f33"></script>
 </body>
 </html>

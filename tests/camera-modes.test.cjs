@@ -18,7 +18,7 @@ for(const mode of ['showcase','corkscrew','gyroscope']){
     camera.yaw=camera.pitch=camera.roll=0;camera.setMode(mode);
     camera.present(0,1);
     for(let frame=1;frame<=240;frame++)camera.present(frame*1000/60,1);
-    assert.ok(Math.abs(camera.motionTime-4*(mode==='gyroscope'?.25:1))<1e-8,'Gyroscope defaults to quarter speed; other movement paths retain their speed');
+    assert.ok(Math.abs(camera.motionTime-4*.25*camera.phaseRates[mode])<1e-8,'Every mode uses its calibrated quarter-speed default');
     assert.ok(camera.yaw!==0&&camera.pitch!==0);if(mode!=='showcase')assert.ok(camera.roll!==0);
     const before=[camera.yaw,camera.pitch,camera.roll];camera.present(60000,1);
     assert.deepEqual([camera.yaw,camera.pitch,camera.roll],before,'A hidden interval cannot advance the automatic view');

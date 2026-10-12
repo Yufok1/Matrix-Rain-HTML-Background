@@ -1,137 +1,56 @@
-# Matrix Rain HTML Background
+# Matrix Rain Omni
 
-Matrix rain with five visual patterns, audio reactivity, and a 3D camera you can look around. Streams turn along the X, Y and Z axes while their fading characters stay where they were drawn, leaving connected trails through a repeating volume. The background stays black.
+Connected Matrix rain trails through a repeating 3D world, with audio-driven motion and colors. Characters turn along the X, Y and Z axes; each old letter keeps its position and birth color until it blinks out. The background is black.
 
-**[Open the live preview](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** · **[Download the source ZIP](https://github.com/Yufok1/Matrix-Rain-HTML-Background/archive/refs/heads/master.zip)**
+**[Try the live demo](https://yufok1.github.io/Matrix-Rain-HTML-Background/)** · **[Download the complete source](https://github.com/Yufok1/Matrix-Rain-HTML-Background/archive/refs/heads/master.zip)** · **[Wallpaper Engine Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3599704378)**
 
-The preview runs the same application as `matrix-rain-utility-suite.html`. No build step, third-party libraries, CDN, or account required.
+The live demo and `matrix-rain-utility-suite.html` are the same application. Runtime assets are bundled; no account, CDN, or companion app is needed.
 
-## Quick start
+## Controls
 
-Use the live preview, or download and extract the complete ZIP. Keep the HTML, JavaScript files, `assets/` and `trails/` folders together. From that folder, start a local server:
+Click the small rain icon in the upper-right corner, or press **M**, to open settings. Escape collapses them. Shortcuts leave text fields alone. Drag the header to move the panel. On phones, the collapsible categories occupy the lower portion of the screen so the rain stays visible.
+
+The header has **Stop / Resume** to preserve the current session and **Reset** to restore defaults. Stop pauses rain, camera, audio analysis and auto scenes. Resume keeps your settings; Reset releases any browser audio share and restarts manual rain. An expired browser share must be reconnected.
+
+- **Rain:** density, size, manual patterns, characters, direction, reverse flow, one-time shuffle and auto scenes. Camera trails have stable, varied lengths and stepped digital fading. Defaults: 50% density and 12–100-character trails.
+- **Audio response:** start audio, choose a palette and adjust color fluctuation, hue range, saturation and brightness. Beat turns allows musical attacks to steer immediately; off waits for a sustained change. Accents still affect speed in either mode.
+- **Camera:** enable perspective, choose Fixed, Showcase, Corkscrew or Gyroscope, and adjust orientation and motion speed. Each animated mode keeps its own calibrated 0–100% speed, default 25%. Zero holds the view while rain continues. Disable camera for uniform-sized, four-direction original rain.
+- **Rendering:** quality, sharp glyphs, smooth motion, glow and contrast. Lower quality, density and trail length reduce drawing work.
+- **Configurations:** export every visual setting into an **MR3** copy/paste code, then import it on another compatible version. Import validates the complete code before applying it and leaves listening, pause and auto-scene activation alone. MR1/MR2 codes are migrated. See [settings coverage](SETTINGS-AUDIT.md).
+
+Audio motion responds to new spectral content and evolving layers, with restrained rapid backtracking rather than a scheduled turn cycle. Color responds primarily to midrange shape and dynamics; it does not isolate vocals or recognize words. A cohesive palette is assigned to newly born characters. Existing trails keep their colors, so changes travel through the rain instead of recoloring the whole screen. Fluctuation sensitivity starts at 100%; 500% detects much smaller changes.
+
+## Audio and platforms
+
+**Wallpaper Engine:** uses the built-in desktop audio listener. No microphone or media-access setting is needed for reactivity.
+
+**Desktop browser:** use a compatible Chrome/Edge screen or tab share with audio. The browser requires a screen/video track for this API; this application only analyzes the audio and saves/uploads nothing. Unsupported browsers have the audio controls disabled. Phones can view the demo, but browser system-audio sharing may be unavailable.
+
+Desktop Gyroscope is an animated camera path. Desktop builds do not read motion sensors, camera hardware or GPS. The separate native Android APK retains its phone-output audio route and optional sensor-based Phone motion view. Speech recognition and microphone routes are not included.
+
+## Run locally
+
+Extract the **whole** source archive, keeping the scripts, `assets/` and `trails/` together. Serve the folder:
 
 ```sh
 python -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. Use HTTP/HTTPS rather than opening the HTML directly: the trail controls load as JavaScript modules.
+Open http://127.0.0.1:8000/. Use HTTP/HTTPS rather than opening the HTML as a file, because the controls load JavaScript modules. The camera uses instanced WebGL; the original canvas view remains available. Longer trails and higher density cost more GPU work.
 
-Click **M +** in the top-right corner to open settings. **M** also toggles the panel. The shortcut currently fires inside text inputs too; use the button while editing custom characters.
+## Development
 
-Desktop settings use a roomy 600px panel with larger controls. On phones, settings cover only the lower 45% of the screen; in landscape, they dock to one side. Drag the header to move the panel; keyboard users can focus the header and use arrow keys. Buttons wrap, sliders stack, and the panel scrolls without sideways overflow.
-
-## 3D camera and trails
-
-The camera starts **enabled**, facing forward. Choose **Fixed**, **Showcase**, **Corkscrew**, or **Gyroscope** in the 3D Camera panel. Showcase is a slow orbit with gentle pitch; Corkscrew adds rolling motion; Gyroscope tumbles through all three axes using the same animated paths as the Android APK. These modes work independently of Manual, Audio Reactive Mode and Auto Orchestrator.
-
-**Look around**, **Look up / down**, and **Roll** set the view manually and switch movement to Fixed. Switching movement modes keeps the world and existing trails in place, starting the new movement from the current orientation. **Original View** returns to the original canvas renderer. Recheck **Enable camera** to return to 3D. Gyroscope here is an animated depiction: desktop builds do not access device sensors, camera hardware, or GPS.
-
-**Motion speed** ranges from **0–100%** and is saved separately for each animated mode. Gyroscope starts at **25%** of the APK path's speed for a gentler ride; Showcase and Corkscrew start at 100%. Set 0% to hold the current viewpoint while the rain continues moving. This slider changes view movement only, not audio response or rain speed.
-
-- **Down / Up / Left / Right / Toward Camera / Away from Camera** use the same stream positions. Turning leaves existing characters in place, so the next segment joins the previous trail.
-- Characters at different depths have different apparent sizes. Toward/away movement grows or shrinks them through perspective.
-- The world repeats across its faces, including during orbit, keeping the surrounding rain visible as the view turns.
-- **Variable tail lengths** gives each stream a stable length. Defaults are **12–100 characters**; both bounds can be adjusted between **12 and 160**.
-- **Stepped fade** is on by default: each character holds one of eight brightness levels, then switches off at the end of its life. Uncheck it for a smooth fade.
-- Turning off variable lengths gives all streams a 40-character lifetime. Turn off both variable lengths and stepped fade to compare with the original 3D fade. These controls affect the camera renderer; Original View keeps its canvas fade.
-
-Trail, rendering and camera-speed preferences are saved locally. The remaining controls reset when the page reloads.
-
-## Rendering quality
-
-**Sharp letters** uses a bundled MSDF font atlas to keep letters clear as perspective changes their size. ASCII and Katakana are covered; other custom characters use the browser's font fallback. No fonts need to be installed.
-
-**Smooth motion** follows the display refresh rate between simulation steps. Only the current head moves between steps; historical characters remain locked in the world. Direction changes and audio timing keep their existing behavior.
-
-| Quality | Behavior |
-|---|---|
-| **Balanced** (default) | Adapts render resolution to the screen, with a smaller pixel budget on phones |
-| **High clarity** | Allows a larger pixel budget for sharper output on high-resolution screens |
-| **Low power** | Uses standard-resolution output and caps 3D presentation at 30 FPS; audio and simulation timing stay the same |
-
-**Glow** starts at 15% and can be switched off. **Color contrast** starts at 100%, adjustable from 75–150%. Empty background remains black. These controls apply to the 3D camera view.
-
-The renderer uploads new characters incrementally and skips repeated world cells outside the view. Sharp letters, glow, higher resolution and more frequent presentation also cost GPU time; choose Low power or reduce glow, density and trail lengths if needed.
-
-## Visual controls
-
-| Control | Range / options | Initial value |
-|---|---|---|
-| Density | 1–100% | **50%** |
-| Rain Speed | 1–100; higher slider values are faster | Slider: 35 |
-| Intensity | 1–100 | 70 |
-| Character Size | 1–100, with − / + buttons | 10 |
-| Primary / Secondary Color | Color pickers | `#00ff41` / `#00cc33` |
-| Camera | Fixed, Showcase, Corkscrew, Gyroscope; yaw, pitch and roll | Enabled; Fixed |
-| Shortest / Longest tail | 12–160 characters | **12 / 100** |
-
-**Patterns:** Classic Matrix, Rainbow Spectrum, Pentad Prism, Chaos Flow, and Harmonic Waves.
-
-**Character sets:** Matrix, Binary, Hexadecimal, Symbols, Katakana, or Custom. Choosing Custom reveals a text field for your own character pool.
-
-**Reverse Flow** manually reverses motion. **Chaos Once** randomizes the scene once. **Auto Orchestrator** changes patterns, colors and movement every 8–15 seconds while leaving density and manual reverse under your control. Auto Orchestrator and Audio Reactive Mode run separately.
-
-## Audio reactive mode
-
-In Chrome or Edge, click **Audio Reactive Mode**, choose the tab or screen playing sound, and enable **Share audio** in the browser's picker. Which sources offer audio depends on your browser and platform. Audio access starts only after you click the button and approve sharing. The screen track required by the capture API is not displayed or recorded by this application.
-
-Audio settings stay gray and disabled until audio mode starts successfully. Browsers without the required capture API also get a disabled Audio Reactive Mode button and a short explanation; regular rain controls and Auto Orchestrator remain available. A canceled share or a source without audio leaves audio settings disabled.
-
-| Audio | Visual response |
-|---|---|
-| Ongoing energy and fresh musical accents | Rain speed and acceleration |
-| Low-mid and mid frequencies | Hue |
-| High frequencies | Hue variation and character set |
-| Volume | Intensity and brightness |
-| New attacks and changes within the frequency spectrum | Direction |
-
-Audio mode uses Classic Matrix and controls its colors, speed, intensity, character set and direction. Density stays manual. Secondary color follows the complement of the primary color.
-
-**Depth** is on by default and includes toward/away movement. Turn it off for the four planar headings. The controller retains individual frequency changes, so sounds can change the path even when average volume stays steady. Fresh attacks accent the current path or select a new heading according to the emerging frequency content; evolving texture can also turn the rain. Ongoing energy controls propulsion, and repeated beats keep accelerating and easing the streams even when the heading stays the same. There is no scheduled or random audio direction cycle.
-
-Small neighboring frequency shifts are filtered to reduce vibrato-triggered corners. Rapid repeated reversals are restrained, while later musical events can reverse direction. Pauses keep the last heading. Manual Reverse Flow still works.
-
-**Beat turns** is optional and off by default. It increases sensitivity to smaller and more closely spaced attacks; it does not introduce a fixed beat schedule.
-
-**Hue Reactivity / Saturation Gain / Brightness Depth** each range from 50–200%. Color presets: Neon, Prism, Pastel, Hyperneon, Aurora, Bassstorm, Crystal, Vaporwave, Inferno, and Zen.
-
-**Color fluctuation sensitivity** matches the APK and defaults to **300%**, adjustable from **100–500%**. It amplifies successive changes in audio hue while a held input keeps its color. **100%** restores the previous hue mapping. Selecting a preset starts from that preset's actual hue; saturation, brightness, intensity, characters and the audio-motion controller retain their existing mappings.
-
-The runtime also supports Wallpaper Engine's built-in audio listener when hosted there; browser sharing is used for this live preview. Speech recognition is not included.
-
-## Compatibility
-
-The 3D camera needs WebGL with instanced rendering. The original 2D renderer remains available when WebGL is unavailable or its context is lost. Chrome or Edge is recommended for the browser audio mode. No microphone, speech model, or companion app is needed. Longer trails and higher density increase rendering load.
-
-## Project files
-
-| File | Purpose |
-|---|---|
-| `matrix-rain-utility-suite.html` | Main application and controls |
-| `index.html` | Synchronized copy used by GitHub Pages |
-| `rain-audio-motion.js` | Spectrum changes, continuous propulsion, musical accents, and reversal restraint |
-| `rain-camera.js` | Camera orientation, repeating volume, and historical trail positions |
-| `rain-camera-motion.js` | APK-matched animated camera paths and full yaw/pitch/roll matrices |
-| `rain-color-fluctuation.js` | APK-matched amplification of successive audio hues |
-| `rain-camera-gpu.js` | Instanced WebGL glyph renderer, incremental uploads and optional glow |
-| `rain-animation-clock.js` | Display-refresh presentation with independent simulation timing |
-| `render-settings.js` | Rendering quality controls and saved preferences |
-| `assets/` | Bundled MSDF font atlas, metadata and third-party license notices |
-| `settings-panel.js` | Draggable settings panel with viewport bounds |
-| `trails/rain-trails.js` | Trail controls and saved preferences |
-| `trails/rain-trail-lengths.js` | Stable per-stream lengths and stepped or smooth brightness |
-| `tests/` | Runtime packaging, direction, trails, animation timing and font coverage checks |
-
-For development, Node.js 18+ can run the checks without installing packages:
+Node.js 18+ can run the checks without installing packages:
 
 ```sh
 npm test
+npm run sync-demo
 ```
 
-After editing the main HTML, run `npm run sync-demo` to update `index.html`. The tests catch a stale demo copy or missing runtime files. GitHub Pages publishes the root of `master` at the live preview link above.
+`index.html` must stay identical to the main HTML. GitHub Pages serves the root of `master`. Changed runtime resources have content-hash URLs to avoid mixing cached versions in embedded browsers. Tests cover bundled paths, deterministic steering, color response, immutable birth colors, calibrated cameras, rendering, settings validation and legacy configuration migration.
+
+`rain-audio-choreography.js` and `beat-turns-policy.js` govern audio motion; `rain-audio-color.js` governs the palette; `rain-camera.js` and `rain-camera-gpu.js` preserve and draw world trails. The settings codec, sharing, session and UI modules manage the panel. Modules named `choreography-preview.js` and `color-preview.js` now wire only the approved controllers; no development comparison switches are exposed.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-Bundled font assets use the SIL Open Font License 1.1. Font credits, MSDF shader attribution and their license notices are in [assets/THIRD-PARTY.md](assets/THIRD-PARTY.md).
+MIT — see [LICENSE](LICENSE). Bundled font assets use the SIL Open Font License 1.1. Font credits, MSDF shader attribution and notices are in [assets/THIRD-PARTY.md](assets/THIRD-PARTY.md).

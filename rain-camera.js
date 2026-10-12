@@ -2,10 +2,30 @@
 const rainCamera = {
     enabled: true, orbit: false, yaw: 0, pitch: 0, roll: 0, frame: 0, marks: [], lastTime: null,
     mode: 'fixed', motionTime: 0, motionBase: {yaw: 0, pitch: 0, roll: 0},
-    speeds: {showcase: 1, corkscrew: 1, gyroscope: .25},
+    speeds: {showcase: .25, corkscrew: .25, gyroscope: .25},
+    phaseRates: {showcase: 10, corkscrew: 3, gyroscope: 1},
     pending: [], bounds: null, streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
+    },
+    setEnabled(enabled) {
+        const changed = this.enabled !== !!enabled;
+        this.enabled = !!enabled; this.lastTime = null;
+        if (changed) {
+            // Re-enter the world from the current heads, not stale flat-view
+            // deltas. Existing marks retain their birth colors and lifetimes.
+            this.streams.clear();
+            matrixCtx.save(); matrixCtx.globalAlpha = 1; matrixCtx.fillStyle = '#000';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height); matrixCtx.restore();
+        }
+        if (!this.enabled) {
+            rainCameraGPU.hide();
+            if (['toward','away'].includes(MatrixRainEngine.rainConfig.direction)) {
+                document.getElementById('rainDirection').value = ['up','down','left','right'].includes(rainMotion.planar) ? rainMotion.planar : 'down';
+                updateRainDirection();
+            }
+        }
+        this.refreshControls?.();
     },
     setMode(mode) {
         if (!window.RainCameraMotion.modes.includes(mode)) return;
@@ -36,6 +56,7 @@ const rainCamera = {
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
     capture(char, x, y, depth, fontSize, alpha, color, streamId) {
+        if (!this.enabled) return;
         this.ensureVolume();
         const scale = rainFocalLength / depth, box = this.volume;
         const head = Number.isInteger(streamId) && rainMotion.drops[streamId];
@@ -71,6 +92,13 @@ const rainCamera = {
             fontSize, alpha, color, frame: this.frame, streamId,
             trailLength: window.matrixRainTrails?.lengthFor(streamId) ?? 40,
             delta: position.delta || [0, 0, 0] };
+        // Capture color now. Uploading, aging, font changes and palette
+        // changes must never recolor a character that already exists.
+        const palette = window.rainAudioPalette;
+        if (palette?.active) {
+            const tone = ((Number(streamId)||0)*.618033988749895%1+1)%1;
+            mark.rgb = Object.freeze(palette.colorA.map((value, channel) => value + (palette.colorB[channel]-value)*tone));
+        }
         this.marks.push(mark); this.pending.push(mark);
     },
     prepareView() {
@@ -159,7 +187,7 @@ const rainCamera = {
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
         if(this.enabled){
             if(this.mode!=='fixed'){
-                this.motionTime+=dt*this.speeds[this.mode];
+                this.motionTime+=dt*this.speeds[this.mode]*this.phaseRates[this.mode];
                 const angles=window.RainCameraMotion.angles(this.mode,this.motionTime),degrees=180/Math.PI;
                 for(const axis of ['yaw','pitch','roll'])this[axis]=this.wrap(this.motionBase[axis]+angles[axis]*degrees,360);
                 if(now-(this.lastControlUpdate||0)>100){this.refreshControls?.(true);this.lastControlUpdate=now;}
@@ -183,6 +211,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin:10px 0">
         <label><input id="cameraEnabled" type="checkbox"> Enable camera</label>
         <button id="cameraReset" type="button" class="btn">Original View</button></div>
+        <small id="cameraViewPolicy" style="display:block;margin-bottom:8px"></small>
         <div role="group" aria-label="Camera movement" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
         <button type="button" class="btn" data-camera-mode="fixed">Fixed</button>
         <button type="button" class="btn" data-camera-mode="showcase">Showcase</button>
@@ -190,7 +219,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="btn" data-camera-mode="gyroscope">Gyroscope</button></div>
         <label for="cameraSpeed">Motion speed: <span id="cameraSpeedValue">100%</span></label>
         <input id="cameraSpeed" type="range" min="0" max="100" value="100" step="1" style="width:100%">
-        <small style="display:block;margin-bottom:10px">View movement works with manual rain, audio mode and Auto Orchestrator.</small>
+        <small style="display:block;margin-bottom:10px">All animated modes start at 25%. Equal percentages give comparable view speed; 0% holds the viewpoint.</small>
         <label for="cameraYaw">Look around</label>
         <input id="cameraYaw" type="range" min="-180" max="180" value="0" step="1" style="width:100%">
         <label for="cameraPitch">Look up / down</label>
@@ -204,7 +233,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const roll = document.getElementById('cameraRoll');
     const speed = document.getElementById('cameraSpeed');
     try {
-        const saved = JSON.parse(localStorage.getItem('matrixRain.cameraSpeeds') || 'null');
+        const saved = JSON.parse(localStorage.getItem('matrixRain.preview.calibratedCameraSpeeds') || 'null');
         for (const mode of Object.keys(rainCamera.speeds))
             if (typeof saved?.[mode] === 'number' && Number.isFinite(saved[mode])) rainCamera.speeds[mode] = Math.max(0, Math.min(1, saved[mode]));
     } catch (_) {}
@@ -213,35 +242,38 @@ window.addEventListener('DOMContentLoaded', () => {
         if (onlyVisible && (!modal || modal.classList.contains('minimized') || modal.style.display === 'none')) return;
         enabled.checked = rainCamera.enabled;
         yaw.value = rainCamera.yaw; pitch.value = rainCamera.pitch; roll.value = rainCamera.roll;
-        speed.disabled = rainCamera.mode === 'fixed';
+        speed.disabled = !rainCamera.enabled || rainCamera.mode === 'fixed';
+        yaw.disabled = pitch.disabled = roll.disabled = !rainCamera.enabled;
+        document.getElementById('cameraViewPolicy').textContent = rainCamera.enabled ? '3D view · perspective fonts · six directions' : 'Original view · one font size · four directions';
+        for (const button of document.querySelectorAll('[data-control="rainDirection"] [data-value="toward"], [data-control="rainDirection"] [data-value="away"]')) button.disabled = !rainCamera.enabled;
         speed.value = Math.round((rainCamera.speeds[rainCamera.mode] ?? 1) * 100);
         document.getElementById('cameraSpeedValue').textContent = speed.value + '%';
         for (const button of panel.querySelectorAll('[data-camera-mode]')) {
-            const active = button.dataset.cameraMode === rainCamera.mode;
+            const active = rainCamera.enabled && button.dataset.cameraMode === rainCamera.mode;
             button.setAttribute('aria-pressed', String(active));
             button.style.outline = active ? '2px solid #00ff41' : '';
         }
     };
-    enabled.onchange = () => { rainCamera.enabled = enabled.checked; rainCamera.lastTime = null; };
+    enabled.onchange = () => rainCamera.setEnabled(enabled.checked);
     speed.oninput = () => {
         if (rainCamera.mode === 'fixed') return;
         rainCamera.speeds[rainCamera.mode] = Number(speed.value) / 100;
-        try { localStorage.setItem('matrixRain.cameraSpeeds', JSON.stringify(rainCamera.speeds)); } catch (_) {}
+        try { localStorage.setItem('matrixRain.preview.calibratedCameraSpeeds', JSON.stringify(rainCamera.speeds)); } catch (_) {}
         rainCamera.refreshControls();
     };
     for (const button of panel.querySelectorAll('[data-camera-mode]')) button.onclick = () => {
-        rainCamera.enabled = true; rainCamera.setMode(button.dataset.cameraMode);
+        rainCamera.setEnabled(true); rainCamera.setMode(button.dataset.cameraMode);
     };
     for (const [axis, input] of [['yaw', yaw], ['pitch', pitch], ['roll', roll]]) input.oninput = () => {
         const value = Number(input.value);
         rainCamera.setMode('fixed'); rainCamera[axis] = value;
-        rainCamera.enabled = true; rainCamera.refreshControls();
+        rainCamera.setEnabled(true);
     };
     document.getElementById('cameraReset').onclick = () => {
-        rainCamera.enabled = false; rainCamera.setMode('fixed');
+        rainCamera.setEnabled(false); rainCamera.setMode('fixed');
         rainCamera.yaw = rainCamera.pitch = rainCamera.roll = 0; rainCamera.refreshControls();
         matrixCtx.globalAlpha = 1; matrixCtx.fillStyle = '#000';
         matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
     };
-    rainCamera.refreshControls();
+    rainCamera.setEnabled(rainCamera.enabled);
 });

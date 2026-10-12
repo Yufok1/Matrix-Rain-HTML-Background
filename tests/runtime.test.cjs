@@ -14,17 +14,17 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     const source = attributes.match(/\bsrc=["']([^"']+)["']/)?.[1];
     if (source) {
         assert.doesNotMatch(source, /^(?:[a-z]+:|\/)/i, 'Scripts are bundled local files');
-        const file = path.resolve(root, source);
+        const file = path.resolve(root, source.split('?')[0]);
         assert.ok(file.startsWith(root + path.sep), 'Runtime scripts stay inside the project');
         assert.ok(fs.existsSync(file), 'Missing runtime file: ' + source);
-        assets.add(source);
+        assets.add(source.split('?')[0]);
         if (!/\btype=["']module["']/.test(attributes)) new vm.Script(fs.readFileSync(file, 'utf8'), {filename: source});
     } else {
         new vm.Script(body, {filename: 'inline-script-' + (++inlineScripts)});
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ['assets/rain-font-msdf.js', 'rain-animation-clock.js', 'rain-audio-motion.js', 'rain-camera-gpu.js', 'rain-camera-motion.js', 'rain-camera.js', 'rain-color-fluctuation.js', 'render-settings.js', 'settings-panel.js', 'trails/rain-trails.js']);
+assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "trails/rain-trails.js"]);
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
     assert.ok(fs.existsSync(path.resolve(root, 'trails', imported)), 'Missing trail module: ' + imported);

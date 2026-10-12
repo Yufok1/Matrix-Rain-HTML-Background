@@ -24,7 +24,7 @@ function fixture({capture, wallpaper = false, secure = true} = {}) {
         MatrixRainEngine:{logActivity(){}}, analyzeAudio(){}, resetAudioMotion(){},
         stopAudioReactive() { if(context.activeStream())context.activeStream().getTracks().forEach(t=>t.stop()); released++; }
     });
-    vm.runInContext('let audioReactiveActive=false, audioStream=null, audioContext=null, audioAnalyser=null, audioBufferLength=0, audioDataArray=null;\n' +
+    vm.runInContext('let rainAudioRequestVersion=0; let audioReactiveActive=false, audioStream=null, audioContext=null, audioAnalyser=null, audioBufferLength=0, audioDataArray=null;\n' +
         ['canCaptureRainAudio','updateModeButtons','toggleAudioReactive'].map(source).join('\n') +
         '\nglobalThis.controls={refresh:updateModeButtons,toggle:toggleAudioReactive}; globalThis.activeStream=()=>audioStream;', context);
     return {elements, controls:context.controls, released:()=>released, connected:()=>connected};
