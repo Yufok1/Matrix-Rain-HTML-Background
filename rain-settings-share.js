@@ -15,7 +15,7 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:3,name,
+            v:4,name,
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
@@ -28,7 +28,8 @@
             camera:{enabled:rainCamera.enabled,mode:rainCamera.mode,yaw:rounded(rainCamera.yaw),pitch:rounded(rainCamera.pitch),roll:rounded(rainCamera.roll),
                 speeds:Object.fromEntries(Object.entries(rainCamera.speeds).map(([k,v])=>[k,rounded(v*100)]))},
             render:{quality:r.quality,sharp:r.sharp,smooth:r.smooth,glow:rounded(r.glow*100),contrast:rounded(r.contrast*100)},
-            trails:{enabled:t.enabled,stepped:t.stepped,minimum:t.minimum,maximum:t.maximum}
+            trails:{enabled:t.enabled,stepped:t.stepped,minimum:t.minimum,maximum:t.maximum},
+            media:{influence:rainMedia.options.influence,exposure:rainMedia.options.exposure,contrast:rainMedia.options.contrast,mirror:rainMedia.options.mirror,glints:rainBorderGlints.options.enabled}
         });
     }
     function apply(settings) {
@@ -66,14 +67,15 @@
         set('render-contrast',s.render.contrast,()=>el('render-contrast').oninput());
         check('trail-variety',s.trails.enabled);check('trail-stepped',s.trails.stepped);
         el('trail-shortest').value=s.trails.minimum;el('trail-longest').value=s.trails.maximum;el('trail-shortest').oninput();
+        if(window.rainMedia){Object.assign(rainMedia.options,{influence:s.media.influence,exposure:s.media.exposure,contrast:s.media.contrast,mirror:s.media.mirror});rainMedia.refresh();}if(window.rainBorderGlints){rainBorderGlints.options.enabled=s.media.glints;if(el('media-border-glints'))el('media-border-glints').checked=s.media.glints;}
         window.rainSettingsUI?.refresh();
         return s;
     }
-    function defaults(){return RainSettingsCodec.validate({v:3,name:'',
+    function defaults(){return RainSettingsCodec.validate({v:4,name:'',
         rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'matrix',customCharacters:'',direction:'down',reverse:false},
         audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
         camera:{enabled:true,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
-        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:true,stepped:true,minimum:12,maximum:100}
+        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:95,exposure:100,contrast:110,mirror:true,glints:true}
     });}
     window.rainSettingsShare={capture,apply,defaults,export:(name='')=>RainSettingsCodec.encode(capture(name)),import:blob=>apply(RainSettingsCodec.decode(blob))};
     window.addEventListener('DOMContentLoaded',()=>{

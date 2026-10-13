@@ -1190,14 +1190,14 @@
         </div>
     </div>
 
-    <script src="rain-audio-motion.js"></script>
-    <script src="rain-color-fluctuation.js"></script>
-    <script src="rain-audio-choreography.js"></script>
+    <script src="rain-audio-motion.js?v=fe061454f30c"></script>
+    <script src="rain-color-fluctuation.js?v=8ba45a554b53"></script>
+    <script src="rain-audio-choreography.js?v=688f8751a072"></script>
     <script src="beat-turns-policy.js?v=ee8bcb5f1763"></script>
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=6108f43efa67"></script>
+    <script src="rain-settings-codec.js?v=92276075aa90"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1833,6 +1833,7 @@
 
         // Helper function to get random character
         function getNextCharacter(characters, columnIndex, isUserColumn) {
+            if (audioReactiveActive && window.rainAudioCharacters) return rainAudioCharacters.choose(columnIndex, performance.now());
             const cache = window.rainCharacterPools || (window.rainCharacterPools = new Map());
             let pool = cache.get(characters);
             if (!pool) {
@@ -1919,7 +1920,11 @@
             matrixCtx.font = `${size}px monospace`;
             matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
             if (rainCamera.enabled) rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
-            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) matrixCtx.fillText(char, x, y);
+            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) {
+                const strength = window.rainMedia?.active ? window.rainMedia.strengthAt(x,y)*window.rainMedia.options.influence/100 : 0;
+                matrixCtx.globalAlpha += (1-matrixCtx.globalAlpha)*strength;
+                matrixCtx.fillText(char, x, y);
+            }
             matrixCtx.globalAlpha = alpha;
             p.lastStamp = { x, y, depth: p.depth };
         }
@@ -3434,12 +3439,10 @@
 
 
 
-            // HIGH → CHARACTER SET (high frequencies pick character complexity)
-            const highNormalized = high / 255;
-            const charIndex = Math.floor(highNormalized * 5); // 0-4
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            config.characterSet = characterSets[Math.min(charIndex, 4)];
-            document.getElementById('characterSet').value = config.characterSet;
+            // Katakana is the base; detected accents affect only a minority of births.
+            window.rainAudioCharacters?.update(spectrum, musicalMotion, performance.now());
+            config.characterSet = 'katakana';
+            document.getElementById('characterSet').value = 'katakana';
 
             // OVERALL VOLUME → INTENSITY (loudness = brightness)
             config.intensity = 30 + Math.floor(volume * 70); // 30-100
@@ -3495,16 +3498,20 @@
             });
         }
     </script>
-<script src="rain-animation-clock.js"></script>
-<script src="render-settings.js"></script>
-<script src="assets/rain-font-msdf.js"></script>
-<script src="rain-camera-gpu.js?v=4c0a1e1f7646"></script>
-<script src="rain-camera-motion.js"></script>
-<script src="rain-camera.js?v=7d56dbc59460"></script>
-<script src="settings-panel.js"></script>
-<script src="rain-settings-share.js?v=7dfc6d9c0783"></script>
-<script src="rain-session-controls.js?v=85c4efde86b4"></script>
-<script type="module" src="trails/rain-trails.js"></script>
-<script type="module" src="rain-settings-ui.js?v=ffb70f559e58"></script>
+<script src="rain-animation-clock.js?v=716799d6292e"></script>
+<script src="render-settings.js?v=51b3abc3cf18"></script>
+<script src="assets/rain-font-msdf.js?v=5418ba0d39c7"></script>
+<script src="rain-camera-gpu.js?v=b95682f1c990"></script>
+<script src="rain-camera-motion.js?v=f71c022c23e7"></script>
+<script src="rain-audio-characters.js?v=0fba78f8fe9d"></script>
+<script src="rain-media-assembly.js?v=148ddb339c6e"></script>
+<script src="rain-border-glints.js?v=e091abad77a7"></script>
+<script src="rain-media-depiction.js?v=35f6df13af5a"></script>
+<script src="rain-camera.js?v=40b0f443ed01"></script>
+<script src="settings-panel.js?v=09645a7bc8c6"></script>
+<script src="rain-settings-share.js?v=4d13df72ee5a"></script>
+<script src="rain-session-controls.js?v=70b1f8ee3653"></script>
+<script type="module" src="trails/rain-trails.js?v=3ee7900fae20"></script>
+<script type="module" src="rain-settings-ui.js?v=f9c0a47180cb"></script>
 </body>
 </html>

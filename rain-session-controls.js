@@ -5,6 +5,7 @@
     function stop(){
         if(stopped)return;
         stopped=true;operation++;
+        window.rainMedia?.pause();
         saved={audio:audioReactiveActive,auto:autoOrchestratorActive,palette:rainAudioPalette.active,
             tracks:audioStream?audioStream.getAudioTracks().map(track=>({track,enabled:track.enabled})):[]};
         // Keep permission and stream ownership for a seamless resume, while
@@ -24,6 +25,7 @@
         if(!stopped)return;
         stopped=false;const version=++operation,previous=saved;saved=null;
         matrixCanvas.style.display='block';rainCamera.lastTime=null;
+        window.rainMedia?.resume();
         if(previous?.audio){
             const sourceEnded=audioStream?!audioStream.getAudioTracks().some(track=>track.readyState==='live'):!window.wallpaperRegisterAudioListener;
             if(sourceEnded){stopAudioReactive();document.getElementById('audioStatus').textContent='Audio source ended. Start audio response to reconnect.';}
@@ -43,6 +45,7 @@
     }
     function reset(){
         operation++;stopMatrixAnimation();
+        window.rainMedia?.reset();
         audioReactiveActive=window.audioReactiveActive=false;
         autoOrchestratorActive=window.autoOrchestratorActive=false;
         stopAutoOrchestrator();stopAudioReactive();resetAudioMotion();

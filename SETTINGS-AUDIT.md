@@ -27,3 +27,7 @@ Validation covers every schema leaf, persistent DOM control, UI round trips acro
 **Configuration input:** Paste code reads the clipboard only on a click and stages a fully validated code. Import is a separate action. Invalid, denied and late reads do not overwrite an existing code or change settings. Wallpaper Engine's `configurationcode` text user property provides an alternative in the Installed tab; startup and live property events stage the code without importing it. Existing property callbacks are retained. These are input methods, not additional visual fields; MR3 coverage remains 41 leaves.
 
 Paste stays available during a pending read. A retry retires the preceding attempt, and unresolved reads expire after four seconds. Old responses cannot overwrite newer results. Button paste and text-box paste both replace the full code; neither concatenates configurations.
+
+## MR4 live depiction extension
+
+Five additional visual values are shared: media.influence, media.exposure, media.contrast, media.mirror and media.glints. MR1/MR2/MR3 migrate to the approved depiction defaults. The source device, local file, capture permission and active camera session are local and never imported. The complete current schema contains 44 visual values plus version/name.

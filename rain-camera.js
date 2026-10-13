@@ -99,6 +99,8 @@ const rainCamera = {
             const tone = ((Number(streamId)||0)*.618033988749895%1+1)%1;
             mark.rgb = Object.freeze(palette.colorA.map((value, channel) => value + (palette.colorB[channel]-value)*tone));
         }
+        window.rainMedia?.capture(mark, this);
+        window.rainBorderGlints?.capture(mark, this);
         this.marks.push(mark); this.pending.push(mark);
     },
     prepareView() {
@@ -183,6 +185,7 @@ const rainCamera = {
         this.frame++;
     },
     present(now = performance.now(), phase = 1) {
+        window.rainMedia?.present(now);
         const gap=this.lastTime===null?0:Math.max(0,now-this.lastTime);
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
         if(this.enabled){
@@ -195,7 +198,7 @@ const rainCamera = {
             const quality=window.matrixRainRendering?.quality;
             if(quality==='low'&&this.lastQuality==='low'&&now-(this.lastPaint||0)<1000/30)return;
             this.lastQuality=quality;this.lastPaint=now;
-            this.prepareView();rainCameraGPU.render(this,phase);
+            this.prepareView();rainCameraGPU.render(window.rainMedia?.renderView(this) || this,phase);
         }else rainCameraGPU.hide();
         window.rainSettingsBeacon?.update(now);
     },

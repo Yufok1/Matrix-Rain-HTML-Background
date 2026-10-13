@@ -7,7 +7,7 @@
     const text = max => ({kind:'text', max});
     const bool = {kind:'bool'}, hex = {kind:'hex'};
     const schema = {
-        v:choice(3), name:text(60),
+        v:choice(4), name:text(60),
         rain:{pattern:choice('classic','rainbow','pentad','chaos','harmonic'),
             speed:integer(1,100), intensity:integer(1,100), density:integer(1,100), fontSize:integer(1,100),
             primary:hex, secondary:hex,
@@ -21,10 +21,13 @@
             yaw:number(-180,180), pitch:number(-180,180), roll:number(-180,180),
             speeds:{showcase:integer(0,100),corkscrew:integer(0,100),gyroscope:integer(0,100)}},
         render:{quality:choice('balanced','sharp','low'),sharp:bool,smooth:bool,glow:integer(0,100),contrast:integer(75,150)},
-        trails:{enabled:bool,stepped:bool,minimum:integer(12,160),maximum:integer(12,160)}
+        trails:{enabled:bool,stepped:bool,minimum:integer(12,160),maximum:integer(12,160)},
+        media:{influence:integer(0,100),exposure:integer(50,200),contrast:integer(50,200),mirror:bool,glints:bool}
     };
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
-    const legacy2Schema={...schema,v:choice(2),preview:previewSchema};
+    const {media:ignoredMedia,...oldSchema}=schema;
+    const legacy3Schema={...oldSchema,v:choice(3)};
+    const legacy2Schema={...oldSchema,v:choice(2),preview:previewSchema};
     const legacySchema={...legacy2Schema,v:choice(1),audio:{...schema.audio,depth:bool}};
     function check(value, rule, path) {
         const fail = () => {throw Error('Invalid setting: '+path);};
@@ -47,11 +50,11 @@
     function validate(settings) {
         // MR1 had an independent depth flag. Camera is now authoritative.
         // Validate the complete old schema before migrating it.
-        if (settings?.v===1 || settings?.v===2) {
-            settings=check(settings,settings.v===1?legacySchema:legacy2Schema,'');
+        if ([1,2,3].includes(settings?.v)) {
+            settings=check(settings,settings.v===1?legacySchema:settings.v===2?legacy2Schema:legacy3Schema,'');
             if(settings.v===1)delete settings.audio.depth;
             delete settings.preview;
-            settings.v=3;
+            settings.v=4;settings.media={influence:95,exposure:100,contrast:110,mirror:true,glints:true};
             if (!settings.camera.enabled && ['toward','away'].includes(settings.rain.direction)) settings.rain.direction='down';
         }
         const clean=check(settings,schema,'');
@@ -64,12 +67,12 @@
     function encode(settings) {
         const bytes=new TextEncoder().encode(JSON.stringify(validate(settings)));
         let binary='';for (const byte of bytes) binary+=String.fromCharCode(byte);
-        return 'MR3.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        return 'MR4.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     function decode(blob) {
         if (typeof blob!=='string' || blob.length>24000) throw Error('Configuration is too large.');
         const compact=blob.replace(/[\t\r\n ]/g,'');
-        if (!/^MR[123]\./.test(compact)) throw Error('Expected a Matrix Rain configuration.');
+        if (!/^MR[1234]\./.test(compact)) throw Error('Expected a Matrix Rain configuration.');
         const payload=compact.slice(4);
         if (!payload || payload.length>12000 || !/^[A-Za-z0-9_-]+$/.test(payload) || payload.length%4===1) throw Error('Damaged configuration.');
         let parsed;
@@ -85,7 +88,7 @@
         if(rule.kind)return [prefix];
         return Object.entries(rule).flatMap(([key,value])=>paths(value,prefix?prefix+'.'+key:key));
     }
-    const api={encode,decode,validate,paths:()=>paths()};
+    const api={encode,decode,validate,paths:()=>paths(),schema};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     root.RainSettingsCodec=api;
 })(typeof window==='undefined'?globalThis:window);

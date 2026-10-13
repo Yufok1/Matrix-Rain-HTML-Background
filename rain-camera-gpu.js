@@ -34,11 +34,11 @@ const rainCameraGPU = {
             this.main=this.program(`
                 attribute vec2 corner;attribute vec4 point,color,atlasRect,shape;attribute vec2 lifetime;attribute vec3 delta;attribute float format;
                 uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase;uniform bool smoothMotion,stepped,variety;
-                varying vec2 uv;varying vec4 tint;varying float glyphFormat;
+                varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential,imageStrength;
                 float level(float p){float s=floor(p*8.);if(s<1.)return 1.;if(s<2.)return .68;if(s<3.)return .45;if(s<4.)return .29;if(s<5.)return .18;if(s<6.)return .105;if(s<7.)return .06;return .032;}
                 void main(){
                     float age=mod(ageNow-lifetime.x+4096.,4096.),length=variety?lifetime.y:40.;
-                    if(age>=length){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=format;return;}
+                    if(age>=length){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=mod(format,2.);imagePotential=imageStrength=0.;return;}
                     float p=age/length,fade=stepped?level(p):(variety?exp(-4.*p)*(1.-p):pow(.88,age));
                     vec3 location=point.xyz;if(smoothMotion&&age<.5)location-=delta*(1.-phase);
                     vec3 world=location+cell-vec3(0.,0.,focal);
@@ -46,25 +46,41 @@ const rainCameraGPU = {
                     vec2 offset=vec2(mix(shape.x,shape.z,corner.x),mix(shape.y,shape.w,corner.y))*point.w;
                     vec2 pixel=(view.xy+offset)*vec2(2.*focal/viewport.x,-2.*focal/viewport.y);
                     float z=(range.y+range.x)/(range.y-range.x)*view.z-2.*range.y*range.x/(range.y-range.x);gl_Position=vec4(pixel,z,view.z);
-                    uv=mix(atlasRect.xy,atlasRect.zw,corner);glyphFormat=format;
-                    tint=vec4(color.rgb,color.a*fade*smoothstep(range.x,range.x+40.,view.z)*(1.-smoothstep(range.y-300.,range.y,view.z)));
+                    uv=mix(atlasRect.xy,atlasRect.zw,corner);glyphFormat=mod(format,2.);
+                    float frustum=smoothstep(range.x,range.x+40.,view.z)*(1.-smoothstep(range.y-300.,range.y,view.z));
+                    tint=vec4(color.rgb,color.a*fade*frustum);
+                    imagePotential=color.a*pow(fade,.18)*frustum;imageStrength=0.;
                 }`,`${this.derivatives?'#extension GL_OES_standard_derivatives : enable\n':''}
                 #ifdef GL_FRAGMENT_PRECISION_HIGH
                 precision highp float;
                 #else
                 precision mediump float;
                 #endif
-                uniform sampler2D msdf,raster;uniform vec2 atlasSize;uniform float pxRange;varying vec2 uv;varying vec4 tint;varying float glyphFormat;
+                uniform sampler2D msdf,raster,mediaImage;uniform vec2 atlasSize,mediaViewport;uniform float pxRange,mediaInfluence;uniform bool mediaLive,mediaMemory;varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential,imageStrength;
                 float median3(vec3 v){return max(min(v.r,v.g),min(max(v.r,v.g),v.b));}
                 void main(){float a;
-                    ${this.derivatives?`if(glyphFormat>.5){vec2 screenTexSize=vec2(1.)/max(fwidth(uv),vec2(.000001));float scale=max(.5*dot(vec2(pxRange)/atlasSize,screenTexSize),1.);a=clamp(scale*(median3(texture2D(msdf,uv).rgb)-.5)+.5,0.,1.);}else`:''}
-                    {a=texture2D(raster,uv).a;}if(a*tint.a<.003)discard;gl_FragColor=vec4(tint.rgb,tint.a*a);
+                    float strength=mediaMemory?imageStrength:0.;
+                    if(mediaLive){
+                        // Sample within each letter, not once for a huge glyph.
+                        // Picture detail follows screen pixels across all cells.
+                        vec2 imageUV=vec2(gl_FragCoord.x/mediaViewport.x,1.-gl_FragCoord.y/mediaViewport.y);
+                        strength=texture2D(mediaImage,imageUV).r;
+                    }
+                    float emphasis=strength*mediaInfluence;
+                    ${this.derivatives?`if(glyphFormat>.5){vec2 screenTexSize=vec2(1.)/max(fwidth(uv),vec2(.000001));float scale=max(.5*dot(vec2(pxRange)/atlasSize,screenTexSize),1.);a=clamp(scale*(median3(texture2D(msdf,uv).rgb)-.5+emphasis*.10)+.5,0.,1.);}else`:''}
+                    {a=texture2D(raster,uv).a;}
+                    // Add picture light to existing rain, with exactly its ink.
+                    // No source pixel can reduce the ordinary rain's alpha.
+                    float alpha=tint.a+(1.-tint.a)*clamp(emphasis*imagePotential*1.8,0.,1.);
+                    if(a*alpha<.003)discard;gl_FragColor=vec4(tint.rgb,alpha*a);
                 }`,['corner','point','color','atlasRect','shape','lifetime','delta','format']);
-            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange']);
+            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaMemory','mediaViewport','mediaInfluence']);
             this.corners=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
             this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.capacity*this.stride*4,gl.DYNAMIC_DRAW);this.staging=new Float32Array(this.capacity*this.stride);
             this.msdfTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
             this.rasterTexture=this.texture();this.atlas=document.createElement('canvas');this.atlas.width=this.atlas.height=Math.min(1536,this.maxSize);this.grid=Math.floor(this.atlas.width/96);this.ctx=this.atlas.getContext('2d');this.ctx.font='64px monospace';this.ctx.fillStyle='#fff';this.rasterDirty=true;
+            this.mediaTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,255]));this.mediaRevision=-1;
+            this.auxBuffer=gl.createBuffer();this.auxCapacity=0;this.auxStaging=null;
             const c=document.createElement('canvas');c.width=c.height=1;this.colorCtx=c.getContext('2d',{willReadFrequently:true});this.glyph('�');
             this.fontReady=false;this.loadFont();this.initPost();this.initialized=true;this.invalidate=true;return true;
         }catch(error){this.failed=true;this.hide();console.warn('3D renderer unavailable; using Original View.',error.message);return false;}
@@ -98,14 +114,22 @@ const rainCameraGPU = {
         else{this.colorCtx.clearRect(0,0,1,1);this.colorCtx.fillStyle=css;this.colorCtx.fillRect(0,0,1,1);const p=this.colorCtx.getImageData(0,0,1,1).data;rgb=[p[0]/255,p[1]/255,p[2]/255];}
         if(this.colors.size>2048)this.colors.clear();this.colors.set(css,rgb);return rgb;
     },
-    bindInstances(start){
-        const gl=this.gl;gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);this.instances.vertexAttribDivisorANGLE(0,0);gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
+    bindInstances(start,buffer=this.buffer){
+        const gl=this.gl;gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);this.instances.vertexAttribDivisorANGLE(0,0);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
         for(const [index,count,offset]of [[1,4,0],[2,4,4],[3,4,8],[4,4,12],[5,2,16],[6,3,18],[7,1,21]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,count,gl.FLOAT,false,this.stride*4,(start*this.stride+offset)*4);this.instances.vertexAttribDivisorANGLE(index,1);}
     },
-    pack(mark,index){
-        const glyph=this.glyph(mark.char),rgb=mark.rgb||(mark.rgb=this.color(mark.color)),v=this.staging;let n=index*this.stride;
+    pack(mark,index,target=this.staging,slot=(this.write+index)%this.capacity){
+        const glyph=this.glyph(mark.char),rgb=mark.rgb||(mark.rgb=this.color(mark.color)),v=target;let n=index*this.stride;
         v[n++]=mark.x;v[n++]=mark.y;v[n++]=mark.z;v[n++]=mark.fontSize;v[n++]=rgb[0];v[n++]=rgb[1];v[n++]=rgb[2];v[n++]=mark.alpha;
-        for(const value of glyph.uv)v[n++]=value;for(const value of glyph.shape)v[n++]=value;v[n++]=mark.frame%4096;v[n++]=mark.trailLength;for(const value of mark.delta)v[n++]=value;v[n]=glyph.mode;
+        for(const value of glyph.uv)v[n++]=value;for(const value of glyph.shape)v[n++]=value;v[n++]=mark.frame%4096;v[n++]=mark.trailLength;for(const value of mark.delta)v[n++]=value;
+        v[n]=glyph.mode;
+    },
+    uploadAux(marks){
+        const gl=this.gl,required=Math.max(1,marks.length);
+        if(required>this.auxCapacity){this.auxCapacity=2048;while(this.auxCapacity<required)this.auxCapacity*=2;this.auxStaging=new Float32Array(this.auxCapacity*this.stride);gl.bindBuffer(gl.ARRAY_BUFFER,this.auxBuffer);gl.bufferData(gl.ARRAY_BUFFER,this.auxStaging.byteLength,gl.DYNAMIC_DRAW);}
+        for(let i=0;i<marks.length;i++)this.pack(marks[i],i,this.auxStaging,-1);
+        gl.bindBuffer(gl.ARRAY_BUFFER,this.auxBuffer);if(marks.length)gl.bufferSubData(gl.ARRAY_BUFFER,0,this.auxStaging.subarray(0,marks.length*this.stride));
+        return marks.length*this.stride*4;
     },
     upload(marks){
         if(!marks.length)return 0;const gl=this.gl;gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);for(let i=0;i<marks.length;i++)this.pack(marks[i],i);
@@ -123,7 +147,7 @@ const rainCameraGPU = {
         this.used=0;this.write=0;this.batches.length=0;this.batchFirst=0;this.invalidate=false;this.lastCompact=camera.frame;const bytes=this.upload(camera.marks);camera.pending.length=0;return bytes;
     },
     tileVisible(camera,tile){
-        if(this.disableCull)return true;const b=camera.bounds;if(!b)return false;const r=camera.rotation;
+        if(camera.mediaDepiction||this.disableCull)return true;const b=camera.bounds;if(!b)return false;const r=camera.rotation;
         const x=b.center[0]+tile.offset[0],y=b.center[1]+tile.offset[1],z=b.center[2]+tile.offset[2]-rainFocalLength;
         const vx=r[0]*x+r[1]*y+r[2]*z,vy=r[3]*x+r[4]*y+r[5]*z,vz=r[6]*x+r[7]*y+r[8]*z+rainFocalLength;
         const sx=matrixCanvas.width/(2*rainFocalLength),sy=matrixCanvas.height/(2*rainFocalLength);
@@ -140,6 +164,9 @@ const rainCameraGPU = {
         const compact=camera.frame-(this.lastCompact||0)>=8&&this.used>camera.marks.length*1.15;
         if(this.invalidate||compact||this.used+camera.pending.length>this.capacity)uploaded+=this.rebuild(camera);else{uploaded+=this.upload(camera.pending);camera.pending.length=0;}
         if(this.invalidate)uploaded+=this.rebuild(camera);
+
+        const glints=window.rainBorderGlints?.prepare(camera,phase)||[];
+        uploaded+=this.uploadAux(glints);
         gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.rasterTexture);if(this.rasterDirty){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,this.atlas);this.rasterDirty=false;}
         const dpr=Math.max(1,window.devicePixelRatio||1),cap=options.quality==='low'?1:options.quality==='sharp'?2:(width<=700?1.5:2),budget=options.quality==='sharp'?12000000:6000000;
         const ratio=Math.min(dpr,cap,Math.sqrt(budget/(width*height)),this.maxSize/width,this.maxSize/height),pw=Math.max(1,Math.floor(width*ratio)),ph=Math.max(1,Math.floor(height*ratio));
@@ -149,12 +176,24 @@ const rainCameraGPU = {
         gl.bindFramebuffer(gl.FRAMEBUFFER,post?this.targets.scene.fbo:null);gl.viewport(0,0,pw,ph);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.useProgram(this.main);
         gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.msdfTexture);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.rasterTexture);
         const u=this.u,r=camera.rotation;gl.uniform1i(u.msdf,0);gl.uniform1i(u.raster,1);gl.uniform2f(u.atlasSize,this.fontInfo?.width||1,this.fontInfo?.height||1);gl.uniform1f(u.pxRange,this.fontInfo?.distanceRange||6);
+        const media=window.rainMedia,live=media?.active,frame=live?(media.options.mode==='assembly'?window.rainMediaAssembly?.frame:media.frame):null;
+        gl.uniform1i(u.mediaImage,2);gl.uniform1i(u.mediaLive,!!frame);
+        gl.uniform1i(u.mediaMemory,!!camera.mediaDepiction);
+        gl.uniform2f(u.mediaViewport,pw,ph);gl.uniform1f(u.mediaInfluence,media?.active?media.options.influence/100:0);
+        gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.mediaTexture);
+        if(frame){
+            if(frame.revision!==this.mediaRevision){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,frame.canvas);this.mediaRevision=frame.revision;}
+        }
         gl.uniform3f(u.rowX,r[0],r[1],r[2]);gl.uniform3f(u.rowY,r[3],r[4],r[5]);gl.uniform3f(u.rowZ,r[6],r[7],r[8]);gl.uniform2f(u.viewport,width,height);gl.uniform1f(u.focal,rainFocalLength);gl.uniform2f(u.range,camera.near,camera.far);
         gl.uniform1f(u.ageNow,age%4096);gl.uniform1f(u.phase,Math.max(0,Math.min(1,phase)));gl.uniform1i(u.smoothMotion,options.smooth!==false);gl.uniform1i(u.stepped,trails?.stepped!==false);gl.uniform1i(u.variety,trails?.enabled!==false);
+
         const start=this.batches[this.batchFirst]?.start||0,first=Math.min(this.used,this.capacity-start);let cells=0;
-        for(const tile of camera.tiles){if(!this.tileVisible(camera,tile))continue;cells++;gl.uniform3fv(u.cell,tile.offset);if(first){this.bindInstances(start);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,first);}if(first<this.used){this.bindInstances(0);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,this.used-first);}}
+        for(let ti=0;ti<camera.tiles.length;ti++){const tile=camera.tiles[ti];if(!this.tileVisible(camera,tile))continue;cells++;gl.uniform3fv(u.cell,tile.offset);if(first){this.bindInstances(start);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,first);}if(first<this.used){this.bindInstances(0);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,this.used-first);}}
+        gl.uniform1i(u.mediaLive,false);gl.uniform1i(u.mediaMemory,false);gl.uniform1f(u.mediaInfluence,0);
+        if(glints.length){this.bindInstances(0,this.auxBuffer);for(const tile of camera.tiles){if(!this.tileVisible(camera,tile))continue;gl.uniform3fv(u.cell,tile.offset);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,glints.length);}}
         if(post)this.post(glow,contrast,pw,ph);
-        this.stats={cells,selectedCells:camera.tiles.length,marks:camera.marks.length,gpuSlots:this.used,instances:cells*this.used,cpuMs:performance.now()-started,uploadedBytes:uploaded,sharp:this.fontReady&&options.sharp!==false,pixelRatio:ratio,size:[pw,ph],glow,phase};
+        this.stats={cells,selectedCells:camera.tiles.length,marks:camera.marks.length,gpuSlots:this.used,instances:cells*(this.used+glints.length),cpuMs:performance.now()-started,uploadedBytes:uploaded,sharp:this.fontReady&&options.sharp!==false,pixelRatio:ratio,size:[pw,ph],glow,phase,glints:glints.length};
+        const mediaOutput=document.getElementById('media-assembly-status');if(mediaOutput){mediaOutput.dataset.gpuCpuMs=this.stats.cpuMs.toFixed(2);mediaOutput.dataset.worldMarks=String(camera.marks.length);mediaOutput.dataset.cells=String(cells);mediaOutput.dataset.glints=String(glints.length);}
         if(this.auditCapture){this.auditCapture(this.canvas);this.auditCapture=null;}
     },
     initPost(){

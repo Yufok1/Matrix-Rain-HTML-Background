@@ -66,6 +66,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const share=el('rain-share-panel');share.className='settings-category';share.removeAttribute('style');share.querySelector('summary').innerHTML='Configurations<span class="category-note">Copy · paste · share</span>';
     share.querySelector('p').textContent='Share every visual setting in one code. Import keeps listening, playback and Auto Orchestrator activation as they are.';
     content.replaceChildren(rain,audio,camera,render,share);
+    window.rainMedia?.mount(content,render);
 
     const toggle=el('minimizeBtn');
     const logo='<svg class="settings-launch-icon" viewBox="0 0 40 42" aria-hidden="true"><path fill="currentColor" stroke="#c0ffd7" stroke-width="1.5" d="M20 3l14 17h-9v19H15V20H6Z"/></svg>';
