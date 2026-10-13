@@ -8,9 +8,9 @@ The live demo and `matrix-rain-utility-suite.html` are the same application. Run
 
 ## Controls
 
-Click the small ship in the upper-right corner, or press **M**, to open settings. Escape collapses them. Shortcuts leave text fields alone. Drag the header to move the panel. On phones, the collapsible categories occupy the lower portion of the screen so the rain stays visible.
+Click the small 3D arrow in the upper-right corner, or press **M**, to open settings. Escape collapses them. Shortcuts leave text fields alone. Drag the header to move the panel. On phones, the collapsible categories occupy the lower portion of the screen so the rain stays visible.
 
-The ship points against the rain’s actual heading, including reverse flow and the camera’s orientation. Its raised logo rails, center cargo pod and short engine plumes remain part of one small 3D mesh. A gentle hover and bank keep it visible during steady rain; the click target stays fixed. It shares the rain’s render clock, stops with the session, and disables idle motion when reduced motion is requested.
+The 3D arrow has a solid pyramid head with flat cel shading, outlined edges and a tiny tapered jet exhaust. Its hue complements the rain's current color. It stays dim during playback and brightens on hover or keyboard focus. It snaps against the rain’s actual heading, including reverse flow, and uses the rain camera's perspective from its position in the corner. Audio accents strengthen the exhaust; travel speed adds a restrained edge glow. A gentle hover and bank keep it visible during steady rain; the click target stays fixed. It shares the rain’s render clock and audio analysis, stops with the session, and disables idle motion and audio effects when reduced motion is requested.
 
 The header has **Stop / Resume** to preserve the current session and **Reset** to restore defaults. Stop pauses rain, camera, audio analysis and auto scenes. Resume keeps your settings; Reset releases any browser audio share and restarts manual rain. An expired browser share must be reconnected.
 
@@ -51,7 +51,7 @@ npm run sync-demo
 
 `index.html` must stay identical to the main HTML. GitHub Pages serves the root of `master`. Changed runtime resources have content-hash URLs to avoid mixing cached versions in embedded browsers. Tests cover bundled paths, deterministic steering, color response, immutable birth colors, calibrated cameras, rendering, settings validation and legacy configuration migration.
 
-`rain-audio-choreography.js` and `beat-turns-policy.js` govern audio motion; `rain-audio-color.js` governs the palette; `rain-camera.js` and `rain-camera-gpu.js` preserve and draw world trails. The settings codec, sharing, session and UI modules manage the panel; `rain-settings-beacon.js` draws its ship launcher without a second WebGL context. Modules named `choreography-preview.js` and `color-preview.js` now wire only the approved controllers; no development comparison switches are exposed.
+`rain-audio-choreography.js` and `beat-turns-policy.js` govern audio motion; `rain-audio-color.js` governs the palette; `rain-camera.js` and `rain-camera-gpu.js` preserve and draw world trails. The settings codec, sharing, session and UI modules manage the panel; `rain-settings-beacon.js` draws its pointer launcher without a second WebGL context. Modules named `choreography-preview.js` and `color-preview.js` now wire only the approved controllers; no development comparison switches are exposed.
 
 ## License
 

@@ -75,8 +75,8 @@
 .matrix-modal.minimized { width:52px!important; min-width:52px!important; height:52px!important; border:0; background:none; box-shadow:none; top:max(14px,env(safe-area-inset-top))!important; right:max(14px,env(safe-area-inset-right))!important; overflow:visible; }
 .matrix-modal.minimized .modal-header { padding:0; min-height:0; border:0; background:none; }
 .matrix-modal.minimized .modal-header > div { display:block!important; }
-.matrix-modal.minimized .minimize-btn { width:52px; height:52px; min-height:52px; padding:2px!important; background:transparent!important; border:1px solid transparent!important; color:#82ac8d!important; opacity:.85; cursor:pointer; }
-.matrix-modal.minimized .minimize-btn:hover, .matrix-modal.minimized .minimize-btn:focus-visible { opacity:1; }
+.matrix-modal.minimized .minimize-btn { width:52px; height:52px; min-height:52px; padding:2px!important; background:transparent!important; border:1px solid transparent!important; color:#82ac8d!important; opacity:.5; cursor:pointer; }
+.matrix-modal.minimized .minimize-btn:hover, .matrix-modal.minimized .minimize-btn:focus-visible { opacity:.9; }
 .matrix-modal.minimized .settings-launch-icon { display:block; width:22px; height:22px; }
 .matrix-modal.minimized .settings-beacon { width:48px; height:48px; pointer-events:none; }
 .matrix-modal.minimized .settings-collapse-icon { display:none; }

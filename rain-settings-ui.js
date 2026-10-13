@@ -1,5 +1,5 @@
 import './trails/rain-trails.js';
-import {createSettingsBeacon} from './rain-settings-beacon.js?v=0b7cda11297a';
+import {createSettingsBeacon} from './rain-settings-beacon.js?v=ff66d04f402d';
 
 // Move the existing controls, preserving their handlers and simulation state.
 window.addEventListener('DOMContentLoaded',()=>{
@@ -68,12 +68,16 @@ window.addEventListener('DOMContentLoaded',()=>{
     content.replaceChildren(rain,audio,camera,render,share);
 
     const toggle=el('minimizeBtn');
-    const logo='<svg class="settings-launch-icon" viewBox="0 0 108 108" aria-hidden="true"><path fill="currentColor" d="M24,20h8v36h-8z M40,28h8v52h-8z M56,16h8v44h-8z M72,38h8v50h-8z"/><path fill="currentColor" opacity=".45" d="M24,61h8v10h-8z M40,85h8v10h-8z M56,65h8v10h-8z"/></svg>';
+    const logo='<svg class="settings-launch-icon" viewBox="0 0 40 42" aria-hidden="true"><path fill="currentColor" stroke="#c0ffd7" stroke-width="1.5" d="M20 3l14 17h-9v19H15V20H6Z"/></svg>';
     toggle.innerHTML=logo+'<span class="settings-collapse-icon" aria-hidden="true">−</span>';
     window.rainSettingsBeacon=createSettingsBeacon(toggle,()=>({
         direction:MatrixRainEngine.rainConfig.direction,
         reverse:reverseFlowMultiplier,
-        view:rainCamera.enabled?rainCamera.viewRotation():null
+        color:MatrixRainEngine.rainConfig.primaryColor,
+        view:rainCamera.enabled?rainCamera.viewRotation():null,
+        focal:rainCamera.enabled?rainFocalLength:0,
+        speed:MatrixRainEngine.rainConfig.speed,
+        audio:window.audioReactiveActive?{...window.rainAudioMotion.snapshot,at:window.rainAudioMotion.sampledAt}:null
     }));
     header.querySelector('.minimized-header-text').remove();
     header.querySelector('.full-header-text').innerHTML='MATRIX RAIN OMNI<small class="panel-drag-hint">Settings · drag to reposition</small>';
