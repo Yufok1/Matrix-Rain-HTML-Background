@@ -23,7 +23,7 @@
     function start(){
         if(worker||error)return;
         const current=epoch;
-        worker=new Worker('rain-media-person-worker.js?v=person1');
+        worker=new Worker('rain-media-person-worker.js?v=15fc47a9eefc');
         worker.onmessage=({data})=>{
             if(current!==epoch)return;
             if(data.type==='ready'){ready=true;report();return;}

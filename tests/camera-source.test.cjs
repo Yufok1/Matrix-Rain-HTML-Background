@@ -1,0 +1,29 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const code=fs.readFileSync('rain-media-depiction.js','utf8');
+const camera=(deviceId,label)=>({kind:'videoinput',deviceId,label});
+const failure=name=>Object.assign(new Error('Capture failed'),{name});
+function harness({enumerate=async()=>[],capture,play=async()=>{},saved=null}={}){
+ const requests=[],tracks=[],errors=[];let lists=0;
+ const video={pause(){},load(){},removeAttribute(){},play};
+ const window={addEventListener(){},rainMediaAssembly:{reset(){}}};
+ function makeStream(id,label='Connected camera'){const track={label,stops:0,getSettings(){return {deviceId:id};},stop(){this.stops++;},addEventListener(){}};tracks.push(track);return {getTracks:()=>[track],getVideoTracks:()=>[track]};}
+ const localStorage={getItem(key){assert.equal(key,'matrixRain.cameraChoice');return JSON.stringify(saved);},setItem(key,value){assert.equal(key,'matrixRain.cameraChoice');saved=JSON.parse(value);}};
+ const context={window,Math,JSON,localStorage,console:{error(text){errors.push(text);}},document:{hidden:false,createElement(type){return type==='video'?video:{getContext(){return {};}};},getElementById(){return null;},addEventListener(){}},navigator:{mediaDevices:{async enumerateDevices(){lists++;return enumerate();},async getUserMedia(constraints){requests.push(constraints);return capture?capture(constraints,makeStream):makeStream(constraints.video.deviceId?.exact||'default');}}}};
+ vm.runInNewContext(code,context);return {media:window.rainMedia,requests,tracks,errors,get saved(){return saved;},get lists(){return lists;}};
+}
+(async()=>{
+ let h=harness({enumerate(){throw Error('Device list unavailable');}});await h.media.startCamera();
+ assert.equal(h.requests.length,1);assert.equal(h.requests[0].video,true,'Use host default without device IDs or size constraints');assert.equal(h.requests[0].audio,false);assert.equal(h.lists,0,'A device list is not required to start');assert.equal(h.media.options.mirror,false);h.media.stop();assert.equal(h.tracks[0].stops,1);
+ h=harness({enumerate:async()=>[camera('disconnected','Camera A'),camera('connected','Camera B')],capture:(constraints,makeStream)=>{if(constraints.video===true||constraints.video.deviceId.exact==='disconnected')throw failure('NotReadableError');return makeStream('connected');}});await h.media.startCamera();assert.equal(h.requests.length,3);assert.equal(h.requests[2].video.deviceId.exact,'connected');assert.ok(h.media.stream,'Automatically use an available alternative after default fails');h.media.stop();
+ h=harness({capture(){throw failure('NotAllowedError');}});await h.media.startCamera();assert.equal(h.requests.length,1);assert.equal(h.lists,0,'Never retry camera permission denial with other devices');assert.equal(h.media.stream,null);assert.match(h.media.status,/permission was denied/);
+ h=harness({enumerate(){throw Error('Device list unavailable');},capture(){throw failure('NotReadableError');}});await h.media.startCamera();assert.match(h.media.status,/NotReadableError/,'Preserve the capture error when optional discovery fails');assert.equal(h.media.stream,null);
+ h=harness({play:async()=>{throw Error('Video playback failed');}});await h.media.startCamera();assert.equal(h.tracks[0].stops,1,'Release captured camera when playback fails');assert.equal(h.media.stream,null);
+ h=harness({enumerate:async()=>[camera('chosen','Connected camera')]});await h.media.startCamera('chosen');h.media.stop();await h.media.startCamera();assert.equal(h.requests[1].video.deviceId.exact,'chosen','Reconnect the last user-selected input without an inventory UI');assert.equal(h.saved.deviceId,'chosen');h.media.stop();
+ h=harness({saved:{deviceId:'old-id',label:'Camera B'},enumerate:async()=>[camera('new-id','Camera B')],capture:(_,makeStream)=>makeStream('new-id','Camera B')});await h.media.startCamera();assert.equal(h.requests[0].video.deviceId.exact,'new-id','Restore local camera choice after device IDs change');assert.equal(h.saved.deviceId,'new-id');h.media.stop();
+ h=harness({saved:{deviceId:'missing-id',label:'Camera B'},enumerate(){throw Error('Device list unavailable');}});await h.media.startCamera();assert.equal(h.requests[0].video,true,'Optional discovery failure cannot prevent reconnection to the default');h.media.stop();
+ h=harness({capture:(constraints,makeStream)=>{if(constraints.video!==true)throw failure('NotReadableError');return makeStream('default');}});await h.media.startCamera('busy-camera');assert.equal(h.requests.length,2,'Try default when the selected camera is unavailable');assert.ok(h.media.stream);h.media.stop();
+ let finish;h=harness({capture:(_,makeStream)=>new Promise(resolve=>{finish=()=>resolve(makeStream('late'));})});const opening=h.media.startCamera();while(!finish)await Promise.resolve();h.media.stop();finish();await opening;assert.equal(h.tracks[0].stops,1,'Cancelled permission request must release late stream');assert.equal(h.media.stream,null);
+ assert.doesNotMatch(code,/media-camera-source|iriun|droidcam|obs virtual/i,'No device inventory or camera-brand preference in the application');
+ const worker={self:{},URL,Uint8Array,fetch(){throw Error('File model must not use fetch');},XMLHttpRequest:class{open(method,url){assert.equal(method,'GET');assert.ok(url.startsWith('file:'));}send(){this.status=0;this.response=new ArrayBuffer(32);this.onload();}}};vm.createContext(worker);vm.runInContext(fs.readFileSync('rain-media-person-worker.js','utf8'),worker);const bytes=await vm.runInContext("localModel(new URL('file:///wallpaper/vendor/model.tflite'))",worker);assert.equal(bytes.byteLength,32);
+ console.log('PASS default/fallback capture, remembered user choice and refreshed IDs, no device inventory/brand/microphone, optional discovery, capture cleanup, unflipped default and local file-model loading.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

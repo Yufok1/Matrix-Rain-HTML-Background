@@ -4,7 +4,7 @@ const fixture={v:4,name:'Zen 雨 🎵',
     audio:{preset:'zen',beatTurns:false,fluctuation:500,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
     camera:{enabled:true,mode:'gyroscope',yaw:15.25,pitch:20,roll:-10,speeds:{showcase:25,corkscrew:30,gyroscope:20}},
     render:{quality:'sharp',sharp:true,smooth:true,glow:15,contrast:100},
-    trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:95,exposure:100,contrast:110,mirror:true,glints:true}};
+    trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:95,exposure:100,contrast:110,mirror:false,glints:true}};
 const blob=codec.encode(fixture);assert.match(blob,/^MR4\.[A-Za-z0-9_-]+$/);assert.deepEqual(codec.decode(blob),fixture);
 assert.equal(codec.encode(codec.decode(blob)),blob);assert.deepEqual(codec.decode(blob.slice(0,40)+'\n'+blob.slice(40)),fixture);
 const raw=x=>'MR'+x.v+'.'+Buffer.from(JSON.stringify(x)).toString('base64url');
@@ -15,7 +15,7 @@ fail(x=>x.rain.primary='<script>');fail(x=>x.rain.customCharacters='x'.repeat(51
 fail(x=>x.rain.customCharacters=' ');fail(x=>{x.camera.enabled=false;x.rain.direction='toward';});
 fail(x=>x.preview={motion:'original',color:'original'});fail(x=>x.audio.mediaAccess=true);fail(x=>x.audio.depth=true);
 const paths=codec.paths();
-const tuned=structuredClone(fixture);tuned.media={influence:62,exposure:142,contrast:176,mirror:false,glints:false};
+const tuned=structuredClone(fixture);tuned.media={influence:62,exposure:142,contrast:176,mirror:true,glints:false};
 assert.deepEqual(codec.decode(codec.encode(tuned)),tuned,'all new visual controls round trip');
 for(const p of paths){const x=structuredClone(fixture),keys=p.split('.'),leaf=keys.pop();let parent=x;for(const k of keys)parent=parent[k];delete parent[leaf];assert.throws(()=>codec.validate(x),p);}
 const legacy2={...structuredClone(fixture),v:2,preview:{motion:'original',color:'original'}};delete legacy2.media;

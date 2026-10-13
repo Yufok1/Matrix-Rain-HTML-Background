@@ -1,12 +1,19 @@
 // Google's Selfie Segmenter: person/background only, entirely local.
 let segmenter=null,loading=null,busy=false,frames=0;
+function localModel(url){
+    if(url.protocol!=='file:')return fetch(url).then(response=>{if(!response.ok)throw Error('Person model could not load ('+response.status+').');return response.arrayBuffer();});
+    // Wallpaper Engine loads Workshop resources from file URLs. Fetch rejects
+    // those URLs; XHR supports them, as does the bundled WASM runtime.
+    return new Promise((resolve,reject)=>{const request=new XMLHttpRequest();request.open('GET',url.href,true);request.responseType='arraybuffer';request.onload=()=>request.response?.byteLength&&(request.status===0||request.status===200)?resolve(request.response):reject(Error('Local person model could not load ('+request.status+').'));request.onerror=()=>reject(Error('Local person model could not be read.'));request.send();});
+}
 async function load(){
     if(loading)return loading;
     loading=(async()=>{
         const {FilesetResolver,ImageSegmenter}=await import('./vendor/mediapipe/package/vision_bundle.mjs');
         const files=await FilesetResolver.forVisionTasks(new URL('./vendor/mediapipe/package/wasm/',self.location.href).href);
+        const model=await localModel(new URL('./vendor/mediapipe/selfie_segmenter.tflite',self.location.href));
         segmenter=await ImageSegmenter.createFromOptions(files,{
-            baseOptions:{modelAssetPath:new URL('./vendor/mediapipe/selfie_segmenter.tflite',self.location.href).href,delegate:'CPU'},
+            baseOptions:{modelAssetBuffer:new Uint8Array(model),delegate:'CPU'},
             runningMode:'VIDEO',outputConfidenceMasks:true,outputCategoryMask:false
         });
         postMessage({type:'ready',engine:'MediaPipe Selfie Segmenter · local worker'});

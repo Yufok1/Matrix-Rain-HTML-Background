@@ -3,14 +3,35 @@
 (function () {
     'use strict';
     const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const inWallpaperEngine=()=>typeof window.wallpaperRegisterAudioListener==='function';
+    const cefSetup='Wallpaper Engine → Settings → General → Developers → CEF command line: include --enable-media-stream and --use-fake-ui-for-media-stream, keeping any other existing flags. Click OK, then fully quit and reopen Wallpaper Engine.';
     const sampler=document.createElement('canvas');
     const ctx=sampler.getContext('2d',{willReadFrequently:true});
     const video=document.createElement('video');
     video.muted=true;video.playsInline=true;video.preload='auto';
     let source=null,stream=null,url=null,epoch=0,paused=false,pixels=null,toneKey='';
     let lastSample=-Infinity,lastVideoTime=-1,revision=0,kind='',status='Camera or local media, depicted by the moving rain.';
-    const defaults={mode:'assembly',influence:95,contrast:110,exposure:100,mirror:true};
+    const defaults={mode:'assembly',influence:95,contrast:110,exposure:100,mirror:false};
     const options={...defaults};
+    // A hardware choice stays on this device, outside shared visual settings.
+    // No camera brands or device inventory are built into the application.
+    let cameraChoice=null;
+    try{const saved=JSON.parse(localStorage.getItem('matrixRain.cameraChoice')||'null');if(saved&&typeof saved.deviceId==='string'&&typeof saved.label==='string')cameraChoice=saved;}catch{}
+    function rememberCamera(track){
+        cameraChoice={deviceId:track.getSettings().deviceId||'',label:track.label||''};
+        try{localStorage.setItem('matrixRain.cameraChoice',JSON.stringify(cameraChoice));}catch{}
+    }
+    // Discovery is optional: a failed device list cannot block default capture.
+    async function availableCameras(){
+        try{return (await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='videoinput');}
+        catch{return [];}
+    }
+    const retryableCameraError=error=>['NotReadableError','NotFoundError','OverconstrainedError','AbortError'].includes(error.name);
+    function cameraFailure(error){
+        if(error.name==='NotAllowedError')return inWallpaperEngine()?'Camera permission was denied. '+cefSetup+' Then click Start camera again. Normal rain and desktop audio still work.':'Camera permission was denied. Allow camera access in your browser, then click Start camera again.';
+        const reason=error.name==='NotReadableError'?'The camera could not supply video. Stop camera use in other previews/apps and check its connection.':error.name==='NotFoundError'?'No connected camera was available.':error.message||'Unknown camera error.';
+        return 'Camera could not start · '+(error.name||'Error')+': '+reason;
+    }
     const stats={sampleFrames:0,sampleMs:0,sourceRevision:0};
     const active=()=>!!(source&&pixels&&options.influence>0);
     const say=text=>{status=text;refresh();};
@@ -24,25 +45,31 @@
     }
     async function startCamera(deviceId){
         release();const ticket=epoch;kind='opening';say('Opening camera…');
+        let incoming=null;
         try{
             if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access is unavailable in this browser.');
-            // Prefer a connected Iriun source; otherwise use the device's front camera.
-            if(!deviceId){const cameras=await navigator.mediaDevices.enumerateDevices();deviceId=cameras.find(camera=>camera.kind==='videoinput'&&/iriun/i.test(camera.label))?.deviceId;}
-            let incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:{
-                width:{ideal:640},height:{ideal:480},...(deviceId?{deviceId:{exact:deviceId}}:{facingMode:'user'})
-            }});
-            // Device labels can be empty until the first permission grant.
-            // Resolve Iriun again after that grant instead of accepting the
-            // system default (often an inactive virtual DroidCam source).
-            if(!deviceId){
-                const available=await navigator.mediaDevices.enumerateDevices();
-                const iriun=available.find(camera=>camera.kind==='videoinput'&&/iriun/i.test(camera.label));
-                const selected=incoming.getVideoTracks()[0]?.getSettings().deviceId;
-                if(iriun&&selected!==iriun.deviceId){
-                    incoming.getTracks().forEach(track=>track.stop());
-                    if(ticket!==epoch)return;
-                    incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:{deviceId:{exact:iriun.deviceId},width:{ideal:640},height:{ideal:480}}});
+            if(!deviceId&&cameraChoice){
+                const devices=await availableCameras();if(ticket!==epoch)return;
+                deviceId=(devices.find(device=>device.deviceId&&device.deviceId===cameraChoice.deviceId)||devices.find(device=>device.deviceId&&device.label&&device.label===cameraChoice.label))?.deviceId;
+            }
+            // Let the host choose its default without stale IDs, brands or
+            // resolution requirements. Probe alternatives only if it fails.
+            try{incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:deviceId?{deviceId:{exact:deviceId}}:true});}
+            catch(firstError){
+                if(!retryableCameraError(firstError))throw firstError;
+                let lastError=firstError;
+                if(deviceId){
+                    try{incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:true});}
+                    catch(error){if(!retryableCameraError(error))throw error;lastError=error;}
                 }
+                const devices=incoming?[]:await availableCameras();
+                for(const device of devices){
+                    if(ticket!==epoch)return;
+                    if(!device.deviceId||device.deviceId===deviceId)continue;
+                    try{incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:{deviceId:{exact:device.deviceId}}});break;}
+                    catch(error){if(!retryableCameraError(error))throw error;lastError=error;}
+                }
+                if(!incoming)throw lastError;
             }
             if(ticket!==epoch){incoming.getTracks().forEach(track=>track.stop());return;}
             stream=incoming;video.srcObject=stream;source=video;kind='camera';
@@ -50,19 +77,26 @@
                 if(stream===incoming){release();say('Camera ended. Start camera to reconnect.');}
             });
             await video.play();if(ticket!==epoch)return;
+            const track=incoming.getVideoTracks()[0];
+            if(deviceId&&track?.getSettings().deviceId===deviceId)rememberCamera(track);
             if(window.rainSessionControls?.stopped||document.hidden)pause();
-            say('Camera connected. Waiting for its first image…');
+            say('Camera connected: '+(incoming.getVideoTracks()[0]?.label||'system default')+'. Waiting for its first image…');
         }catch(error){
+            if(incoming&&incoming!==stream)incoming.getTracks().forEach(track=>track.stop());
             if(ticket!==epoch)return;release();
-            say(error.name==='NotAllowedError'?(typeof window.wallpaperRegisterAudioListener==='function'?'Camera access is blocked by Wallpaper Engine. CEF media access must be enabled in its settings. Normal rain and desktop audio still work.':'Camera permission was denied. You can also load a local image or video.'):'Camera could not start: '+error.message);
+            console.error('[Matrix Rain camera] '+(error.name||'Error')+': '+error.message);
+            say(cameraFailure(error));
         }
     }
     async function nextCamera(){
         if(kind!=='camera'||!stream)return;
+        const ticket=epoch;
         try{
-            const devices=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+            const devices=await availableCameras();
+            if(ticket!==epoch||kind!=='camera')return;
+            if(!devices.some(device=>device.deviceId)){say('This host is not exposing camera choices. '+(inWallpaperEngine()?cefSetup:'Allow camera access in your browser, then reconnect.'));return;}
             if(devices.length<2){say('Only one camera is available.');return;}
-            const id=stream.getVideoTracks()[0]?.getSettings().deviceId;
+            const track=stream.getVideoTracks()[0];const id=track?.getSettings().deviceId||devices.find(device=>device.label===track?.label)?.deviceId;
             const next=devices[(devices.findIndex(d=>d.deviceId===id)+1)%devices.length];
             await startCamera(next.deviceId);
         }catch(error){say('Could not switch camera: '+error.message);}
@@ -107,7 +141,7 @@
             lastSample=now;lastVideoTime=isVideo?video.currentTime:-1;toneKey=key;
             if(options.mode==='assembly')window.rainMediaAssembly?.sample({source,pixels,width,height,kind});
             stats.sampleFrames++;stats.sampleMs=performance.now()-started;stats.sourceRevision=revision;
-            if(kind==='camera'&&status.startsWith('Camera connected.'))say('Camera live · '+(stream?.getVideoTracks()[0]?.label||'camera')+'. Omni colors and audio remain in control.');
+            if(kind==='camera'&&status.startsWith('Camera connected'))say('Camera live · '+(stream?.getVideoTracks()[0]?.label||'camera')+'. Omni colors and audio remain in control.');
             const output=document.getElementById('media-status');
             if(output){output.dataset.frames=String(stats.sampleFrames);output.dataset.sourceSize=sw+'×'+sh;output.dataset.ready=String(active());}
         }catch(error){release();say('This media could not be sampled: '+error.message);}
@@ -139,7 +173,8 @@
         const panel=document.createElement('details');panel.id='settings-media';panel.className='settings-category';
         panel.innerHTML=`<summary>Live depiction<span class="category-note">Camera · local media</span></summary>
             <div class="category-body">
-            <div class="settings-row"><button id="media-camera" type="button">Start camera</button><button id="media-next-camera" type="button">Switch camera</button><button id="media-file" type="button">Load image / video</button><button id="media-stop" type="button">Stop depiction</button></div>
+            <div class="settings-row"><button id="media-camera" type="button" aria-describedby="media-camera-help">Start camera</button><button id="media-next-camera" type="button">Switch camera</button><button id="media-file" type="button">Load image / video</button><button id="media-stop" type="button">Stop depiction</button></div>
+            <p id="media-camera-help" class="settings-hint">${inWallpaperEngine()?'<strong>Camera setup (once):</strong> Wallpaper Engine → Settings → General → Developers → <strong>CEF command line</strong>. Include both <code>--enable-media-stream</code> and <code>--use-fake-ui-for-media-stream</code>, keeping any other existing flags. Click OK, then fully quit and reopen Wallpaper Engine. These flags automatically allow camera, microphone and desktop capture for all web wallpapers; this feature requests camera video only. Return here and click <strong>Start camera</strong>; the same button becomes <strong>Stop camera</strong> to release it.':'Click <strong>Start camera</strong> and allow camera access in your browser. The same button becomes <strong>Stop camera</strong> to release it.'} Use <strong>Switch camera</strong> if another input opens; your choice is remembered on this device.</p>
             <input id="media-file-input" type="file" accept="image/*,video/*" hidden>
             <p id="media-status" class="settings-hint" role="status"></p>
             <p id="media-assembly-status" class="settings-hint" role="status">Camera detail follows the original moving rain.</p>
@@ -148,7 +183,7 @@
             <label for="media-influence">Image influence<output id="media-influence-value" class="settings-value"></output><input id="media-influence" type="range" min="0" max="100" step="1"></label>
             <label for="media-exposure">Image exposure<output id="media-exposure-value" class="settings-value"></output><input id="media-exposure" type="range" min="50" max="200" step="1"></label>
             <label for="media-contrast">Image contrast<output id="media-contrast-value" class="settings-value"></output><input id="media-contrast" type="range" min="50" max="200" step="1"></label>
-            <label><input id="media-mirror" type="checkbox"> Mirror camera</label>
+            <label><input id="media-mirror" type="checkbox"> Flip camera horizontally</label>
             <p class="settings-hint">Your visible body is isolated locally from the background and drawn with the rain's characters and colors. Camera detail adds no separate trail history. Nothing is recorded or uploaded. Near-face reflections exist only during a crossing.</p>
             </div>`;
         content.insertBefore(panel,before);

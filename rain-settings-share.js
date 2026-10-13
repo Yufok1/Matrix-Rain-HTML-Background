@@ -75,7 +75,7 @@
         rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'matrix',customCharacters:'',direction:'down',reverse:false},
         audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
         camera:{enabled:true,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
-        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:95,exposure:100,contrast:110,mirror:true,glints:true}
+        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:95,exposure:100,contrast:110,mirror:false,glints:true}
     });}
     window.rainSettingsShare={capture,apply,defaults,export:(name='')=>RainSettingsCodec.encode(capture(name)),import:blob=>apply(RainSettingsCodec.decode(blob))};
     window.addEventListener('DOMContentLoaded',()=>{

@@ -54,7 +54,7 @@
             settings=check(settings,settings.v===1?legacySchema:settings.v===2?legacy2Schema:legacy3Schema,'');
             if(settings.v===1)delete settings.audio.depth;
             delete settings.preview;
-            settings.v=4;settings.media={influence:95,exposure:100,contrast:110,mirror:true,glints:true};
+            settings.v=4;settings.media={influence:95,exposure:100,contrast:110,mirror:false,glints:true};
             if (!settings.camera.enabled && ['toward','away'].includes(settings.rain.direction)) settings.rain.direction='down';
         }
         const clean=check(settings,schema,'');
