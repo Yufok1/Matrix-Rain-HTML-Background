@@ -1,4 +1,5 @@
 import './trails/rain-trails.js';
+import {createSettingsBeacon} from './rain-settings-beacon.js?v=0b7cda11297a';
 
 // Move the existing controls, preserving their handlers and simulation state.
 window.addEventListener('DOMContentLoaded',()=>{
@@ -69,6 +70,11 @@ window.addEventListener('DOMContentLoaded',()=>{
     const toggle=el('minimizeBtn');
     const logo='<svg class="settings-launch-icon" viewBox="0 0 108 108" aria-hidden="true"><path fill="currentColor" d="M24,20h8v36h-8z M40,28h8v52h-8z M56,16h8v44h-8z M72,38h8v50h-8z"/><path fill="currentColor" opacity=".45" d="M24,61h8v10h-8z M40,85h8v10h-8z M56,65h8v10h-8z"/></svg>';
     toggle.innerHTML=logo+'<span class="settings-collapse-icon" aria-hidden="true">−</span>';
+    window.rainSettingsBeacon=createSettingsBeacon(toggle,()=>({
+        direction:MatrixRainEngine.rainConfig.direction,
+        reverse:reverseFlowMultiplier,
+        view:rainCamera.enabled?rainCamera.viewRotation():null
+    }));
     header.querySelector('.minimized-header-text').remove();
     header.querySelector('.full-header-text').innerHTML='MATRIX RAIN OMNI<small class="panel-drag-hint">Settings · drag to reposition</small>';
     const headerActions=toggle.parentElement;headerActions.className='settings-header-actions';
@@ -115,4 +121,5 @@ window.addEventListener('DOMContentLoaded',()=>{
     window.orchestrateRandomChange=()=>{orchestrate();rainSettingsUI.refresh();};
     window.rainSettingsUI.refresh();
     modal.dataset.settingsReady='true';
+    rainSettingsBeacon.update();
 });

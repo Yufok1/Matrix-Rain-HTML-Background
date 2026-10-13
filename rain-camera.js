@@ -197,6 +197,7 @@ const rainCamera = {
             this.lastQuality=quality;this.lastPaint=now;
             this.prepareView();rainCameraGPU.render(this,phase);
         }else rainCameraGPU.hide();
+        window.rainSettingsBeacon?.update(now);
     },
     // Diagnostic compatibility: one complete simulation step and presentation.
     render() {this.advanceFrame();this.present(performance.now(),1);}

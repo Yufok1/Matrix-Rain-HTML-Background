@@ -72,14 +72,15 @@
 .matrix-modal #rain-share-panel label { margin-top:8px; }
 .matrix-modal .minimize-btn { width:32px; min-height:32px; padding:4px!important; flex-shrink:0; }
 .matrix-modal .settings-launch-icon { display:none; }
-.matrix-modal.minimized { width:44px!important; min-width:44px!important; height:44px!important; border:0; background:none; box-shadow:none; top:max(14px,env(safe-area-inset-top))!important; right:max(14px,env(safe-area-inset-right))!important; overflow:visible; }
+.matrix-modal.minimized { width:52px!important; min-width:52px!important; height:52px!important; border:0; background:none; box-shadow:none; top:max(14px,env(safe-area-inset-top))!important; right:max(14px,env(safe-area-inset-right))!important; overflow:visible; }
 .matrix-modal.minimized .modal-header { padding:0; min-height:0; border:0; background:none; }
 .matrix-modal.minimized .modal-header > div { display:block!important; }
-.matrix-modal.minimized .minimize-btn { width:44px; height:44px; min-height:44px; padding:10px!important; background:#0a120dbf!important; border-color:#314d3b!important; color:#82ac8d!important; opacity:.68; }
+.matrix-modal.minimized .minimize-btn { width:52px; height:52px; min-height:52px; padding:2px!important; background:transparent!important; border:1px solid transparent!important; color:#82ac8d!important; opacity:.85; cursor:pointer; }
 .matrix-modal.minimized .minimize-btn:hover, .matrix-modal.minimized .minimize-btn:focus-visible { opacity:1; }
 .matrix-modal.minimized .settings-launch-icon { display:block; width:22px; height:22px; }
+.matrix-modal.minimized .settings-beacon { width:48px; height:48px; pointer-events:none; }
 .matrix-modal.minimized .settings-collapse-icon { display:none; }
-.matrix-modal.minimized .minimize-btn:hover::after, .matrix-modal.minimized .minimize-btn:focus-visible::after { content:'Settings · M'; position:absolute; right:54px; top:8px; width:max-content; background:#0b100eee; color:#b5c7bc; padding:5px 8px; font-size:11px; border:1px solid #314439; }
+.matrix-modal.minimized .minimize-btn:hover::after, .matrix-modal.minimized .minimize-btn:focus-visible::after { content:'Settings · M'; position:absolute; right:62px; top:14px; width:max-content; background:#0b100eee; color:#b5c7bc; padding:5px 8px; font-size:11px; border:1px solid #314439; }
 .matrix-modal .modal-content::-webkit-scrollbar-thumb { background:#405c49; }
 .matrix-modal .modal-content { scrollbar-color:#405c49 #0b100e; }
 @media(max-width:700px) { .matrix-modal:not(.minimized) { width:calc(100vw - 20px); max-width:none; height:48dvh; max-height:calc(100dvh - 20px); bottom:max(10px,env(safe-area-inset-bottom)); right:10px; } .matrix-modal button { min-height:44px; } .matrix-modal input[type=text], .matrix-modal textarea { font-size:16px!important; } .matrix-modal .modal-content { padding:0 12px 12px; } }
