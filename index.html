@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=2ad2685fabd3"></script>
+    <script src="rain-settings-codec.js?v=d221a1cd23d0"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1834,7 +1834,6 @@
 
         // Helper function to get random character
         function getNextCharacter(characters, columnIndex, isUserColumn) {
-            const spoken=window.rainMediaWords?.nextCharacter(columnIndex);if(spoken)return spoken;
             if (audioReactiveActive && window.rainAudioCharacters) return rainAudioCharacters.choose(columnIndex, performance.now());
             const cache = window.rainCharacterPools || (window.rainCharacterPools = new Map());
             let pool = cache.get(characters);
@@ -3532,16 +3531,11 @@
 <script src="rain-camera-motion.js?v=fa4d75e30d2e"></script>
 <script src="rain-audio-characters.js?v=3f847c91d51b"></script>
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
-<script src="vendor/canvas5/words.js?v=81f09bc1a084"></script>
-<script src="rain-tab-sync.js?v=3df1975c49a5"></script>
-<script src="rain-word-reading.js?v=b21d45b829fb"></script>
-<script src="rain-word-timeline.js?v=9a63c886b9ef"></script>
-<script src="rain-video-words.js?v=b5fdaba6125c"></script>
-<script src="rain-media-words.js?v=b3751fd7d206"></script>
-<script src="rain-media-depiction.js?v=7127f93fb971"></script>
-<script src="rain-camera.js?v=eb753dbd2019"></script>
+<script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
+<script src="rain-media-depiction.js?v=5e394dd492b3"></script>
+<script src="rain-camera.js?v=867de0a858e2"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=4d360e26d29f"></script>
+<script src="rain-settings-share.js?v=9310f004505b"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
 <script type="module" src="rain-settings-ui.js?v=6b8fa8fb3a89"></script>
 </body>

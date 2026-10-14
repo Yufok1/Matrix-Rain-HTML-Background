@@ -1,4 +1,4 @@
-# Settings coverage audit — revision 12
+# Settings coverage audit — revision 13
 
 The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings logo reuses the Android vector paths.
 
@@ -13,7 +13,6 @@ The UI keeps the accepted choreography and immutable, cohesive birth colors. Ori
 | Rendering | Quality, sharp letters, smooth motion, glow and contrast | `render.quality`, `sharp`, `smooth`, `glow`, `contrast` |
 | 3D trails | Variable lengths, stepped fade, shortest/longest tails | `trails.enabled`, `stepped`, `minimum`, `maximum` |
 | Media depiction | Influence, exposure, contrast and gamma | `media.influence`, `exposure`, `contrast`, `gamma` |
-| Local words | Latest word count, vertical reading and shared-tab playback head start | `words.maxWords`, `bufferMs`, `verticalOrder` |
 | Configurations | Optional name and schema version | `name`, `v` |
 
 Size minus/plus buttons change the same `rain.fontSize` field as the slider. Imports restore a palette first, then exact saved tuning and private bounds. All three camera speeds are stored, not just the active slider. Custom Unicode characters and inactive manual settings remain represented. The audit also corrected the initial speed slider: it now matches the actual delay through `101 − delay`, so an immediate startup export/import preserves playback speed.
@@ -30,14 +29,10 @@ Validation covers every schema leaf, persistent DOM control, UI round trips acro
 
 Paste stays available during a pending read. A retry retires the preceding attempt, and unresolved reads expire after four seconds. Old responses cannot overwrite newer results. Button paste and text-box paste both replace the full code; neither concatenates configurations.
 
-## MR9 media depiction and local words
+## MR10 media depiction
 
-Four media appearance values are shared: influence, exposure, contrast and gamma. Webcam capture, source selection, subject isolation, camera flipping and the bundled person model are removed from this browser version. MR1–MR8 are fully validated before migration; removed webcam fields and MR4's border-glint flag are then discarded. All surviving preferences remain intact. New exports use MR9 and contain 46 visual values plus version/name. Variable tail lengths default to off at first use and Reset; explicitly saved choices and imported configurations remain respected.
+Four media appearance values are shared: influence, exposure, contrast and gamma. Speech recognition, lyric controls, recognition workers and model runtimes are removed from this browser build. Webcam capture and subject isolation remain absent. MR1–MR9 codes are fully validated before migration; removed speech preferences, webcam fields and MR4's border-glint flag are then discarded. New exports use MR10 and cover 43 visual values plus version/name. Variable tail lengths default to off at first use and Reset; saved choices and imported configurations remain respected.
 
-Local files and tab capture permission are session state and never imported. Play/Pause and Mute/Unmute video are also excluded. Videos use their own sound for audio response; stopping analysis does not stop audible playback. Header Stop suspends playback and analysis, and Resume preserves a deliberate video pause. RGB depiction affects only the ink of existing moving rain; birth history, world geometry and choreography remain intact.
+Local files, tab capture, Play/Pause and Mute/Unmute are session state and never imported. Videos use their own sound for audio response; stopping analysis does not stop audible playback. Shared-tab picture and audio remain live, without a speech head-start buffer. Original-tab sound is monitored only when the browser suppresses it, avoiding duplicate playback. Header Stop suspends playback and analysis, and Resume preserves a deliberate video pause.
 
-MR6 is fully validated and migrates with `words.maxWords=3` and `words.bufferMs=1900`. Speech activation, recognizer pack state, source tracks, tab capture, recognized words, playback and monitoring are session state and never imported. Importing a code updates word-window and timing preferences without starting recognition or opening a picker. Media RGB remains a presentation effect. Media appearance preferences are retained locally across reloads.
-
-MR7 migrates with downward vertical reading. Word activation and video analysis coverage are session state; import never starts transcription. Leftward and upward motion reverse emission where required, while glyph history keeps its original characters.
-
-Recognition is off on each visit and after Reset. Enable words is the explicit opt-in for local model/language-pack preparation; its download notice sits beside the button. This session choice is not exported or imported. Source changes can start lyrics only after opt-in; Disable words prevents future sources from preparing recognition. Reset and initial rain use Katakana. Recognition never owns playback pause/resume controls.
+RGB depiction affects only the ink of existing moving rain; birth history, world geometry and choreography remain intact. Media appearance preferences are retained locally across reloads. Reset and initial rain use Katakana.

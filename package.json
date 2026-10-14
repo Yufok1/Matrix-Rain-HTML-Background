@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "sync-demo": "node tools/sync-demo.cjs",
-    "test": "node tests/runtime.test.cjs && node tests/audio-direction.test.cjs && node tests/rain-trails.test.mjs && node tests/audio-controls.test.cjs && node tests/rendering.test.cjs && node tests/camera-modes.test.cjs && node tests/color-fluctuation.test.cjs && node tests/color.test.cjs && node tests/beat-turns.test.cjs && node tests/camera-speed.test.cjs && node tests/settings-codec-ui.test.cjs && node tests/configuration-input.test.cjs && node tests/media-colors.test.cjs && node tests/media-playback.test.cjs && node tests/trail-live-controls.test.mjs && node tests/media-words.test.cjs && node tests/tab-buffer.test.cjs && node tests/word-timeline.test.cjs && node tests/video-word-playback.test.cjs && node tests/word-handoff.test.cjs && node tests/word-worker-lifecycle.test.cjs"
+    "test": "node tests/runtime.test.cjs && node tests/audio-direction.test.cjs && node tests/rain-trails.test.mjs && node tests/audio-controls.test.cjs && node tests/rendering.test.cjs && node tests/camera-modes.test.cjs && node tests/color-fluctuation.test.cjs && node tests/color.test.cjs && node tests/beat-turns.test.cjs && node tests/camera-speed.test.cjs && node tests/settings-codec-ui.test.cjs && node tests/configuration-input.test.cjs && node tests/media-colors.test.cjs && node tests/media-playback.test.cjs && node tests/trail-live-controls.test.mjs && node tests/tab-audio.test.cjs"
   },
   "engines": {
     "node": ">=18"

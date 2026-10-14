@@ -7,7 +7,7 @@
     const video=document.createElement('video');
     video.muted=true;video.playsInline=true;video.preload='auto';
     let source=null,stream=null,url=null,epoch=0,paused=false,videoPaused=false,pixels=null,toneKey='',audioGraph=null;
-    let tabGraph=null,tabFrames=null,tabSpeech=null,loadedFile=null,playbackRevision=0;
+    let tabGraph=null,playbackRevision=0;
     let lastSample=-Infinity,lastVideoTime=-1,revision=0,kind='',status='Load an image/video or share a tab to depict it in the moving rain.';
     const defaults={influence:100,contrast:100,exposure:100,gamma:100};
     const options={...defaults};
@@ -24,7 +24,7 @@
     const say=text=>{status=text;refresh();};
     function clearHistory(){}
     function release(){
-        hideFlat();window.rainMediaWords?.stop(undefined,false);loadedFile=null;releaseSpeech();tabGraph?.dispose();tabGraph=null;tabFrames=null;
+        hideFlat();tabGraph?.dispose();tabGraph=null;
         if(kind==='video'||kind==='tab')window.rainMediaAudioEnded?.();
         window.rainMediaAssembly?.reset();
         epoch++;for(const track of stream?.getTracks()||[])track.stop();stream=null;
@@ -34,13 +34,13 @@
         lastVideoTime=-1;lastSample=-Infinity;paused=videoPaused=false;clearHistory();
     }
     async function loadFile(file){
-        if(!file)return;const restoreAudio=!!window.audioReactiveActive;release();loadedFile=file;const audioTicket=window.rainMediaAudioToken?.();const ticket=epoch;url=URL.createObjectURL(file);say('Opening local media…');
+        if(!file)return;const restoreAudio=!!window.audioReactiveActive;release();const audioTicket=window.rainMediaAudioToken?.();const ticket=epoch;url=URL.createObjectURL(file);say('Opening local media…');
         try{
             if(file.type.startsWith('image/')){
                 const image=new Image();image.src=url;await image.decode();if(ticket!==epoch)return;
                 source=image;kind='image';
             }else{
-                video.src=url;video.loop=true;video.muted=false;if(audioGraph?.monitor){audioGraph.muted=false;audioGraph.monitor.gain.value=1;}source=video;kind='video';
+                video.src=url;video.loop=true;video.muted=false;source=video;kind='video';
                 try{await playVideo();}catch(error){
                     if(error.name!=='NotAllowedError')throw error;
                     videoPaused=true;say('Video ready. Click Play video to start with sound.');
@@ -49,7 +49,7 @@
             }
             if(window.rainSessionControls?.stopped||document.hidden)pause();
             if(!videoPaused)say(kind==='video'?'Video playing with sound. Start audio response to make the rain dance to this video.':'Image loaded. Its colors follow the moving rain.');
-            if(kind==='video'){window.rainUseMediaAudio?.(restoreAudio,audioTicket);window.rainMediaWords?.sourceReady();}
+            if(kind==='video'){window.rainUseMediaAudio?.(restoreAudio,audioTicket);}
             else window.rainRefreshAudioControls?.();
         }catch(error){if(ticket===epoch){release();say('Could not open this media file: '+error.message);}}
     }
@@ -62,15 +62,15 @@
             if(error.name==='AbortError'&&(ticket!==epoch||playbackTicket!==playbackRevision||paused||document.hidden||window.rainSessionControls?.stopped))return;
             throw error;
         }
-        if(ticket!==epoch)return;videoPaused=false;window.rainMediaWords?.resume();refresh();
+        if(ticket!==epoch)return;videoPaused=false;refresh();
     }
     async function togglePlayback(){
         if(kind!=='video'||paused)return;
-        if(!video.paused){videoPaused=true;video.pause();window.rainMediaWords?.pause();say('Video paused. Click Play video to continue.');}
+        if(!video.paused){videoPaused=true;video.pause();say('Video paused. Click Play video to continue.');}
         else try{await playVideo();say('Video playing'+(video.muted?' (muted).':' with sound.'));}catch(error){say('Video could not play: '+error.message);}
     }
-    function soundMuted(){return audioGraph?.monitor&&kind==='video'?audioGraph.muted:video.muted;}
-    function toggleSound(){if(kind==='video'){if(audioGraph?.monitor){audioGraph.muted=!audioGraph.muted;audioGraph.monitor.gain.value=audioGraph.muted?0:1;}else video.muted=!video.muted;refresh();}}
+    function soundMuted(){return video.muted;}
+    function toggleSound(){if(kind==='video'){video.muted=!video.muted;refresh();}}
     async function connectAudio(){
         if(kind==='tab'){const graph=tabGraph,ticket=epoch;if(!graph)throw Error('This share has no audio. Share a tab with audio enabled.');await graph.context.resume();if(ticket!==epoch)throw Error('The shared source changed.');return graph;}
         if(kind!=='video')throw Error('Load a video before using its audio.');
@@ -87,30 +87,6 @@
         if(ticket!==epoch||kind!=='video')throw Error('Video changed before audio could start.');
         return audioGraph;
     }
-    function releaseSpeech(){
-        for(const track of tabSpeech?.getTracks()||[])track.stop();tabSpeech=null;
-        if(audioGraph?.speech){audioGraph.input.disconnect(audioGraph.speech);audioGraph.speech.stream.getTracks().forEach(t=>t.stop());audioGraph.speech=null;}
-    }
-    async function connectSpeech(){
-        if(kind==='tab'){
-            const track=stream?.getAudioTracks().find(t=>t.readyState==='live');
-            if(!track)throw Error('The shared tab has no live audio. Share a tab with audio enabled.');
-            if(!tabSpeech?.getAudioTracks().some(t=>t.readyState==='live')){releaseSpeech();tabSpeech=new MediaStream([track.clone()]);}
-            return tabSpeech;
-        }
-        const graph=await connectAudio();
-        if(!graph.speech){
-            graph.speech=graph.context.createMediaStreamDestination();graph.input.connect(graph.speech);
-            if(!graph.monitor){graph.monitor=graph.context.createGain();graph.muted=video.muted;graph.monitor.gain.value=video.muted?0:1;
-                graph.input.disconnect(graph.context.destination);graph.input.connect(graph.monitor);graph.monitor.connect(graph.context.destination);video.muted=false;}
-        }
-        return graph.speech.stream;
-    }
-    function setWordSync(active){
-        tabGraph?.mode(active,window.rainMediaWords?.options.bufferMs??1900);
-        const output=document.getElementById('media-status');
-        if(output&&kind==='tab')output.textContent=tabGraph?.active?'Shared tab · picture and sound delayed together for local words.':tabGraph?.suppressed?'Shared tab · live picture and sound.':'Shared tab · sound plays in the original tab. Synchronized delay is unavailable for this share.';
-    }
     async function startTab(){
         if(kind==='opening-tab')return;
         const restoreAudio=!!window.audioReactiveActive;release();const ticket=epoch,audioTicket=window.rainMediaAudioToken?.();kind='opening-tab';say('Choose a browser tab and enable Share tab audio. Return to Omni after sharing to see its picture in the rain.');
@@ -119,7 +95,6 @@
             incoming=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:30}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,suppressLocalAudioPlayback:true}});
             if(ticket!==epoch){incoming.getTracks().forEach(t=>t.stop());return;}
             stream=incoming;source=video;kind='tab';video.srcObject=stream;video.muted=true;video.loop=false;
-            tabFrames=new window.RainTabSync.FrameDelay();
             // Selecting the source tab may hide Omni while playback starts.
             // A visibility pause is not a failed capture: keep its live tracks.
             if(document.hidden||window.rainSessionControls?.stopped)pause();
@@ -127,13 +102,13 @@
             if(ticket!==epoch)return;
             for(const track of stream.getVideoTracks())track.addEventListener('ended',()=>{if(stream===incoming){release();say('Tab sharing ended. Normal rain continues.');}},{once:true});
             let audioError='';
-            try{tabGraph=window.RainTabSync.create(stream);if(tabGraph)await tabGraph.context.resume();}
+            try{tabGraph=window.RainTabAudio.create(stream);if(tabGraph)await tabGraph.context.resume();}
             catch(error){tabGraph?.dispose();tabGraph=null;audioError=' Audio analysis could not start: '+error.message;}
             if(ticket!==epoch)return;
-            for(const track of stream.getAudioTracks())track.addEventListener('ended',()=>{if(stream!==incoming)return;window.rainMediaWords?.stop('Shared audio ended. The shared picture continues.');tabGraph?.dispose();tabGraph=null;window.rainMediaAudioEnded?.();window.rainRefreshAudioControls?.();say('Shared picture continues. Share again with tab audio for lyrics.');},{once:true});
-            say((incoming.getAudioTracks().some(t=>t.readyState==='live')?'Shared tab connected. Audio response uses its sound. Words are optional.':'Picture connected without audio. Share a tab with audio to use lyrics.')+audioError);
+            for(const track of stream.getAudioTracks())track.addEventListener('ended',()=>{if(stream!==incoming)return;tabGraph?.dispose();tabGraph=null;window.rainMediaAudioEnded?.();window.rainRefreshAudioControls?.();say('Shared picture continues. Share again with tab audio for audio response.');},{once:true});
+            say((incoming.getAudioTracks().some(t=>t.readyState==='live')?'Shared tab connected. Audio response uses its sound.':'Picture connected without audio. Share a tab with audio to use audio response.')+audioError);
             if(document.hidden||window.rainSessionControls?.stopped)pause();
-            window.rainUseMediaAudio?.(restoreAudio,audioTicket);window.rainRefreshAudioControls?.();window.rainMediaWords?.sourceReady();
+            window.rainUseMediaAudio?.(restoreAudio,audioTicket);window.rainRefreshAudioControls?.();
         }catch(error){if(incoming&&incoming!==stream)incoming.getTracks().forEach(t=>t.stop());if(ticket===epoch){release();say('Could not share this source: '+error.message);}}
     }
     function present(now){
@@ -166,8 +141,7 @@
             pixels=ctx.getImageData(0,0,width,height).data;
             sampler.dataset.aspect=String(aspect);
             lastSample=now;lastVideoTime=isVideo?video.currentTime:-1;toneKey=key;
-            let frame={source,pixels,width,height,kind};
-            if(kind==='tab'&&tabFrames)frame=tabFrames.sample(frame,now,window.rainMediaWords?.options.bufferMs??1900,!!tabGraph?.active);
+            const frame={source,pixels,width,height,kind};
             window.rainMediaAssembly?.sample(frame);
             stats.sampleFrames++;stats.sampleMs=performance.now()-started;stats.sourceRevision=revision;
             const output=document.getElementById('media-status');
@@ -199,14 +173,14 @@
         flatContext.globalAlpha=1;flatContext.globalCompositeOperation='source-over';flatOutput.style.opacity=matrixCanvas.style.opacity||'.8';flatOutput.style.display='block';matrixCanvas.style.visibility='hidden';flatVisible=true;
     }
     function pause(){
-        playbackRevision++;paused=true;window.rainMediaWords?.pause();hideFlat();video.pause();tabGraph?.context.suspend().catch(()=>{});audioGraph?.context.suspend().catch(()=>{});for(const track of stream?.getVideoTracks()||[])track.enabled=false;refresh();
+        playbackRevision++;paused=true;hideFlat();video.pause();tabGraph?.context.suspend().catch(()=>{});audioGraph?.context.suspend().catch(()=>{});for(const track of stream?.getVideoTracks()||[])track.enabled=false;refresh();
     }
     function resume(){
         paused=false;lastSample=-Infinity;tabGraph?.context.resume().catch(()=>{});for(const track of stream?.getVideoTracks()||[])track.enabled=true;
         if(source===video&&!videoPaused)playVideo().catch(()=>say('Media paused. Click Play video to continue.'));refresh();
     }
     function stop(){release();say('Media depiction stopped. Normal rain continues.');}
-    function reset(){stop();window.rainMediaWords?.resetOptIn();Object.assign(options,defaults);saveAppearance();refresh();}
+    function reset(){stop();Object.assign(options,defaults);saveAppearance();refresh();}
     function refresh(){
         if(!document.getElementById('media-file'))return;
         document.getElementById('media-stop').disabled=!source&&kind!=='opening-tab';
@@ -219,7 +193,7 @@
         document.getElementById('media-status').textContent=paused&&source?'Depiction paused. Resume in the header to continue.':status;
         for(const key of ['influence','contrast','exposure','gamma']){
             document.getElementById('media-'+key).value=options[key];document.getElementById('media-'+key+'-value').textContent=options[key]+'%';
-        }window.rainMediaWords?.refresh();
+        }
     }
     function mount(content,before){
         const panel=document.createElement('details');panel.id='settings-media';panel.className='settings-category';
@@ -245,7 +219,6 @@
         document.getElementById('media-stop').onclick=stop;
         document.getElementById('media-tab').onclick=startTab;
         document.getElementById('media-tab').disabled=!navigator.mediaDevices?.getDisplayMedia;
-        window.rainMediaWords?.mount(panel.querySelector('.category-body'));
         document.getElementById('media-play').onclick=togglePlayback;
         document.getElementById('media-sound').onclick=toggleSound;
         const input=document.getElementById('media-file-input');
@@ -260,9 +233,9 @@
     document.addEventListener('visibilitychange',()=>{
         if(document.hidden)pause();else if(!window.rainSessionControls?.stopped)resume();
     });
-    window.rainMedia={mount,present,presentFlat,strengthAt,colorAt,loadFile,stop,pause,resume,reset,connectAudio,connectSpeech,setWordSync,startTab,releaseSpeech,options,stats,refresh,saveAppearance,
+    window.rainMedia={mount,present,presentFlat,strengthAt,colorAt,loadFile,stop,pause,resume,reset,connectAudio,startTab,options,stats,refresh,saveAppearance,
         get active(){return active();},get stream(){return stream;},get source(){return source;},get status(){return status;},
-        get file(){return kind==='video'?loadedFile:null;},get hasVideo(){return kind==='video';},get hasAudioSource(){return kind==='video'||(kind==='tab'&&!!stream?.getAudioTracks().some(t=>t.readyState==='live'));},get audioLabel(){return kind==='tab'?'shared tab':'loaded video';},get playbackPaused(){return paused||videoPaused||video.paused;},get audioContext(){return (kind==='tab'?tabGraph:audioGraph)?.context||null;},
+        get hasVideo(){return kind==='video';},get hasAudioSource(){return kind==='video'||(kind==='tab'&&!!stream?.getAudioTracks().some(t=>t.readyState==='live'));},get audioLabel(){return kind==='tab'?'shared tab':'loaded video';},get audioContext(){return (kind==='tab'?tabGraph:audioGraph)?.context||null;},
         get frame(){return window.rainMediaAssembly?.frame||null;},
         // A canvas may also supply frames; used by deterministic visual tests.
         useCanvas(canvas){release();source=canvas;kind='canvas';say('Local canvas source active.');}

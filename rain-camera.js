@@ -55,18 +55,6 @@ const rainCamera = {
         this.streams.clear(); this.marks.length = 0; this.pending.length = 0;
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
-    replaceCharacters(nextCharacter) {
-        // Handoff to the first lyrics without deleting the moving picture.
-        // History is already ordered by birth, so each stream's word cursor
-        // continues through its tail into the next newly emitted character.
-        for(const mark of this.marks){
-            const character=nextCharacter(mark.streamId);
-            if(typeof character==='string')mark.char=character;
-        }
-        // Pending births share these mark objects. Rebuild once so resident
-        // GPU glyphs receive the letters; all geometry and lifetimes stay put.
-        if(typeof rainCameraGPU!=='undefined')rainCameraGPU.invalidate=true;
-    },
     capture(char, x, y, depth, fontSize, alpha, color, streamId) {
         if (!this.enabled) return;
         this.ensureVolume();
@@ -197,7 +185,6 @@ const rainCamera = {
     },
     present(now = performance.now(), phase = 1) {
         this.syncTrailSettings();
-        window.rainMediaWords?.tick();
         window.rainMedia?.present(now);
         const gap=this.lastTime===null?0:Math.max(0,now-this.lastTime);
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
@@ -223,17 +210,6 @@ const rainCamera = {
         this.trailRevision = trails.revision; this.trailVariety = trails.enabled;
         for (const mark of this.marks) mark.trailLength = trails.lengthFor(mark.streamId);
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
-    },
-    wordFlow(streamId) {
-        const direction=MatrixRainEngine.rainConfig.direction,sign=reverseFlowMultiplier;
-        const vector=direction==='left'?[-sign,0,0]:direction==='right'?[sign,0,0]:direction==='up'?[0,-sign,0]:direction==='toward'?[0,0,-sign]:direction==='away'?[0,0,sign]:[0,sign,0];
-        if(!this.enabled)return {dx:vector[0],dy:vector[1]};
-        const stream=this.streams.get(streamId),box=this.volume,r=this.rotation||this.viewRotation();
-        const delta=[r[0]*vector[0]+r[1]*vector[1]+r[2]*vector[2],r[3]*vector[0]+r[4]*vector[1]+r[5]*vector[2],r[6]*vector[0]+r[7]*vector[1]+r[8]*vector[2]];
-        if(!stream||!box)return {dx:delta[0],dy:delta[1]};
-        const p={x:this.wrap(stream.x,box.x),y:this.wrap(stream.y,box.y),z:this.wrap(stream.z,box.z,box.zMin)-rainFocalLength};
-        const x=r[0]*p.x+r[1]*p.y+r[2]*p.z,y=r[3]*p.x+r[4]*p.y+r[5]*p.z,z=r[6]*p.x+r[7]*p.y+r[8]*p.z+rainFocalLength;
-        return {dx:delta[0]*z-x*delta[2],dy:delta[1]*z-y*delta[2]};
     },
     render() {this.advanceFrame();this.present(performance.now(),1);}
 

@@ -24,7 +24,7 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-media-words.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "rain-tab-sync.js", "rain-word-timeline.js", "rain-word-reading.js", "rain-video-words.js", "vendor/canvas5/words.js"].sort());
+assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "rain-tab-audio.js"].sort());
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
     assert.ok(fs.existsSync(path.resolve(root, 'trails', imported.split('?')[0])), 'Missing trail module: ' + imported);
@@ -46,7 +46,7 @@ assert.match(main,/characterSet:\s*'katakana'/);
 assert.match(fs.readFileSync(path.join(root,'rain-settings-share.js'),'utf8'),/characterSet:'katakana',customCharacters:''/);
 
 const crypto=require('node:crypto');
-for(const [parent,dependency]of [['trails/rain-trails.js','trails/rain-trail-lengths.js'],['rain-settings-ui.js','trails/rain-trails.js'],['rain-video-words.js','rain-timed-words-worker.js']]){
+for(const [parent,dependency]of [['trails/rain-trails.js','trails/rain-trail-lengths.js'],['rain-settings-ui.js','trails/rain-trails.js']]){
     const digest=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,dependency),'utf8').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
     assert.ok(fs.readFileSync(path.join(root,parent),'utf8').includes(path.basename(dependency)+'?v='+digest),'Cached dependency URL must match '+dependency);
 }
@@ -58,3 +58,7 @@ for(const name of ['rain-media-depiction.js','rain-media-assembly.js','rain-came
 }
 assert.ok(!fs.existsSync(path.join(root,'rain-media-person-worker.js')));
 assert.ok(!fs.existsSync(path.join(root,'vendor/mediapipe')));
+
+// The browser bundle must contain no recognition worker or model-download route.
+for(const name of ['rain-media-words.js','rain-video-words.js','rain-timed-words-worker.js','rain-word-reading.js','rain-word-timeline.js','vendor/canvas5/words.js','vendor/speech'])assert.ok(!fs.existsSync(path.join(root,name)),'Removed speech asset still present: '+name);
+for(const file of [...assets,'rain-settings-ui.js','rain-settings-beacon.js'])assert.doesNotMatch(fs.readFileSync(path.join(root,file),'utf8'),/SpeechRecognition|rainMediaWords|rainVideoWords|connectSpeech|setWordSync|whisper|transformers|onnx/i,'No recognition or model-download runtime remains: '+file);

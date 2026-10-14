@@ -5,9 +5,6 @@ function rewrite(file,pattern,replacement){const target=path.join(root,file),bef
 // Hash dependencies first so a parent URL always changes with its dependency.
 rewrite('trails/rain-trails.js',/(from\s+['"]\.\/rain-trail-lengths\.js)(?:\?v=[^'"]+)?(['"])/g,(_,a,b)=>a+'?v='+hash('trails/rain-trail-lengths.js')+b);
 rewrite('rain-settings-ui.js',/(import\s+['"]\.\/trails\/rain-trails\.js)(?:\?v=[^'"]+)?(['"])/g,(_,a,b)=>a+'?v='+hash('trails/rain-trails.js')+b);
-for(const [parent,worker]of [['rain-video-words.js','rain-timed-words-worker.js']]){
- const escaped=worker.replace(/\./g,'\\.');rewrite(parent,new RegExp("(['\"])"+escaped+"(?:\\?v=[^'\"]+)?(['\"])",'g'),(_,a,b)=>a+worker+'?v='+hash(worker)+b);
-}
 rewrite('matrix-rain-utility-suite.html',/(src=")([^"?]+)(?:\?v=[^" ]+)?(")/g,(match,a,file,b)=>file.endsWith('.js')&&fs.existsSync(path.join(root,file))?a+file+'?v='+hash(file)+b:match);
 fs.copyFileSync(path.join(root,'matrix-rain-utility-suite.html'),path.join(root,'index.html'));
 console.log('Demo synchronized with hashed runtime, trail dependencies and worker URLs.');

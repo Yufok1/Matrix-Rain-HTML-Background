@@ -2,6 +2,6 @@
 
 Created by Jeff Towers (Tostido / Yufok1), copyright 2026.
 
-`words.js` extracts the speech-window and recognition-result helpers from Canvas-5's `media-workflow.js`. `rain-media-words.js` adapts the local browser speech lifecycle from `capture-studio.js`. `rain-tab-sync.js` adapts its bounded frame buffer and shared-tab audio routing. The adaptations omit microphone, recording, Android, and remote-service routes.
+`rain-tab-audio.js` adapts Canvas-5's shared-tab audio routing. It sends live audio to the analyser and monitors sound only when the browser suppresses the original tab's playback. Speech recognition, model loading, frame-delay buffering, microphone and recording routes are not included.
 
-These files retain the Canvas-5 PolyForm Noncommercial 1.0.0 license in [LICENSE.txt](LICENSE.txt). Commercial use requires a separate written license from the creator. Other Matrix Rain Omni source retains its existing license.
+This adaptation retains the Canvas-5 PolyForm Noncommercial 1.0.0 license in [LICENSE.txt](LICENSE.txt). Commercial use requires a separate written license from the creator. Other Matrix Rain Omni source retains its existing license.
