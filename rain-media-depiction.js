@@ -131,7 +131,7 @@
             catch(error){tabGraph?.dispose();tabGraph=null;audioError=' Audio analysis could not start: '+error.message;}
             if(ticket!==epoch)return;
             for(const track of stream.getAudioTracks())track.addEventListener('ended',()=>{if(stream!==incoming)return;window.rainMediaWords?.stop('Shared audio ended. The shared picture continues.');tabGraph?.dispose();tabGraph=null;window.rainMediaAudioEnded?.();window.rainRefreshAudioControls?.();say('Shared picture continues. Share again with tab audio for lyrics.');},{once:true});
-            say((incoming.getAudioTracks().some(t=>t.readyState==='live')?'Shared tab connected. Lyrics start automatically; audio response uses its sound.':'Picture connected without audio. Share a tab with audio to use lyrics.')+audioError);
+            say((incoming.getAudioTracks().some(t=>t.readyState==='live')?'Shared tab connected. Audio response uses its sound. Words are optional.':'Picture connected without audio. Share a tab with audio to use lyrics.')+audioError);
             if(document.hidden||window.rainSessionControls?.stopped)pause();
             window.rainUseMediaAudio?.(restoreAudio,audioTicket);window.rainRefreshAudioControls?.();window.rainMediaWords?.sourceReady();
         }catch(error){if(incoming&&incoming!==stream)incoming.getTracks().forEach(t=>t.stop());if(ticket===epoch){release();say('Could not share this source: '+error.message);}}
@@ -206,7 +206,7 @@
         if(source===video&&!videoPaused)playVideo().catch(()=>say('Media paused. Click Play video to continue.'));refresh();
     }
     function stop(){release();say('Media depiction stopped. Normal rain continues.');}
-    function reset(){stop();window.rainMediaWords?.resetAutoStart();Object.assign(options,defaults);saveAppearance();refresh();}
+    function reset(){stop();window.rainMediaWords?.resetOptIn();Object.assign(options,defaults);saveAppearance();refresh();}
     function refresh(){
         if(!document.getElementById('media-file'))return;
         document.getElementById('media-stop').disabled=!source&&kind!=='opening-tab';

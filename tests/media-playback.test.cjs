@@ -5,7 +5,7 @@ function fixture(){
  const element=()=>({style:{},dataset:{},hidden:false,disabled:false,setAttribute(){},appendChild(){},querySelector(){return null;},
   set innerHTML(text){for(const [,id] of text.matchAll(/id="([^"]+)"/g))elements.set(id,element());}});
  const video={...element(),readyState:4,videoWidth:1280,videoHeight:720,currentTime:0,paused:true,muted:true,async play(){if(blocked)throw Object.assign(Error('User gesture needed'),{name:'NotAllowedError'});plays++;this.paused=false;},pause(){this.paused=true;},load(){},removeAttribute(){}};
- const words={enabled:true,starts:0,stops:0,sourceReady(){if(this.enabled)this.starts++;},stop(){this.stops++;},pause(){},resume(){},resetAutoStart(){this.enabled=true;},mount(){},refresh(){}};
+ const words={enabled:true,starts:0,stops:0,sourceReady(){if(this.enabled)this.starts++;},stop(){this.stops++;},pause(){},resume(){},resetOptIn(){this.enabled=false;},mount(){},refresh(){}};
  const window={rainMediaWords:words,addEventListener(){},rainMediaAssembly:{reset(){},sample(){}}};
  const navigator={mediaDevices:{}};
  class MediaStream{constructor(tracks){this.tracks=tracks;}getTracks(){return this.tracks;}getAudioTracks(){return this.tracks.filter(t=>t.kind==='audio');}getVideoTracks(){return this.tracks.filter(t=>t.kind==='video');}}
@@ -55,7 +55,7 @@ function fixture(){
  await hidden.media.startTab();assert.equal(hidden.plays,0,'An already hidden page adopts the capture without starting a doomed play request');assert.equal(hv.readyState,'live');hidden.media.stop();
  const pendingShare=fixture();let accept,shareRequests=0;pendingShare.navigator.mediaDevices.getDisplayMedia=()=>{shareRequests++;return new Promise(resolve=>accept=resolve);};
  const pendingStart=pendingShare.media.startTab();await pendingShare.media.startTab();assert.equal(shareRequests,1,'Repeated clicks cannot start competing share requests');pendingShare.media.stop();const pv=track('video');accept(new pendingShare.MediaStream([pv]));await pendingStart;assert.equal(pv.readyState,'ended','A canceled picker cannot reconnect later');
- const disabled=fixture();disabled.words.enabled=false;await disabled.media.loadFile(file);assert.equal(disabled.words.starts,0,'Deactivation applies to the next video');disabled.media.reset();assert.equal(disabled.words.enabled,true,'Reset restores automatic words');
+ const disabled=fixture();disabled.words.enabled=false;await disabled.media.loadFile(file);assert.equal(disabled.words.starts,0,'Deactivation applies to the next video');disabled.media.reset();assert.equal(disabled.words.enabled,false,'Reset leaves recognition opt-in');
  // Stopping visual/audio response must leave audible video playback intact.
  const html=fs.readFileSync('matrix-rain-utility-suite.html','utf8');
  const stop=html.match(/^        function stopAudioReactive\(\) \{[\s\S]*?^        \}/m)[0];
@@ -63,5 +63,5 @@ function fixture(){
  const context=vm.createContext({window:{rainAudioPalette:{active:true}},cancelAnimationFrame(){}});
  vm.runInContext('let rainAudioRequestVersion=0,audioAnimationFrame=null,audioStream=null,audioContext=null,audioUsesLocalVideo=true,audioAnalyser={},audioDataArray={};'+stop+';globalThis.setContext=value=>audioContext=value;',context);
  context.setContext(shared);context.stopAudioReactive();assert.equal(shared.closes,0,'Audio mode does not close a video-owned context');
- console.log('PASS audible playback, retryable autoplay denial, Play/Pause/Mute, header pause/resume, single reusable audio graph, automatic lyrics, independent shared video/audio, picker visibility race, duplicate/canceled share requests, recognizer track ownership and no video silence when analysis stops.');
+ console.log('PASS audible playback, retryable autoplay denial, Play/Pause/Mute, header pause/resume, single reusable audio graph, session opt-in, independent shared video/audio, picker visibility race, duplicate/canceled share requests, recognizer track ownership and no video silence when analysis stops.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

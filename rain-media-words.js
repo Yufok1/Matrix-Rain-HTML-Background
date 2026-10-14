@@ -2,8 +2,9 @@
 // See vendor/canvas5/LICENSE.txt. No microphone or remote recognizer fallback.
 (function(){
     'use strict';
-    let enabled=true,wanted=false,suspended=false,generation=0,recognition=null,timer=null,phrase='',letters=[],positions=new Map(),prepared=false;
-    let status='Lyrics start automatically with a video or a shared tab with audio.';
+    const offStatus='Words are off. Enable words to use local speech recognition.';
+    let enabled=false,wanted=false,suspended=false,generation=0,recognition=null,timer=null,phrase='',letters=[],positions=new Map(),prepared=false;
+    let status=offStatus;
     const options={maxWords:3,bufferMs:1900,verticalOrder:'down'};
     const live={maxWords:3,instantWords:true};
     const picker=Canvas5Words.createSpeechResultPicker();
@@ -17,9 +18,9 @@
         refresh();
     }
     function sourceReady(){if(enabled&&window.rainMedia?.hasAudioSource)void start();}
-    function deactivate(){enabled=false;stop('Lyrics deactivated. Playback and audio response continue.');}
-    function activate(){enabled=true;if(window.rainMedia?.hasAudioSource)void start();else say('Lyrics start automatically with a video or a shared tab with audio.');refresh();}
-    function resetAutoStart(){enabled=true;refresh();}
+    function deactivate(){enabled=false;stop('Words are off. Playback and audio response continue.');}
+    function activate(){enabled=true;const starting=window.rainMedia?.hasAudioSource?start():Promise.resolve();if(!window.rainMedia?.hasAudioSource)say('Words enabled for this visit. Load a video or share a tab with audio.');refresh();return starting;}
+    function resetOptIn(){enabled=false;stop(offStatus);}
     function api(){const A=window.SpeechRecognition;return A&&typeof A.available==='function'&&typeof A.install==='function'&&'processLocally'in A.prototype?A:null;}
     const say=text=>{if(status===text)return;status=text;refresh();};
     function destroy(){clearTimeout(timer);timer=null;const old=recognition;recognition=null;if(old){old.onstart=old.onresult=old.onerror=old.onend=old.onspeechend=old.onaudiostart=null;try{old.abort();}catch{}}}
@@ -71,7 +72,7 @@
         try{next.start(track);}catch(error){stop('This browser could not recognize the source audio: '+error.message);}
     }
     async function start(){
-        enabled=true;if(wanted)return;
+        if(!enabled||wanted)return;
         wanted=true;suspended=false;prepared=false;const mine=++generation;
         // Source changes can switch between Whisper and browser speech.
         // Finish retiring the file worker before opening either replacement.
@@ -110,7 +111,7 @@
     }
     function refresh(){
         const button=document.getElementById('media-words');if(!button)return;
-        button.textContent=enabled?'Deactivate words':'Activate words';button.setAttribute('aria-pressed',String(enabled));
+        button.textContent=enabled?'Disable words':'Enable words';button.setAttribute('aria-pressed',String(enabled));
         button.disabled=false;
         document.getElementById('media-words-status').textContent=status;
         document.getElementById('media-words-latest').textContent=phrase||'—';
@@ -121,12 +122,13 @@
         for(const button of document.querySelectorAll?.('[data-word-vertical]')||[])button.setAttribute('aria-pressed',String(button.dataset.wordVertical===options.verticalOrder));
     }
     function mount(panel){
-        const box=document.createElement('div');box.innerHTML=`<div class="settings-row"><button id="media-words" type="button">Deactivate words</button></div>
+        const box=document.createElement('div');box.innerHTML=`<div class="settings-row"><button id="media-words" type="button" aria-describedby="media-words-download">Enable words</button></div>
+        <p id="media-words-download" class="settings-hint">Optional speech recognition. Enabling words may download a local model or English language pack on first use. Your media stays on your device. This choice lasts for this visit; Reset turns words off.</p>
         <p id="media-words-status" class="settings-hint" role="status"></p><output id="media-words-latest" aria-live="off"></output>
         <label for="media-word-count">Latest words<output id="media-word-count-value" class="settings-value"></output><input id="media-word-count" type="range" min="1" max="5" step="1"></label>
         <div role="group" aria-label="Vertical word reading" class="settings-row"><button type="button" data-word-vertical="down">Read downward</button><button type="button" data-word-vertical="up">Read upward</button></div>
         <label for="media-word-buffer">Shared-tab speech head start<output id="media-word-buffer-value" class="settings-value"></output><input id="media-word-buffer" type="range" min="0" max="3500" step="100"></label>
-        <p class="settings-hint">Loaded videos use local Whisper with word timestamps and audio lookahead. Lyrics start automatically and prepare in the background without pausing playback. Deactivate words switches them off for this session; Activate words switches them back on. The last lyrics stay until new words arrive. First use downloads the recognizer assets. Shared tabs use on-device browser speech. Lyrics can be imperfect. Shared-tab buffering delays picture and sound together when the browser permits it; this is a head start, not exact word timing. No microphone or cloud recognition.</p>`;
+        <p class="settings-hint">After you enable words, loaded videos use local Whisper with word timestamps and audio lookahead. Recognition prepares in the background without pausing playback. Disable words stops recognition; playback and audio response continue. The last lyrics stay until new words arrive. Shared tabs use on-device browser speech. Lyrics can be imperfect. Shared-tab buffering delays picture and sound together when the browser permits it; this is a head start, not exact word timing. No microphone or cloud recognition.</p>`;
         panel.appendChild(box);
         for(const button of box.querySelectorAll('[data-word-vertical]'))button.onclick=()=>configure({...options,verticalOrder:button.dataset.wordVertical});
         document.getElementById('media-words').onclick=()=>enabled?deactivate():activate();
@@ -136,7 +138,7 @@
     function tick(){
         if(window.rainVideoWords?.active){window.rainVideoWords.tick();return;}
     }
-    window.rainMediaWords={start,stop,tick,pause,resume,mount,refresh,configure,sourceReady,deactivate,activate,resetAutoStart,options,
+    window.rainMediaWords={start,stop,tick,pause,resume,mount,refresh,configure,sourceReady,deactivate,activate,resetOptIn,options,
         get enabled(){return enabled;},
         get active(){return wanted&&!suspended;},
         get hasWords(){return wanted&&letters.length>0;},

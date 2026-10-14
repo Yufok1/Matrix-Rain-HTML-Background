@@ -40,4 +40,4 @@ MR6 is fully validated and migrates with `words.maxWords=3` and `words.bufferMs=
 
 MR7 migrates with downward vertical reading. Word activation and video analysis coverage are session state; import never starts transcription. Leftward and upward motion reverse emission where required, while glyph history keeps its original characters.
 
-Loaded videos and audio-bearing shares automatically activate local lyrics. Deactivate/Activate words is a session control and does not start a new capture. Source changes respect deactivation until Activate or Reset. Reset and initial rain use Katakana. Recognition never owns playback pause/resume controls.
+Recognition is off on each visit and after Reset. Enable words is the explicit opt-in for local model/language-pack preparation; its download notice sits beside the button. This session choice is not exported or imported. Source changes can start lyrics only after opt-in; Disable words prevents future sources from preparing recognition. Reset and initial rain use Katakana. Recognition never owns playback pause/resume controls.

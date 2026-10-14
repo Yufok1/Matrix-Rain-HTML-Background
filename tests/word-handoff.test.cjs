@@ -12,7 +12,7 @@ for(let frame=0;frame<6;frame++)for(let id=0;id<2;id++)camera.marks.push({char:'
 camera.pending.push(...camera.marks.slice(-2));const originalMarks=camera.marks.slice(),originalPending=camera.pending.slice(),before=camera.marks.map(({char,...rest})=>({...rest}));camera.bounds={center:[1,2,3]};const bounds=camera.bounds;
 vm.runInContext(fs.readFileSync('rain-media-words.js','utf8'),context);
 (async()=>{
- await window.rainMediaWords.start();assert.equal(window.rainMediaWords.nextCharacter(0),null);assert.equal(clears,0,'Preparation preserves the existing picture');
+ await window.rainMediaWords.activate();assert.equal(window.rainMediaWords.nextCharacter(0),null);assert.equal(clears,0,'Preparation preserves the existing picture');
  recognizer.onresult({resultIndex:0,results:[Object.assign([{transcript:'hello world'}],{isFinal:true})]});
  assert.equal(camera.marks.length,originalMarks.length,'First lyrics keep every trail glyph');assert.equal(camera.pending.length,originalPending.length);assert.equal(camera.bounds,bounds);assert.equal(camera.frame,10);assert.equal(clears,0,'First lyrics never clear the canvas');assert.equal(gpu.invalidate,true);
  for(let i=0;i<camera.marks.length;i++){const mark=camera.marks[i];assert.equal(mark,originalMarks[i]);const {char,...rest}=mark;assert.deepEqual(rest,before[i],'Positions, alpha, frozen birth RGB, sizes, ages and lifetimes survive the handoff');assert.ok(!/[\u30a0-\u30ff]/.test(char));assert.equal(mark.rgb,rgb);}
