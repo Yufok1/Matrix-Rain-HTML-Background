@@ -1,28 +1,54 @@
 // Decode ahead of the file's playback clock, then reveal actual timestamped words.
 (function(){
     'use strict';
-    let run=null,serial=0;
+    let run=null,serial=0,retirement=Promise.resolve();
     function stop(){
-        const old=run;run=null;serial++;if(!old)return;
+        const old=run;run=null;serial++;if(!old)return retirement;
         old.reject?.(Error('Words stopped'));old.reject=null;
-        const worker=old.worker;if(worker){worker.onmessage=null;worker.postMessage({action:'dispose'});setTimeout(()=>worker.terminate(),2000);}
+        const worker=old.worker;
+        if(worker){
+            // A replacement waits for disposal, including an unfinished load
+            // or inference. A stuck worker is terminated before that wait ends.
+            const cleanup=new Promise(resolve=>{
+                let timeout;
+                const finish=()=>{clearTimeout(timeout);worker.onmessage=worker.onerror=null;worker.terminate();resolve();};
+                worker.onmessage=({data})=>{if(data.event==='disposed')finish();};worker.onerror=finish;
+                timeout=setTimeout(finish,2000);
+                try{worker.postMessage({action:'dispose'});}catch{finish();}
+            });
+            retirement=Promise.all([retirement,cleanup]).then(()=>{});
+        }
         old.pcm=null;
+        return retirement;
     }
     async function start(file,video,publish,say){
-        stop();const id=++serial;const mine=run={id,video,pcm:null,worker:null,ready:false,busy:false,nextJob:0,coverage:[],timeline:new window.RainWordTimeline(),publish,say,phrase:''};
+        stop();const id=++serial;const mine=run={id,video,pcm:null,worker:null,ready:false,busy:false,nextJob:0,coverage:[],downloads:{encoder:0,decoder:0},timeline:new window.RainWordTimeline(),publish,say,phrase:''};
         say('Preparing local lyrics in the background. Video playback continues…');
         try{
+            await retirement;if(run!==mine)return;
             const Decoder=window.OfflineAudioContext||window.webkitOfflineAudioContext;
             const decoded=await new Decoder(1,1,16000).decodeAudioData(await file.arrayBuffer());
             if(run!==mine)return;
             const pcm=mine.pcm=new Float32Array(decoded.length);
             for(let channel=0;channel<decoded.numberOfChannels;channel++){const input=decoded.getChannelData(channel);for(let i=0;i<pcm.length;i++)pcm[i]+=input[i]/decoded.numberOfChannels;}
-            const worker=mine.worker=new Worker('rain-timed-words-worker.js?v=8f7e7b6922fb',{type:'module'});
+            const worker=mine.worker=new Worker('rain-timed-words-worker.js?v=181edbca5ceb',{type:'module'});
             await new Promise((resolve,reject)=>{
                 mine.reject=reject;
                 worker.onmessage=({data})=>{
                     if(run!==mine)return;
-                    if(data.event==='progress')say('Preparing local recognizer · '+Math.round(data.progress)+'% · audio stays on this device.');
+                    if(data.event==='progress'){
+                        // Whisper's two model files download concurrently.
+                        // Combine their progress instead of alternating two
+                        // unrelated percentages in the same status line.
+                        const part=/encoder/i.test(data.file)?'encoder':/decoder/i.test(data.file)?'decoder':null;
+                        if(part){
+                            const value=Number(data.progress);
+                            if(Number.isFinite(value))mine.downloads[part]=Math.max(mine.downloads[part],Math.max(0,Math.min(100,value)));
+                            const progress=(mine.downloads.encoder+mine.downloads.decoder)/2;
+                            say(progress===100?'Starting local Whisper English · model files ready.':
+                                'Preparing local Whisper English · model download '+Math.floor(progress)+'% · one recognizer, two model files.');
+                        }
+                    }
                     if(data.event==='ready'){mine.ready=true;mine.reject=null;resolve();}
                     if(data.event==='error'){mine.reject=null;reject(Error(data.message));}
                 };
@@ -74,5 +100,5 @@
             }
         }
     }
-    window.rainVideoWords={start,stop,tick,get active(){return !!run;}};
+    window.rainVideoWords={start,stop,tick,whenStopped(){return retirement;},get active(){return !!run;}};
 })();

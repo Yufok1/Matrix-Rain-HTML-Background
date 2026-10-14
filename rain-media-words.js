@@ -73,10 +73,13 @@
     async function start(){
         enabled=true;if(wanted)return;
         wanted=true;suspended=false;prepared=false;const mine=++generation;
+        // Source changes can switch between Whisper and browser speech.
+        // Finish retiring the file worker before opening either replacement.
+        await window.rainVideoWords?.whenStopped?.();if(mine!==generation||!wanted)return;
         if(window.rainMedia?.file){
             try{await window.rainVideoWords.start(window.rainMedia.file,window.rainMedia.source,text=>{
                 if(!wanted||mine!==generation)return;publish(text);
-            },say);if(wanted&&mine===generation)prepared=true;}catch(error){if(mine===generation)stop(error.message);}
+            },text=>{if(wanted&&mine===generation)say(text);});if(wanted&&mine===generation)prepared=true;}catch(error){if(mine===generation)stop(error.message);}
             return;
         }
         const A=api();if(!A){stop('Local source-audio speech is unavailable in this browser. Use Chrome with on-device speech.');return;}
