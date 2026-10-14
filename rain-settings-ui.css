@@ -83,62 +83,6 @@
 .matrix-modal.minimized .minimize-btn:hover::after, .matrix-modal.minimized .minimize-btn:focus-visible::after { content:'Settings · M'; position:absolute; right:62px; top:14px; width:max-content; background:#0b100eee; color:#b5c7bc; padding:5px 8px; font-size:11px; border:1px solid #314439; }
 .matrix-modal .modal-content::-webkit-scrollbar-thumb { background:#405c49; }
 .matrix-modal .modal-content { scrollbar-color:#405c49 #0b100e; }
-@media(max-width:700px) { .matrix-modal:not(.minimized) { width:calc(100vw - 20px); max-width:none; height:75dvh; max-height:calc(100dvh - 20px); bottom:max(10px,env(safe-area-inset-bottom)); right:10px; } .matrix-modal button { min-height:44px; } .matrix-modal input[type=text], .matrix-modal textarea { font-size:16px!important; } .matrix-modal .modal-content { padding:0 12px 12px; } }
+@media(max-width:700px) { .matrix-modal:not(.minimized) { width:calc(100vw - 20px); max-width:none; height:48dvh; max-height:calc(100dvh - 20px); bottom:max(10px,env(safe-area-inset-bottom)); right:10px; } .matrix-modal button { min-height:44px; } .matrix-modal input[type=text], .matrix-modal textarea { font-size:16px!important; } .matrix-modal .modal-content { padding:0 12px 12px; } }
 @media(max-width:700px) { .matrix-modal .settings-header-actions button { min-height:44px; } .matrix-modal .full-header-text { font-size:12px; letter-spacing:.08em; } }
 @media(max-height:500px) and (min-width:701px) { .matrix-modal:not(.minimized) { width:360px; height:calc(100dvh - 24px); bottom:12px; right:12px; } }
-
-/* One expanding category, with button pages inside it. */
-.matrix-modal .settings-category:not([open]) > .category-body { display:none; }
-.matrix-modal .settings-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-.matrix-modal .settings-tabs button { flex:1; }
-.matrix-modal .settings-tabs button[aria-selected=true] { color:#d4ecd9!important; border-color:#7dad89!important; background:#263a2c!important; }
-.matrix-modal .settings-control-page { display:grid; gap:12px; }
-.matrix-modal .settings-control-page[hidden] { display:none; }
-.matrix-modal .settings-dial-shell { min-width:0; }
-.matrix-modal .tv-dial,.tv-stage,.tv-hull { display:none; }
-.matrix-modal.minimized .settings-view-toggle { display:none; }
-@media(max-width:700px),(max-height:479px),(hover:none) { .matrix-modal .settings-view-toggle { display:none; } }
-
-/* The optional console frames the same full rain image; it never resets history. */
-body.rain-tv-view { background:#080e0b; }
-body.rain-tv-view :is(#matrixRainCanvas,#rainWorldCanvas,#media-flat-rain) { inset:auto!important; left:var(--rain-port-x)!important; top:var(--rain-port-y)!important; right:auto!important; bottom:auto!important; width:var(--rain-port-width)!important; height:var(--rain-port-height)!important; }
-.matrix-modal.tv-console:not(.minimized) { inset:14px!important; width:calc(100vw - 28px)!important; height:calc(100dvh - 28px)!important; max-width:none; max-height:none; background:transparent; border:1px solid #3a4c41; box-shadow:inset 0 0 0 2px #060b08,0 0 0 14px #080e0b; }
-.matrix-modal.tv-console .modal-header { background:#101813f2; border-bottom:1px solid #405348; cursor:default!important; padding:10px 18px; }
-.matrix-modal.tv-console .full-header-text { font:600 16px/1.3 monospace; letter-spacing:.15em; }
-.matrix-modal.tv-console .modal-content { display:grid; grid-template-columns:minmax(128px,.9fr) minmax(0,2.6fr) minmax(232px,1.5fr); grid-template-rows:repeat(6,52px) minmax(0,1fr); gap:10px 14px; padding:18px; overflow:hidden; }
-.matrix-modal.tv-console .settings-category { display:contents; }
-.matrix-modal.tv-console .settings-category > summary { grid-column:1; grid-row:var(--category-row); padding:10px 12px; border:1px solid #516458; background:linear-gradient(145deg,#223229ed,#101913f2); box-shadow:inset 0 1px #62746855,0 4px 8px #0005; font:600 13px/1.2 monospace; letter-spacing:.025em; }
-.matrix-modal.tv-console .settings-category > summary::before { content:''; width:5px; height:5px; background:#4d6054; box-shadow:0 0 0 2px #0c150f; }
-.matrix-modal.tv-console .settings-category[open] > summary { border-color:#9bbc9e; background:linear-gradient(145deg,#304b37,#182c1e); }
-.matrix-modal.tv-console .settings-category[open] > summary::before { background:#a4e5ac; box-shadow:0 0 5px #8deb99,0 0 0 2px #15251a; }
-.matrix-modal.tv-console .category-note { display:none; }
-.matrix-modal.tv-console .category-body { grid-column:3; grid-row:1/-1; align-content:start; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#63876c #101912; padding:18px; border:1px solid #526b5b; background:linear-gradient(160deg,#1c2a22ed,#0c1510f2); box-shadow:inset 0 1px #9aac9e33,0 8px 18px #0006; }
-.matrix-modal.tv-console button { background:linear-gradient(#293a2e,#18251d)!important; border-color:#617868!important; box-shadow:inset 0 1px #adbdac22,0 2px 4px #0004!important; }
-.matrix-modal.tv-console button:hover:not(:disabled) { background:#35513e!important; }
-.matrix-modal.tv-console .tv-stage { display:flex; grid-column:2; grid-row:1/-1; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-width:0; pointer-events:none; }
-.matrix-modal .tv-flight-label { color:#869c8a; font:11px monospace; letter-spacing:.2em; }
-.matrix-modal .tv-window { width:100%; padding:0; background:transparent; border:12px solid #29402f; border-image:linear-gradient(145deg,#52705b,#14271b 55%,#597360) 1; outline:1px solid #839a86; box-shadow:0 0 0 4px #07120a,0 0 0 5px #3c5b45,0 10px 30px #000a; }
-.matrix-modal .tv-rain-port { width:100%; aspect-ratio:var(--view-aspect,16/9); background:transparent; outline:1px solid #9bd9a4; box-shadow:0 0 12px #70ef8a4d; }
-.matrix-modal .tv-brand { color:#75e391; font:600 clamp(20px,2.2vw,36px)/1.1 monospace; letter-spacing:.12em; text-shadow:0 0 10px #43d86a44; text-align:center; }
-.matrix-modal .tv-brand strong { display:block; font-size:.55em; color:#bedac3; letter-spacing:.4em; padding-top:7px; }
-.matrix-modal .tv-flight-caption { color:#8f9f94; font:11px monospace; text-align:center; }
-body.rain-tv-view .tv-hull { display:block; position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; }
-.tv-hull .hull-plane { fill:url(#hull-metal); }
-.tv-hull .plane-1 { fill:#111c16; }
-.tv-hull .plane-2 { fill:#0b150e; }
-.tv-hull .plane-3 { fill:#15251a; }
-.tv-hull .hull-seam { fill:none; stroke:#608367; stroke-width:2; opacity:.55; }
-.tv-hull .hull-rib { fill:none; stroke:#6d8f76; stroke-width:1; opacity:.18; }
-.matrix-modal.tv-console .settings-dial-shell { display:flex; justify-content:center; }
-.matrix-modal.tv-console .settings-dial-shell > input { display:none; }
-.matrix-modal.tv-console .tv-dial { display:block; position:relative; width:80px; height:80px; touch-action:none; cursor:ns-resize; }
-.matrix-modal .tv-dial svg { width:100%; height:100%; }
-.matrix-modal .dial-track { fill:#0c1510; stroke:#718a78; stroke-width:2; stroke-dasharray:1 5; }
-.matrix-modal .dial-face { fill:#293e30; stroke:#789680; stroke-width:2; }
-.matrix-modal .dial-pointer { transform:rotate(var(--dial-angle)); transform-origin:50% 50%; }
-.matrix-modal .dial-pointer path { stroke:#c8e7a7; stroke-width:4; stroke-linecap:square; }
-.matrix-modal .dial-notch { fill:none; stroke:#708b79; stroke-width:2; }
-.matrix-modal .tv-dial-value { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding-top:10px; color:#d3e4c8; font:12px monospace; pointer-events:none; }
-.matrix-modal .tv-dial[aria-disabled=true] { opacity:.4; cursor:not-allowed; }
-.matrix-modal.tv-console #rain-manual-settings { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 10px; }
-.matrix-modal.tv-console #rain-manual-settings > :is(.settings-hint,.pattern-controls,.settings-grid) { grid-column:1/-1; }

@@ -46,7 +46,7 @@ assert.match(main,/characterSet:\s*'katakana'/);
 assert.match(fs.readFileSync(path.join(root,'rain-settings-share.js'),'utf8'),/characterSet:'katakana',customCharacters:''/);
 
 const crypto=require('node:crypto');
-for(const [parent,dependency]of [['trails/rain-trails.js','trails/rain-trail-lengths.js'],['rain-settings-ui.js','trails/rain-trails.js'],['rain-settings-ui.js','rain-settings-console.js'],['rain-video-words.js','rain-timed-words-worker.js']]){
+for(const [parent,dependency]of [['trails/rain-trails.js','trails/rain-trail-lengths.js'],['rain-settings-ui.js','trails/rain-trails.js'],['rain-video-words.js','rain-timed-words-worker.js']]){
     const digest=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,dependency),'utf8').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
     assert.ok(fs.readFileSync(path.join(root,parent),'utf8').includes(path.basename(dependency)+'?v='+digest),'Cached dependency URL must match '+dependency);
 }

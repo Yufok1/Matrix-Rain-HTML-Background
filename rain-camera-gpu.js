@@ -24,7 +24,6 @@ const rainCameraGPU = {
         try{
             if(!this.canvas){
                 const canvas=this.canvas=document.createElement('canvas');
-                canvas.id='rainWorldCanvas';
                 canvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:.8;display:none;background:#000';document.body.appendChild(canvas);
                 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();this.lost=true;this.hide();});
                 canvas.addEventListener('webglcontextrestored',()=>{this.lost=false;this.initialized=false;this.failed=false;this.postFailed=false;this.invalidate=true;this.targets=null;this.glyphs.clear();this.colors.clear();this.fontReady=false;});

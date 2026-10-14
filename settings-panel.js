@@ -14,7 +14,7 @@ window.addEventListener('DOMContentLoaded', () => {
         panel.style.right = 'auto'; panel.style.bottom = 'auto';
     }
     header.addEventListener('pointerdown', event => {
-        if (isCollapsed() || panel.classList.contains('tv-console') || event.button !== 0 || event.target.closest('button')) return;
+        if (isCollapsed() || event.button !== 0 || event.target.closest('button')) return;
         const box = panel.getBoundingClientRect();
         drag = {id: event.pointerId, x: event.clientX, y: event.clientY, left: box.left, top: box.top};
         header.setPointerCapture(event.pointerId);
@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded', () => {
     header.addEventListener('pointercancel', finish);
     header.addEventListener('lostpointercapture', finish);
     header.addEventListener('keydown', event => {
-        if (isCollapsed() || panel.classList.contains('tv-console') || event.target !== header) return;
+        if (isCollapsed() || event.target !== header) return;
         const delta = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[event.key];
         if (!delta) return;
         event.preventDefault();
