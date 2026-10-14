@@ -1,4 +1,4 @@
-import {RainTrailLengths} from './rain-trail-lengths.js';
+import {RainTrailLengths} from './rain-trail-lengths.js?v=d1fd06eb9954';
 const trails = window.matrixRainTrails = new RainTrailLengths();
 try {
     const saved = JSON.parse(localStorage.getItem('matrixRain.trails'));
@@ -8,7 +8,7 @@ const panel = document.createElement('div');
 panel.id = 'rain-trails-panel';
 panel.style.cssText = 'border:1px solid #00ff41;padding:12px;margin:12px 0;background:#071009;text-align:left';
 panel.innerHTML = `<strong>3D Rain trails</strong>
-    <p style="font-size:12px;margin:8px 0">Each drop keeps its own tail length as it moves and turns.</p>
+    <p style="font-size:12px;margin:8px 0">Each drop keeps its own tail length as it moves and turns. Changes apply immediately in 3D Camera view.</p>
     <label><input type="checkbox" id="trail-variety"> Variable tail lengths</label>
     <div style="margin:8px 0"><label><input type="checkbox" id="trail-stepped"> Stepped fade</label></div>
     <div style="margin-top:8px"><label for="trail-shortest">Shortest tail: <span id="trail-shortest-value"></span> characters</label>
@@ -21,7 +21,10 @@ const stepped = panel.querySelector('#trail-stepped');
 function refresh() {
     stepped.checked = trails.stepped;
     shortest.value = trails.minimum; longest.value = trails.maximum; variety.checked = trails.enabled;
-    shortest.disabled = longest.disabled = !trails.enabled;
+    const cameraOff = typeof rainCamera !== 'undefined' && !rainCamera.enabled;
+    shortest.disabled = longest.disabled = cameraOff || !trails.enabled;
+    variety.disabled = stepped.disabled = cameraOff;
+    panel.title = cameraOff ? 'Enable 3D Camera to adjust these trails. Original View uses its original fade.' : '';
     panel.querySelector('#trail-shortest-value').textContent = trails.minimum;
     panel.querySelector('#trail-longest-value').textContent = trails.maximum;
 }
@@ -33,4 +36,5 @@ shortest.oninput = () => { trails.configure(shortest.value, Math.max(Number(shor
 longest.oninput = () => { trails.configure(Math.min(Number(shortest.value), Number(longest.value)), longest.value); save(); };
 stepped.onchange = () => { trails.stepped = stepped.checked; save(); };
 variety.onchange = () => { trails.enabled = variety.checked; save(); };
+window.rainTrailControls = {refresh};
 refresh();

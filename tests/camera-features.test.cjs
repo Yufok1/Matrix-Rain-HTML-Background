@@ -4,22 +4,41 @@ const kana=/[\u30a0-\u30ff]/;mix.update([.4],{accent:true,region:2});
 let count=0;for(let i=0;i<100000;i++)count+=kana.test(mix.choose(i%192));
 assert.ok(Math.abs(count/100000-.55)<.005);mix.update([0]);
 for(let i=0;i<10000;i++)assert.ok(kana.test(mix.choose(i%192)));
-const window={},context={window,Map,Math};vm.runInNewContext(fs.readFileSync('rain-border-glints.js','utf8'),context);
-const glints=window.rainBorderGlints,camera={volume:{x:100,y:100,zMin:0,z:100},frame:10};
-const mark={streamId:1,x:0,y:43,z:50,fontSize:10,delta:[0,2,0],alpha:1,frame:10,trailLength:20};
-const before=JSON.stringify(mark);glints.capture(mark,camera);camera.frame++;
-assert.equal(glints.prepare(camera,.5).length,12);assert.equal(JSON.stringify(mark),before);
-glints.capture({...mark,y:-49,frame:11},camera);camera.frame++;
-assert.equal(glints.prepare(camera,.5).length,0,'wrapped head has no lingering reflection');
-glints.capture({...mark,streamId:2},camera);glints.options.enabled=false;
-assert.equal(glints.prepare(camera).length,0);
-// Static photographs use current tonal light only; never create streams or a worker.
+// Local media retains RGB and alpha, without a person worker or extra streams.
 let image;const output={createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(value){image=value;}};
 const canvas={getContext(){return output;}},w={rainMedia:{options:{exposure:100,contrast:100}}};
 vm.runInNewContext(fs.readFileSync('rain-media-assembly.js','utf8'),{window:w,document:{createElement(){return canvas;},getElementById(){return null;},hidden:false},matrixCanvas:{width:2,height:1},performance:{now(){return 0;}},Uint8Array,Uint8ClampedArray,Float32Array,Math,setTimeout,clearTimeout,Worker(){throw Error('Photo must not start a person worker');}});
 w.rainMediaAssembly.sample({kind:'image',source:{},width:2,height:1,pixels:new Uint8ClampedArray([255,255,255,255,0,0,0,255])});
 assert.equal(image.data[0],255);assert.equal(image.data[4],0);
 assert.equal(w.rainMediaAssembly.strengthAt(0,0),1);assert.equal(w.rainMediaAssembly.strengthAt(1,0),0);
+for(const kind of ['image','video']){
+ w.rainMediaAssembly.sample({kind,source:{},width:2,height:1,pixels:new Uint8ClampedArray([31,181,242,255,210,42,97,0])});
+ assert.deepEqual(Array.from(image.data),[31,181,242,255,210,42,97,0],'Full-frame RGB and transparent margins survive');
+ assert.deepEqual({...w.rainMediaAssembly.colorAt(0,0)},{r:31,g:181,b:242,coverage:1});
+ assert.equal(w.rainMediaAssembly.colorAt(1,0).coverage,0,'Borders retain normal rain');
+ assert.equal(w.rainMediaAssembly.colorAt(2,0),null);
+ assert.equal(w.rainMediaAssembly.strengthAt(1,0),0);
+}
+// Live cameras still isolate the whole subject; detail uses current frame RGB.
+let worker,clock=100;
+const cameraWindow={rainMedia:{options:{exposure:100,contrast:100}}};
+vm.runInNewContext(fs.readFileSync('rain-media-assembly.js','utf8'),{window:cameraWindow,document:{createElement(){return canvas;},getElementById(){return null;},hidden:false},matrixCanvas:{width:2,height:1},performance:{now(){return clock;}},Uint8Array,Uint8ClampedArray,Float32Array,Math,setTimeout,clearTimeout,Worker:class{constructor(){worker=this;}postMessage(){}terminate(){}}});
+cameraWindow.rainMediaAssembly.sample({kind:'camera',source:{},width:2,height:1,pixels:new Uint8ClampedArray([21,124,230,255,140,180,90,255])});
+assert.equal(cameraWindow.rainMediaAssembly.frame,null,'No unmasked camera background while loading isolation');
+worker.onmessage({data:{type:'ready'}});
+cameraWindow.rainMediaAssembly.sample({kind:'camera',source:{},width:2,height:1,pixels:new Uint8ClampedArray([21,124,230,255,140,180,90,255])});
+clock=120;cameraWindow.rainMediaAssembly.sample({kind:'camera',source:{},width:2,height:1,pixels:new Uint8ClampedArray([200,80,120,255,70,110,160,255])});
+worker.onmessage({data:{type:'depth',epoch:0,time:100,depth:new Uint8Array([255,0]).buffer,width:2,height:1,frames:1,ms:10}});
+assert.deepEqual(Array.from(image.data),[110,0,0,110,0,0,0,0]);
+assert.equal(cameraWindow.rainMediaAssembly.colorAt(1,0).coverage,0);
+clock=700;assert.ok(cameraWindow.rainMediaAssembly.frame,'Normal processing gaps must not flash the subject off');
+clock=2400;assert.equal(cameraWindow.rainMediaAssembly.frame,null,'A genuinely stalled mask cannot linger indefinitely');
+cameraWindow.rainMedia.options.isolate=false;
+cameraWindow.rainMediaAssembly.sample({kind:'camera',source:{},width:2,height:1,pixels:new Uint8ClampedArray([200,80,120,255,70,110,160,255])});
+assert.deepEqual(Array.from(image.data),[108,0,0,108,105,0,0,105],'Complete camera frame bypasses isolation');
 assert.equal(w.rainMediaAssembly.prepare(),null);assert.equal(w.rainMediaAssembly.stats.borrowed,0);
+w.rainMedia.options.gamma=200;
+w.rainMediaAssembly.sample({kind:'video',source:{},width:3,height:1,pixels:new Uint8ClampedArray([0,0,0,255,64,64,64,255,255,255,255,255])});
+assert.deepEqual(Array.from(image.data),[0,0,0,255,128,128,128,255,255,255,255,255],'Gamma lifts shadows and preserves black and white');
 w.rainMediaAssembly.reset();assert.equal(w.rainMediaAssembly.frame,null);
-console.log('PASS 55/45 audio alphabet, all-Katakana silence, bounded crossing glints, unchanged rain history and static-media light without extra glyphs/capture.');
+console.log('PASS 55/45 alphabet, full-frame media RGB, transparent borders and camera-only subject isolation without extra glyphs.');

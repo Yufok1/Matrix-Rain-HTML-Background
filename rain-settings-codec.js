@@ -7,7 +7,7 @@
     const text = max => ({kind:'text', max});
     const bool = {kind:'bool'}, hex = {kind:'hex'};
     const schema = {
-        v:choice(4), name:text(60),
+        v:choice(8), name:text(60),
         rain:{pattern:choice('classic','rainbow','pentad','chaos','harmonic'),
             speed:integer(1,100), intensity:integer(1,100), density:integer(1,100), fontSize:integer(1,100),
             primary:hex, secondary:hex,
@@ -22,10 +22,17 @@
             speeds:{showcase:integer(0,100),corkscrew:integer(0,100),gyroscope:integer(0,100)}},
         render:{quality:choice('balanced','sharp','low'),sharp:bool,smooth:bool,glow:integer(0,100),contrast:integer(75,150)},
         trails:{enabled:bool,stepped:bool,minimum:integer(12,160),maximum:integer(12,160)},
-        media:{influence:integer(0,100),exposure:integer(50,200),contrast:integer(50,200),mirror:bool,glints:bool}
+        words:{maxWords:integer(1,5),bufferMs:integer(0,3500),verticalOrder:choice('down','up')},
+        media:{influence:integer(0,100),exposure:integer(50,200),contrast:integer(50,200),gamma:integer(50,300),mirror:bool,isolate:bool}
     };
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
-    const {media:ignoredMedia,...oldSchema}=schema;
+    const {words:ignoredWords,...schema6}=schema;
+    const {media:ignoredMedia,...oldSchema}=schema6;
+    const legacy7Schema={...schema,v:choice(7),words:{maxWords:schema.words.maxWords,bufferMs:schema.words.bufferMs}};
+    const legacy6Schema={...schema6,v:choice(6)};
+    const legacyMedia={influence:schema.media.influence,exposure:schema.media.exposure,contrast:schema.media.contrast,mirror:bool};
+    const legacy4Schema={...schema6,v:choice(4),media:{...legacyMedia,glints:bool}};
+    const legacy5Schema={...schema6,v:choice(5),media:legacyMedia};
     const legacy3Schema={...oldSchema,v:choice(3)};
     const legacy2Schema={...oldSchema,v:choice(2),preview:previewSchema};
     const legacySchema={...legacy2Schema,v:choice(1),audio:{...schema.audio,depth:bool}};
@@ -54,9 +61,12 @@
             settings=check(settings,settings.v===1?legacySchema:settings.v===2?legacy2Schema:legacy3Schema,'');
             if(settings.v===1)delete settings.audio.depth;
             delete settings.preview;
-            settings.v=4;settings.media={influence:95,exposure:100,contrast:110,mirror:false,glints:true};
+            settings.v=6;settings.media={influence:100,exposure:100,contrast:100,gamma:100,mirror:false,isolate:true};
             if (!settings.camera.enabled && ['toward','away'].includes(settings.rain.direction)) settings.rain.direction='down';
         }
+        if(settings?.v===4||settings?.v===5){settings=check(settings,settings.v===4?legacy4Schema:legacy5Schema,'');delete settings.media.glints;settings.media.gamma=100;settings.media.isolate=true;settings.v=6;}
+        if(settings?.v===6){settings=check(settings,legacy6Schema,'');settings.words={maxWords:3,bufferMs:1900};settings.v=7;}
+        if(settings?.v===7){settings=check(settings,legacy7Schema,'');settings.words.verticalOrder='down';settings.v=8;}
         const clean=check(settings,schema,'');
         if (clean.trails.minimum>clean.trails.maximum) throw Error('Shortest trail exceeds longest trail.');
         if (clean.audio.brightnessMin>clean.audio.brightnessMax) throw Error('Invalid brightness range.');
@@ -67,12 +77,12 @@
     function encode(settings) {
         const bytes=new TextEncoder().encode(JSON.stringify(validate(settings)));
         let binary='';for (const byte of bytes) binary+=String.fromCharCode(byte);
-        return 'MR4.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        return 'MR8.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     function decode(blob) {
         if (typeof blob!=='string' || blob.length>24000) throw Error('Configuration is too large.');
         const compact=blob.replace(/[\t\r\n ]/g,'');
-        if (!/^MR[1234]\./.test(compact)) throw Error('Expected a Matrix Rain configuration.');
+        if (!/^MR[12345678]\./.test(compact)) throw Error('Expected a Matrix Rain configuration.');
         const payload=compact.slice(4);
         if (!payload || payload.length>12000 || !/^[A-Za-z0-9_-]+$/.test(payload) || payload.length%4===1) throw Error('Damaged configuration.');
         let parsed;

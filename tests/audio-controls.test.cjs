@@ -8,7 +8,7 @@ function source(name) {
     assert.ok(matches?.length, name + ' exists in the application');
     return matches.at(-1);
 }
-function fixture({capture, wallpaper = false, secure = true} = {}) {
+function fixture({capture, wallpaper = false, secure = true, localVideo = false} = {}) {
     let released = 0, connected = 0;
     const elements = Object.fromEntries(['audioReactiveBtn', 'audioStatus', 'audioModeSettings', 'autoOrchestratorBtn', 'secondaryColor'].map(id =>
         [id, {disabled:false, style:{}, textContent:'', previousElementSibling:{style:{}}}]));
@@ -17,14 +17,16 @@ function fixture({capture, wallpaper = false, secure = true} = {}) {
         createMediaStreamSource() { connected++; return {connect(){}}; }
         close() {}
     }
+    const graph={context:new AudioContext(),analyser:{frequencyBinCount:1024}};
     const context = vm.createContext({window:{isSecureContext:secure, AudioContext,
+        rainMedia:localVideo?{hasAudioSource:true,async connectAudio(){connected++;return graph;}}:undefined,
         wallpaperRegisterAudioListener:wallpaper ? () => {} : undefined},
         navigator:{mediaDevices:capture ? {getDisplayMedia:capture} : {}},
         document:{getElementById:id => elements[id]}, console:{error(){}},
         MatrixRainEngine:{logActivity(){}}, analyzeAudio(){}, resetAudioMotion(){},
         stopAudioReactive() { if(context.activeStream())context.activeStream().getTracks().forEach(t=>t.stop()); released++; }
     });
-    vm.runInContext('let rainAudioRequestVersion=0; let audioReactiveActive=false, audioStream=null, audioContext=null, audioAnalyser=null, audioBufferLength=0, audioDataArray=null;\n' +
+    vm.runInContext('let rainAudioRequestVersion=0; let audioReactiveActive=false, audioUsesLocalVideo=false, audioStream=null, audioContext=null, audioAnalyser=null, audioBufferLength=0, audioDataArray=null;\n' +
         ['canCaptureRainAudio','updateModeButtons','toggleAudioReactive'].map(source).join('\n') +
         '\nglobalThis.controls={refresh:updateModeButtons,toggle:toggleAudioReactive}; globalThis.activeStream=()=>audioStream;', context);
     return {elements, controls:context.controls, released:()=>released, connected:()=>connected};
@@ -45,6 +47,11 @@ function stream(audio = true) {
     assert.equal(unsupported.connected(),0);
     const insecure=fixture({capture:()=>{},secure:false});
     insecure.controls.refresh(null);assert.equal(insecure.elements.audioReactiveBtn.disabled,true);
+    const video=fixture({localVideo:true,capture(){throw Error('Video must not request screen sharing');}});
+    video.controls.refresh(null);assert.equal(video.elements.audioReactiveBtn.disabled,false);
+    await video.controls.toggle();assert.equal(video.connected(),1);assert.match(video.elements.audioStatus.textContent,/selected media/);
+    assert.equal(video.elements.audioModeSettings.disabled,false);
+    await video.controls.toggle();assert.equal(video.elements.audioModeSettings.disabled,true);
     const wallpaper=fixture({wallpaper:true,secure:false});
     wallpaper.controls.refresh(null);assert.equal(wallpaper.elements.audioReactiveBtn.disabled,false);
     await wallpaper.controls.toggle();assert.equal(wallpaper.elements.audioModeSettings.disabled,false);

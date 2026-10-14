@@ -6,11 +6,13 @@ export class RainTrailLengths {
         this.minimum = 12;
         this.maximum = 100;
         this.lengths = new Map();
+        this.revision = 0;
     }
     configure(minimum, maximum) {
         this.minimum = Math.max(12, Math.min(160, Math.round(Number(minimum) || 12)));
         this.maximum = Math.max(this.minimum, Math.min(160, Math.round(Number(maximum) || 100)));
         this.lengths.clear();
+        this.revision++;
     }
     lengthFor(streamId) {
         if (!this.enabled) return 40;

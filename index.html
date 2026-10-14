@@ -1156,7 +1156,7 @@
                             <h4>Pattern Settings</h4>
                             <div class="control-item">
                                 <label>Character Set</label>
-                                <input type="hidden" id="characterSet" value="matrix">
+                                <input type="hidden" id="characterSet" value="katakana">
 <div class="setting-choices" role="group" aria-label="characterSet" data-control="characterSet" data-handler="updateCharacterSet">
 <button type="button" class="setting-choice" data-value="matrix" aria-pressed="false">Matrix (A-Z, 0-9, @#$)</button>
 <button type="button" class="setting-choice" data-value="binary" aria-pressed="false">Binary (01)</button>
@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=e7280f16d7c5"></script>
+    <script src="rain-settings-codec.js?v=391c5ebcdc7e"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1254,6 +1254,7 @@
         // === MODE BUTTON MANAGEMENT - Prevent multiple modes at once ===
         function canCaptureRainAudio() {
             return typeof window.wallpaperRegisterAudioListener === 'function' ||
+                (window.rainMedia?.hasAudioSource && typeof (window.AudioContext || window.webkitAudioContext) === 'function') ||
                 (window.isSecureContext && typeof navigator.mediaDevices?.getDisplayMedia === 'function' &&
                     typeof (window.AudioContext || window.webkitAudioContext) === 'function');
         }
@@ -1304,7 +1305,7 @@
                 primaryColor: '#00ff41',
                 secondaryColor: '#00cc33',
                 fontSize: 10,
-                characterSet: 'matrix',
+                characterSet: 'katakana',
                 direction: 'down',
                 spectrumColor: '#ff0000'
             },
@@ -1758,7 +1759,7 @@
                 matrixCanvas.height = window.innerHeight;
                 matrixCtx.globalAlpha = 1;
                 matrixCtx.fillStyle = '#000';
-                matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                matrixCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
                 // Recompute active columns when canvas size changes
                 recomputeActiveColumnsMask();
             }
@@ -1833,6 +1834,7 @@
 
         // Helper function to get random character
         function getNextCharacter(characters, columnIndex, isUserColumn) {
+            const spoken=window.rainMediaWords?.nextCharacter(columnIndex);if(spoken)return spoken;
             if (audioReactiveActive && window.rainAudioCharacters) return rainAudioCharacters.choose(columnIndex, performance.now());
             const cache = window.rainCharacterPools || (window.rainCharacterPools = new Map());
             let pool = cache.get(characters);
@@ -1921,8 +1923,6 @@
             matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
             if (rainCamera.enabled) rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
             if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) {
-                const strength = window.rainMedia?.active ? window.rainMedia.strengthAt(x,y)*window.rainMedia.options.influence/100 : 0;
-                matrixCtx.globalAlpha += (1-matrixCtx.globalAlpha)*strength;
                 matrixCtx.fillText(char, x, y);
             }
             matrixCtx.globalAlpha = alpha;
@@ -1966,8 +1966,12 @@
             // Fade character trails toward black; audio changes glyph colors only.
             // Reset alpha left by the 3D renderer before the full-canvas fade.
             matrixCtx.globalAlpha = 1;
-            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.12)';
-            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) {
+                // Same .88 fade over black, stored as glyph alpha. Source RGB
+                // is applied only during presentation, never into trail history.
+                matrixCtx.save();matrixCtx.globalCompositeOperation='destination-out';matrixCtx.globalAlpha=.12;matrixCtx.fillStyle='#000';
+                matrixCtx.fillRect(0,0,matrixCanvas.width,matrixCanvas.height);matrixCtx.restore();
+            }
 
             prepareRainMotion(fontSize);
 
@@ -3105,7 +3109,23 @@
         window.audioReactiveActive = false; // Expose globally for Ollama integration
         let audioAnimationFrame = null;
         let audioStream = null;
+        let audioUsesLocalVideo = false;
         let rainAudioRequestVersion = 0;
+
+        window.rainRefreshAudioControls = () => updateModeButtons(audioReactiveActive ? 'audio' : autoOrchestratorActive ? 'orchestrator' : null);
+        window.rainMediaAudioToken = () => rainAudioRequestVersion;
+        window.rainMediaAudioEnded = () => {
+            if (!audioUsesLocalVideo) return;
+            if (audioReactiveActive) toggleAudioReactive();
+            else stopAudioReactive();
+        };
+        window.rainUseMediaAudio = async (restoreAudio, ticket) => {
+            if (window.wallpaperRegisterAudioListener) return;
+            if (ticket !== undefined && ticket !== rainAudioRequestVersion) return;
+            if (audioReactiveActive) { stopAudioReactive(); audioReactiveActive = window.audioReactiveActive = false; }
+            window.rainRefreshAudioControls();
+            if (restoreAudio && !window.rainSessionControls?.stopped) await toggleAudioReactive();
+        };
 
         async function toggleAudioReactive() {
             if (!canCaptureRainAudio()) { updateModeButtons(null); return; }
@@ -3146,10 +3166,15 @@
                 }
 
                 // BROWSER MODE - Request desktop/tab audio capture
-                status.textContent = 'Choose a tab or screen and enable Share audio.';
+                status.textContent = window.rainMedia?.hasAudioSource ? 'Connecting the loaded video’s sound…' : 'Choose a tab or screen and enable Share audio.';
                 btn.disabled = true;
 
                 try {
+                    if (window.rainMedia?.hasAudioSource) {
+                        const graph=await window.rainMedia.connectAudio();
+                        if (requestVersion !== rainAudioRequestVersion || !audioReactiveActive || window.rainSessionControls?.stopped) return;
+                        audioUsesLocalVideo=true;audioContext=graph.context;audioAnalyser=graph.analyser;
+                    } else {
                     const requestedStream = await navigator.mediaDevices.getDisplayMedia({
                         video: true,
                         audio: {
@@ -3175,11 +3200,12 @@
 
                     const source = audioContext.createMediaStreamSource(audioStream);
                     source.connect(audioAnalyser);
+                    }
 
                     audioBufferLength = audioAnalyser.frequencyBinCount;
                     audioDataArray = new Uint8Array(audioBufferLength);
 
-                    status.textContent = '🎵 AUDIO REACTIVE - Syncing with sound!';
+                    status.textContent = audioUsesLocalVideo ? 'Audio response follows the selected media’s sound.' : '🎵 AUDIO REACTIVE - Syncing with sound!';
                     MatrixRainEngine.logActivity('🎵 Audio Reactive Mode ACTIVATED - Rain synced to audio!', 'success');
 
                     // Gray out secondary color picker (not used in audio mode)
@@ -3200,8 +3226,8 @@
 
                     updateModeButtons('audio'); // Disable other mode buttons
 
-                    audioStream.getTracks().forEach(track => track.addEventListener('ended', () => {
-                        if (audioReactiveActive) toggleAudioReactive();
+                    audioStream?.getTracks().forEach(track => track.addEventListener('ended', () => {
+                        if (requestVersion === rainAudioRequestVersion && audioReactiveActive) toggleAudioReactive();
                     }, {once: true}));
 
                 } catch (error) {
@@ -3268,9 +3294,10 @@
                 audioStream = null;
             }
             if (audioContext) {
-                audioContext.close();
+                if (!audioUsesLocalVideo) audioContext.close();
                 audioContext = null;
             }
+            audioUsesLocalVideo = false;
             audioAnalyser = null;
             audioDataArray = null;
         }
@@ -3500,18 +3527,22 @@
     </script>
 <script src="rain-animation-clock.js?v=716799d6292e"></script>
 <script src="render-settings.js?v=51b3abc3cf18"></script>
-<script src="assets/rain-font-msdf.js?v=5418ba0d39c7"></script>
-<script src="rain-camera-gpu.js?v=b95682f1c990"></script>
+<script src="assets/rain-font-msdf.js?v=a2e4dfe46fde"></script>
+<script src="rain-camera-gpu.js?v=6a7d1ca7556d"></script>
 <script src="rain-camera-motion.js?v=f71c022c23e7"></script>
-<script src="rain-audio-characters.js?v=0fba78f8fe9d"></script>
-<script src="rain-media-assembly.js?v=f53f4b51aca7"></script>
-<script src="rain-border-glints.js?v=e091abad77a7"></script>
-<script src="rain-media-depiction.js?v=eaad118694f4"></script>
-<script src="rain-camera.js?v=40b0f443ed01"></script>
+<script src="rain-audio-characters.js?v=3f847c91d51b"></script>
+<script src="rain-media-assembly.js?v=8702eac7dd21"></script>
+<script src="vendor/canvas5/words.js?v=81f09bc1a084"></script>
+<script src="rain-tab-sync.js?v=3df1975c49a5"></script>
+<script src="rain-word-reading.js?v=b21d45b829fb"></script>
+<script src="rain-word-timeline.js?v=9a63c886b9ef"></script>
+<script src="rain-video-words.js?v=9fca2a006933"></script>
+<script src="rain-media-words.js?v=eda3c1885843"></script>
+<script src="rain-media-depiction.js?v=9d600d86887d"></script>
+<script src="rain-camera.js?v=391ba90252a4"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=1e467fd04ef0"></script>
-<script src="rain-session-controls.js?v=70b1f8ee3653"></script>
-<script type="module" src="trails/rain-trails.js?v=3ee7900fae20"></script>
-<script type="module" src="rain-settings-ui.js?v=f9c0a47180cb"></script>
+<script src="rain-settings-share.js?v=4445521adb09"></script>
+<script src="rain-session-controls.js?v=6c9044062230"></script>
+<script type="module" src="rain-settings-ui.js?v=2b594ed197fa"></script>
 </body>
 </html>

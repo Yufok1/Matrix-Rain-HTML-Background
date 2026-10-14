@@ -28,7 +28,7 @@ self.onmessage=async({data})=>{
         segmenter.segmentForVideo(image,data.time,result=>{
             const masks=result.confidenceMasks,mask=masks[masks.length-1],values=mask.getAsFloat32Array();
             const pixels=new Uint8Array(values.length);for(let i=0;i<values.length;i++)pixels[i]=Math.round(values[i]*255);
-            postMessage({type:'depth',epoch:data.epoch,width:mask.width,height:mask.height,frames:++frames,ms:performance.now()-start,depth:pixels.buffer},[pixels.buffer]);
+            postMessage({type:'depth',epoch:data.epoch,time:data.time,width:mask.width,height:mask.height,frames:++frames,ms:performance.now()-start,depth:pixels.buffer},[pixels.buffer]);
         });
     }catch(error){postMessage({type:'error',message:error.message});}finally{busy=false;}
 };

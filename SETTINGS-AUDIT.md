@@ -1,4 +1,4 @@
-# Settings coverage audit — revision 9
+# Settings coverage audit — revision 11
 
 The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings logo reuses the Android vector paths.
 
@@ -12,6 +12,8 @@ The UI keeps the accepted choreography and immutable, cohesive birth colors. Ori
 | Camera | Individual motion speeds, including inactive modes | `camera.speeds.showcase`, `corkscrew`, `gyroscope` |
 | Rendering | Quality, sharp letters, smooth motion, glow and contrast | `render.quality`, `sharp`, `smooth`, `glow`, `contrast` |
 | 3D trails | Variable lengths, stepped fade, shortest/longest tails | `trails.enabled`, `stepped`, `minimum`, `maximum` |
+| Live depiction | Influence, exposure, contrast, gamma, camera flip and isolation | `media.influence`, `exposure`, `contrast`, `gamma`, `mirror`, `isolate` |
+| Local words | Latest word count, vertical reading and shared-tab playback head start | `words.maxWords`, `bufferMs`, `verticalOrder` |
 | Configurations | Optional name and schema version | `name`, `v` |
 
 Size minus/plus buttons change the same `rain.fontSize` field as the slider. Imports restore a palette first, then exact saved tuning and private bounds. All three camera speeds are stored, not just the active slider. Custom Unicode characters and inactive manual settings remain represented. The audit also corrected the initial speed slider: it now matches the actual delay through `101 − delay`, so an immediate startup export/import preserves playback speed.
@@ -28,6 +30,14 @@ Validation covers every schema leaf, persistent DOM control, UI round trips acro
 
 Paste stays available during a pending read. A retry retires the preceding attempt, and unresolved reads expire after four seconds. Old responses cannot overwrite newer results. Button paste and text-box paste both replace the full code; neither concatenates configurations.
 
-## MR4 live depiction extension
+## MR8 live depiction and local words
 
-Five additional visual values are shared: media.influence, media.exposure, media.contrast, media.mirror and media.glints. MR1/MR2/MR3 migrate to the approved depiction defaults. The source device, local file, capture permission and active camera session are local and never imported. The complete current schema contains 44 visual values plus version/name.
+Six live depiction values are shared: media.influence, media.exposure, media.contrast, media.gamma, media.mirror and media.isolate. MR1/MR2/MR3 migrate to neutral source color defaults (100% influence, exposure, contrast and gamma; no flip; camera isolation enabled). MR4 and MR5 are fully validated before migration; MR4's removed border-glint field is discarded. All other saved values survive. New exports use MR8 and contain 48 visual values plus version/name, with no dormant border-effect setting. Gamma and isolation are included in the same strict coverage checks and export/import round trips as every other visual control.
+
+The source device, local file, capture permission and active camera session are local and never imported. Play/Pause and Mute/Unmute video are session actions, also excluded. Local videos use their own sound for audio response; stopping that analysis does not stop audible playback. Header Stop suspends playback and analysis, and Resume preserves a deliberate video pause. RGB depiction affects only the ink of existing moving rain; birth history, world geometry and choreography remain intact.
+
+MR6 is fully validated and migrates with `words.maxWords=3` and `words.bufferMs=1900`. Speech activation, recognizer pack state, source tracks, tab capture, recognized words, playback and monitoring are session state and never imported. Importing a code updates word-window and timing preferences without starting recognition or opening a picker. Video RGB remains a presentation effect; camera detail retains the rain palette. Media appearance preferences are retained locally across reloads.
+
+MR7 migrates with downward vertical reading. Word activation and video analysis coverage are session state; import never starts transcription. Leftward and upward motion reverse emission where required, while glyph history keeps its original characters.
+
+Loaded videos and audio-bearing shares automatically activate local lyrics. Deactivate/Activate words is a session control and does not start a new capture. Source changes respect deactivation until Activate or Reset. Reset and initial rain use Katakana. Recognition never owns playback pause/resume controls.

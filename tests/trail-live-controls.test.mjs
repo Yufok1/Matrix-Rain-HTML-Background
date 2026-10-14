@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {RainTrailLengths} from '../trails/rain-trail-lengths.js';
+const trails = new RainTrailLengths();
+const gpu={invalidate:false};
+const context=vm.createContext({window:{matrixRainTrails:trails},rainCameraGPU:gpu});
+const camera=vm.runInContext(fs.readFileSync('rain-camera.js','utf8').split("window.addEventListener('DOMContentLoaded'")[0]+';rainCamera;',context);
+camera.marks=[{streamId:0,trailLength:80,color:'#123456',frame:1},{streamId:1,trailLength:60,color:'#abcdef',frame:2}];
+trails.configure(12,12);camera.syncTrailSettings();
+assert.deepEqual(Array.from(camera.marks,m=>m.trailLength),[12,12]);
+assert.equal(gpu.invalidate,true,'Existing GPU history is refreshed');
+trails.configure(160,160);camera.syncTrailSettings();
+assert.deepEqual(Array.from(camera.marks,m=>m.trailLength),[160,160]);
+assert.deepEqual(Array.from(camera.marks,m=>m.color),['#123456','#abcdef'],'Changing trail length preserves birth colors');
+trails.enabled=false;camera.syncTrailSettings();
+assert.deepEqual(Array.from(camera.marks,m=>m.trailLength),[40,40]);
+console.log('PASS existing trail marks respond immediately to length changes and uniform toggle.');

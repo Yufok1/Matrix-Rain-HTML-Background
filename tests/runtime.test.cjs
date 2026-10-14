@@ -24,10 +24,10 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-border-glints.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "trails/rain-trails.js"]);
+assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-media-words.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "rain-tab-sync.js", "rain-word-timeline.js", "rain-word-reading.js", "rain-video-words.js", "vendor/canvas5/words.js"].sort());
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
-    assert.ok(fs.existsSync(path.resolve(root, 'trails', imported)), 'Missing trail module: ' + imported);
+    assert.ok(fs.existsSync(path.resolve(root, 'trails', imported.split('?')[0])), 'Missing trail module: ' + imported);
 }
 assert.match(main, /id="rainDensity"[^>]*value="50"/);
 assert.match(main, /density:\s*50\b/);
@@ -38,3 +38,15 @@ for (const name of ['matrix-rain-utility-suite.html', 'rain-camera.js', 'rain-ca
 assert.doesNotMatch(main, /<(select|option)\b/i, 'Preserve the CEF-safe settings controls');
 assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /https:\/\/yufok1\.github\.io\/Matrix-Rain-HTML-Background\//);
 console.log('Demo parity, bundled runtime paths, script syntax, release defaults, and settings guards passed.');
+
+assert.doesNotMatch(main, /<script[^>]+src="trails\/rain-trails\.js/, "Trail state is initialized once, through the settings module dependency");
+
+assert.match(main,/id="characterSet" value="katakana"/);
+assert.match(main,/characterSet:\s*'katakana'/);
+assert.match(fs.readFileSync(path.join(root,'rain-settings-share.js'),'utf8'),/characterSet:'katakana',customCharacters:''/);
+
+const crypto=require('node:crypto');
+for(const [parent,dependency]of [['trails/rain-trails.js','trails/rain-trail-lengths.js'],['rain-settings-ui.js','trails/rain-trails.js'],['rain-video-words.js','rain-timed-words-worker.js'],['rain-media-assembly.js','rain-media-person-worker.js']]){
+    const digest=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,dependency),'utf8').replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
+    assert.ok(fs.readFileSync(path.join(root,parent),'utf8').includes(path.basename(dependency)+'?v='+digest),'Cached dependency URL must match '+dependency);
+}

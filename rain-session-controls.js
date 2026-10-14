@@ -27,7 +27,8 @@
         matrixCanvas.style.display='block';rainCamera.lastTime=null;
         window.rainMedia?.resume();
         if(previous?.audio){
-            const sourceEnded=audioStream?!audioStream.getAudioTracks().some(track=>track.readyState==='live'):!window.wallpaperRegisterAudioListener;
+            const sourceEnded=audioStream?!audioStream.getAudioTracks().some(track=>track.readyState==='live'):
+                !(audioUsesLocalVideo&&window.rainMedia?.hasAudioSource&&audioContext?.state!=='closed')&&!window.wallpaperRegisterAudioListener;
             if(sourceEnded){stopAudioReactive();document.getElementById('audioStatus').textContent='Audio source ended. Start audio response to reconnect.';}
             else{
                 audioReactiveActive=window.audioReactiveActive=true;
@@ -59,7 +60,7 @@
         rainCamera.marks.length=rainCamera.pending.length=0;rainCamera.streams.clear();rainCamera.bounds=null;rainCamera.frame=0;rainCamera.lastTime=null;rainCameraGPU.invalidate=true;
         rainMotion.drops.length=0;rainMotion.planar='down';rainMotion.direction='down';rainMotion.reverse=1;
         matrixDrops=Array.from({length:Math.max(1,Math.floor(matrixCanvas.width/10))},()=>Math.random()*matrixCanvas.height/MatrixRainEngine.rainConfig.fontSize-Math.random()*50);
-        matrixCtx.save();matrixCtx.globalAlpha=1;matrixCtx.fillStyle='#000';matrixCtx.fillRect(0,0,matrixCanvas.width,matrixCanvas.height);matrixCtx.restore();
+        matrixCtx.clearRect(0,0,matrixCanvas.width,matrixCanvas.height);
         matrixCanvas.style.display='block';startMatrixAnimation();refresh();
     }
     window.rainSessionControls={stop,resume,reset,get stopped(){return stopped;},get audioPaused(){return stopped&&!!saved?.audio;}};
