@@ -111,7 +111,6 @@ const rainCamera = {
             const tone = ((Number(streamId)||0)*.618033988749895%1+1)%1;
             mark.rgb = Object.freeze(palette.colorA.map((value, channel) => value + (palette.colorB[channel]-value)*tone));
         }
-        window.rainMedia?.capture(mark, this);
         this.marks.push(mark); this.pending.push(mark);
     },
     prepareView() {
@@ -212,7 +211,7 @@ const rainCamera = {
             const quality=window.matrixRainRendering?.quality;
             if(quality==='low'&&this.lastQuality==='low'&&now-(this.lastPaint||0)<1000/30)return;
             this.lastQuality=quality;this.lastPaint=now;
-            this.prepareView();rainCameraGPU.render(window.rainMedia?.renderView(this) || this,phase);
+            this.prepareView();rainCameraGPU.render(this,phase);
         }else rainCameraGPU.hide();
         window.rainMedia?.presentFlat(!this.enabled||rainCameraGPU.failed||rainCameraGPU.lost);
         window.rainSettingsBeacon?.update(now);

@@ -1,7 +1,7 @@
 const DIGITAL_LEVELS = [1, .68, .45, .29, .18, .105, .06, .032];
 export class RainTrailLengths {
     constructor() {
-        this.enabled = true;
+        this.enabled = false;
         this.stepped = true;
         this.minimum = 12;
         this.maximum = 100;

@@ -3,6 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {RainTrailLengths} from '../trails/rain-trail-lengths.js';
 const trails = new RainTrailLengths();
+trails.enabled=true;
 const gpu={invalidate:false};
 const context=vm.createContext({window:{matrixRainTrails:trails},rainCameraGPU:gpu});
 const camera=vm.runInContext(fs.readFileSync('rain-camera.js','utf8').split("window.addEventListener('DOMContentLoaded'")[0]+';rainCamera;',context);

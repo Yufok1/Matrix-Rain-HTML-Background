@@ -56,7 +56,7 @@ const rainCameraGPU = {
                 #else
                 precision mediump float;
                 #endif
-                uniform sampler2D msdf,raster,mediaImage;uniform vec2 atlasSize,mediaViewport;uniform float pxRange,mediaInfluence;uniform bool mediaLive,mediaCamera;varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
+                uniform sampler2D msdf,raster,mediaImage;uniform vec2 atlasSize,mediaViewport;uniform float pxRange,mediaInfluence;uniform bool mediaLive;varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
                 float median3(vec3 v){return max(min(v.r,v.g),min(max(v.r,v.g),v.b));}
                 void main(){float a;
                     float strength=0.,mediaCoverage=0.;
@@ -67,23 +67,22 @@ const rainCameraGPU = {
                         vec2 imageUV=vec2(gl_FragCoord.x/mediaViewport.x,1.-gl_FragCoord.y/mediaViewport.y);
                         vec4 picture=texture2D(mediaImage,imageUV);
                         mediaCoverage=picture.a*mediaInfluence;
-                        strength=mediaCamera?picture.r:dot(picture.rgb,vec3(.2126,.7152,.0722))*picture.a;
-                        if(!mediaCamera)ink=mix(ink,picture.rgb,picture.a*mediaInfluence);
+                        strength=dot(picture.rgb,vec3(.2126,.7152,.0722))*picture.a;
+                        ink=mix(ink,picture.rgb,picture.a*mediaInfluence);
                     }
                     float emphasis=strength*mediaInfluence;
                     ${this.derivatives?`if(glyphFormat>.5){vec2 screenTexSize=vec2(1.)/max(fwidth(uv),vec2(.000001));float scale=max(.5*dot(vec2(pxRange)/atlasSize,screenTexSize),1.);a=clamp(scale*(median3(texture2D(msdf,uv).rgb)-.5+emphasis*.10)+.5,0.,1.);}else`:''}
                     {a=texture2D(raster,uv).a;}
-                    // Camera retains the original rain palette and tonal
-                    // depiction. Loaded media supplies its own RGB ink.
+                    // Media supplies its own RGB ink.
                     // Preserve the approved media visibility curve. Trail lifetime
                     // still controls when each glyph disappears.
                     // Video RGB already contains the scene's luminance. Using
                     // that luminance as opacity darkens its colors a second time.
-                    float visibility=mediaLive&&!mediaCamera?mediaCoverage:emphasis;
+                    float visibility=mediaLive?mediaCoverage:emphasis;
                     float alpha=tint.a+(1.-tint.a)*clamp(visibility*imagePotential*1.8,0.,1.);
                     if(a*alpha<.003)discard;gl_FragColor=vec4(ink,alpha*a);
                 }`,['corner','point','color','atlasRect','shape','lifetime','delta','format']);
-            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaCamera','mediaViewport','mediaInfluence']);
+            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
             this.corners=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
             this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.capacity*this.stride*4,gl.DYNAMIC_DRAW);this.staging=new Float32Array(this.capacity*this.stride);
             this.msdfTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
@@ -175,9 +174,8 @@ const rainCameraGPU = {
         gl.bindFramebuffer(gl.FRAMEBUFFER,post?this.targets.scene.fbo:null);gl.viewport(0,0,pw,ph);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.useProgram(this.main);
         gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.msdfTexture);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.rasterTexture);
         const u=this.u,r=camera.rotation;gl.uniform1i(u.msdf,0);gl.uniform1i(u.raster,1);gl.uniform2f(u.atlasSize,this.fontInfo?.width||1,this.fontInfo?.height||1);gl.uniform1f(u.pxRange,this.fontInfo?.distanceRange||6);
-        const media=window.rainMedia,live=media?.active,frame=live?(media.options.mode==='assembly'?window.rainMediaAssembly?.frame:media.frame):null;
+        const media=window.rainMedia,live=media?.active,frame=live?media.frame:null;
         gl.uniform1i(u.mediaImage,2);gl.uniform1i(u.mediaLive,!!frame);
-        gl.uniform1i(u.mediaCamera,!!frame?.camera);
         gl.uniform2f(u.mediaViewport,pw,ph);gl.uniform1f(u.mediaInfluence,media?.active?media.options.influence/100:0);
         gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.mediaTexture);
         if(frame){

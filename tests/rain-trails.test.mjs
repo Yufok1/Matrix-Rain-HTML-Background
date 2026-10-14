@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {RainTrailLengths} from '../trails/rain-trail-lengths.js';
 const trails = new RainTrailLengths();
+assert.equal(trails.enabled,false,'Variable tails default to off');
+assert.equal(trails.lengthFor(0),40);
+trails.enabled=true;
 const lengths = Array.from({length:192},(_,id)=>trails.lengthFor(id));
 assert.equal(trails.minimum,12);
 assert.equal(trails.maximum,100);

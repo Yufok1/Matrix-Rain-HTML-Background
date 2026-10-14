@@ -1,14 +1,14 @@
-import {RainTrailLengths} from './rain-trail-lengths.js?v=d1fd06eb9954';
+import {RainTrailLengths} from './rain-trail-lengths.js?v=aff5b387500b';
 const trails = window.matrixRainTrails = new RainTrailLengths();
 try {
     const saved = JSON.parse(localStorage.getItem('matrixRain.trails'));
-    if (saved) { trails.configure(saved.minimum, saved.maximum); trails.enabled = saved.enabled !== false; trails.stepped = saved.stepped !== false; }
+    if (saved) { trails.configure(saved.minimum, saved.maximum); trails.enabled = saved.enabled === true; trails.stepped = saved.stepped !== false; }
 } catch (_) {}
 const panel = document.createElement('div');
 panel.id = 'rain-trails-panel';
 panel.style.cssText = 'border:1px solid #00ff41;padding:12px;margin:12px 0;background:#071009;text-align:left';
 panel.innerHTML = `<strong>3D Rain trails</strong>
-    <p style="font-size:12px;margin:8px 0">Each drop keeps its own tail length as it moves and turns. Changes apply immediately in 3D Camera view.</p>
+    <p style="font-size:12px;margin:8px 0">Tails are uniform by default. Enable variable lengths for a stable individual length per drop. Changes apply immediately in 3D Camera view.</p>
     <label><input type="checkbox" id="trail-variety"> Variable tail lengths</label>
     <div style="margin:8px 0"><label><input type="checkbox" id="trail-stepped"> Stepped fade</label></div>
     <div style="margin-top:8px"><label for="trail-shortest">Shortest tail: <span id="trail-shortest-value"></span> characters</label>
