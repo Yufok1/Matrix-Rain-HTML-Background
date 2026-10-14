@@ -1,6 +1,6 @@
-# Settings coverage audit — revision 12
+# Settings coverage audit — revision 13
 
-The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings logo reuses the Android vector paths.
+The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The pointer opens either the compact panel or the optional desktop flight console.
 
 | Category | Controls | Saved fields |
 | --- | --- | --- |
@@ -41,3 +41,5 @@ MR6 is fully validated and migrates with `words.maxWords=3` and `words.bufferMs=
 MR7 migrates with downward vertical reading. Word activation and video analysis coverage are session state; import never starts transcription. Leftward and upward motion reverse emission where required, while glyph history keeps its original characters.
 
 Loaded videos and audio-bearing shares automatically activate local lyrics. Deactivate/Activate words is a session control and does not start a new capture. Source changes respect deactivation until Activate or Reset. Reset and initial rain use Katakana. Recognition never owns playback pause/resume controls.
+
+Only one main category opens at a time. Nested sections use tab buttons. Desktop TV-console layout and panel placement are local presentation choices, not visual configuration fields. Rotary dials drive the same existing range inputs and handlers; exports and imports are identical in either layout. Mobile web settings retain a 75% control area above which 25% of the rain remains visible.

@@ -4,10 +4,10 @@ const context=vm.createContext({window:{matrixRainRendering:{quality:'balanced'}
     rainCameraGPU:{render(){},hide(){}},performance});
 vm.runInContext(read('rain-camera-motion.js'),context);
 const motion=context.window.RainCameraMotion;
-const fixtures=JSON.parse(read('tests/fixtures/android-visuals.json'));
+const fixtures=JSON.parse(read('tests/fixtures/visual-reference.json'));
 for(const sample of fixtures.camera){
     const a=motion.angles(sample.mode,sample.seconds),r=motion.rotation(a.yaw,a.pitch,a.roll);
-    r.forEach((x,i)=>assert.ok(Math.abs(x-sample.rows[i])<1e-6,'Native APK orientation parity'));
+    r.forEach((x,i)=>assert.ok(Math.abs(x-sample.rows[i])<1e-6,'Reference orientation parity'));
     for(let i=0;i<3;i++)for(let j=0;j<3;j++)assert.ok(Math.abs(r[i*3]*r[j*3]+r[i*3+1]*r[j*3+1]+r[i*3+2]*r[j*3+2]-(i===j?1:0))<1e-12);
 }
 const camera=vm.runInContext(read('rain-camera.js').split("window.addEventListener('DOMContentLoaded'")[0]+';rainCamera;',context);
@@ -41,4 +41,4 @@ for(let i=0;i<75;i++){
 camera.yaw=camera.pitch=0;camera.roll=90;
 const projected=camera.project({x:100,y:0,z:500,fontSize:10});
 assert.ok(Math.abs(projected.x-660)<1e-8&&Math.abs(projected.y-350)<1e-8,'A quarter roll rotates view projection consistently');
-console.log(`${fixtures.camera.length} native APK camera fixtures and ${samples} full-rotation frustum samples passed; fixed historical trails and pause recovery preserved.`);
+console.log(`${fixtures.camera.length} reference camera fixtures and ${samples} full-rotation frustum samples passed; fixed historical trails and pause recovery preserved.`);

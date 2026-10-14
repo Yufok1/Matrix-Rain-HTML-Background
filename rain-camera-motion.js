@@ -1,4 +1,4 @@
-// The Android renderer's animated view paths and orthonormal yaw/pitch/roll rows.
+// Calibrated animated view paths and orthonormal yaw/pitch/roll rows.
 // This module animates the virtual viewpoint; it never reads a device sensor.
 (function (root) {
     'use strict';

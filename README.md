@@ -8,7 +8,7 @@ The live demo and `matrix-rain-utility-suite.html` are the same application. Run
 
 ## Controls
 
-Click the small 3D arrow in the upper-right corner, or press **M**, to open settings. Escape collapses them. Shortcuts leave text fields alone. Drag the header to move the panel. On phones, the collapsible categories occupy the lower portion of the screen so the rain stays visible.
+Click the small 3D arrow in the upper-right corner, or press **M**, to open settings. Only one main category stays open. Buttons switch between Appearance/3D trails, Response/Color tuning and Motion/Orientation without nested dropdowns. Escape collapses them. Shortcuts leave text fields alone. Drag the header to move the compact panel. On desktop, **TV console** changes to a spaceship console: hull planes converge from all four screen corners around a central live rain window, with category buttons and working rotary dials. **Panel controls** restores the compact layout. This presentation preference stays local; changing it preserves all visual settings, trails and playback. On phones, settings occupy the lower 75% of the screen and leave the top quarter visible.
 
 The 3D arrow has a solid pyramid head with flat cel shading, outlined edges and a tiny tapered jet exhaust. Its hue complements the rain's current color. It stays dim during playback and brightens on hover or keyboard focus. It snaps against the rain’s actual heading, including reverse flow, and uses the rain camera's perspective from its position in the corner. Audio accents strengthen the exhaust; travel speed adds a restrained edge glow. A gentle hover and bank keep it visible during steady rain; the click target stays fixed. It shares the rain’s render clock and audio analysis, stops with the session, and disables idle motion and audio effects when reduced motion is requested.
 
@@ -33,7 +33,7 @@ Audio motion responds to new spectral content and evolving layers, with restrain
 
 **Browser:** with a loaded video or shared tab, **Start audio response** analyzes that source's sound directly, without another capture picker. Stopping audio response leaves video playback audible. Otherwise use a compatible Chrome/Edge screen or tab share with audio. The browser requires a screen/video track for that API; the audio-only response uses no picture, while **Share tab / screen** also depicts the shared picture. Nothing is recorded or uploaded. Phones can use a local video's audio even when browser system-audio sharing is unavailable.
 
-Desktop Gyroscope is an animated 3D view path. Desktop builds do not read motion sensors or GPS. Browser builds contain no webcam capture route, camera selection, subject isolation or bundled person model. The separate native Android APK retains its phone-output audio route and optional sensor-based Phone motion view; this browser update does not change the APK.
+Desktop Gyroscope is an animated 3D view path. Desktop builds do not read motion sensors or GPS. Browser builds contain no webcam capture route, camera selection, subject isolation or bundled person model.
 
 ## Run locally
 

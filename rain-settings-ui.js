@@ -1,5 +1,22 @@
 import './trails/rain-trails.js?v=2680146807bc';
 import {createSettingsBeacon} from './rain-settings-beacon.js?v=ff66d04f402d';
+import {mountSettingsConsole} from './rain-settings-console.js?v=e50eb891f3c5';
+
+// Buttons select one control page; only the main categories expand.
+function controlPages(parent,key,pages){
+    const tabs=document.createElement('div');tabs.className='settings-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label',key);
+    const body=document.createElement('div');body.className='settings-pages';
+    const choose=index=>pages.forEach((page,i)=>{page.node.hidden=i!==index;buttons[i].setAttribute('aria-selected',String(i===index));buttons[i].tabIndex=i===index?0:-1;});
+    const buttons=pages.map((page,index)=>{
+        const button=document.createElement('button');button.type='button';button.textContent=page.title;button.id=key+'-tab-'+index;
+        button.setAttribute('role','tab');button.setAttribute('aria-controls',key+'-page-'+index);
+        page.node.id=key+'-page-'+index;page.node.setAttribute('role','tabpanel');page.node.setAttribute('aria-labelledby',button.id);
+        button.onclick=()=>choose(index);
+        button.onkeydown=event=>{const next=event.key==='ArrowRight'?(index+1)%pages.length:event.key==='ArrowLeft'?(index+pages.length-1)%pages.length:event.key==='Home'?0:event.key==='End'?pages.length-1:-1;if(next<0)return;event.preventDefault();choose(next);buttons[next].focus();};
+        tabs.append(button);body.append(page.node);return button;
+    });
+    parent.append(tabs,body);choose(0);
+}
 
 // Move the existing controls, preserving their handlers and simulation state.
 window.addEventListener('DOMContentLoaded',()=>{
@@ -10,7 +27,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         details.innerHTML=`<summary>${title}<span class="category-note">${note}</span></summary><div class="category-body"></div>`;
         return details;
     };
-    const sub=(title)=>{const details=document.createElement('details');details.className='settings-subcategory';details.innerHTML=`<summary>${title}</summary><div></div>`;return details;};
+    const page=()=>{const section=document.createElement('section');section.className='settings-control-page';return section;};
     const row=(...nodes)=>{const box=document.createElement('div');box.className='settings-row';box.append(...nodes);return box;};
     const hint=text=>{const p=document.createElement('p');p.className='settings-hint';p.textContent=text;return p;};
     const control=id=>{const item=el(id).closest('.control-item');const label=item.querySelector('label');if(label)label.htmlFor=id;return item;};
@@ -29,11 +46,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     manual.append(hint('Manual appearance. Audio response takes over speed, intensity, direction, colors and characters.'),patterns,
         control('rainSpeed'),control('rainIntensity'),control('characterSet'),control('rainDirection'));
     const colors=document.createElement('div');colors.className='settings-grid';colors.append(control('primaryColor'),control('secondaryColor'));manual.append(colors);
-    const manualDetails=sub('Manual appearance');manualDetails.lastElementChild.append(manual);rb.append(manualDetails);
+    const appearance=page();appearance.append(manual);
     const auto=el('autoOrchestratorBtn'),reverse=el('reverseFlowBtn'),shuffle=document.querySelector('[onclick="activateChaosRandomizer()"]');
     shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle,auto));
-    const trailDetails=sub('3D trails'),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';
-    trailField.append(el('rain-trails-panel'));trailDetails.lastElementChild.append(trailField,hint('Tail length and stepped fade apply to the 3D camera view.'));rb.append(trailDetails);
+    const trails=page(),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';
+    trailField.append(el('rain-trails-panel'));trails.append(trailField,hint('Tail length and stepped fade apply to the 3D camera view.'));
+    controlPages(rb,'rain-controls',[{title:'Appearance',node:appearance},{title:'3D trails',node:trails}]);
 
     const audio=category('settings-audio','Audio response','Motion · palette'),ab=audio.lastElementChild;
     const audioTitle=document.createElement('span');audioTitle.className='audio-color-label';audioTitle.setAttribute('aria-label','Audio response');
@@ -49,24 +67,31 @@ window.addEventListener('DOMContentLoaded',()=>{
     }
     const defaultPalette=document.createElement('button');defaultPalette.type='button';defaultPalette.className='btn';defaultPalette.dataset.palette='default';defaultPalette.textContent='Default';defaultPalette.onclick=()=>setColorPreset('default');palette.prepend(defaultPalette);
     const beat=el('toggleAudioReverseBtn'),beatStatus=el('beatTurnPolicyStatus'),colorControls=document.querySelector('.audio-color-controls');
-    const advanced=sub('Color response tuning');advanced.lastElementChild.append(...Array.from(colorControls.children).slice(1));
-    audioField.replaceChildren(palette,colorControls,advanced,beat,beatStatus,hint('New letters follow the sound. Each keeps its assigned color until it fades.'));
+    const tuning=page();tuning.append(...Array.from(colorControls.children).slice(1));
+    const response=page();response.append(colorControls,beat,beatStatus,hint('New letters follow the sound. Each keeps its assigned color until it fades.'));
+    audioField.replaceChildren(palette);controlPages(audioField,'audio-controls',[{title:'Response',node:response},{title:'Color tuning',node:tuning}]);
     document.querySelector('label[for="hueReactSlider"]').textContent='Hue range';
     document.querySelector('label[for="satGainSlider"]').textContent='Saturation response';
     document.querySelector('label[for="brightDepthSlider"]').textContent='Brightness response';
     ab.append(el('audioReactiveBtn'),el('audioStatus'),el('audioVisualizer'),audioField);
 
     const camera=category('settings-camera','Camera','Flat · 3D'),cb=camera.lastElementChild;
-    const cameraPanel=el('rain-camera-panel');cb.append(cameraPanel);
+    const cameraPanel=el('rain-camera-panel'),motion=page();motion.append(cameraPanel);
     cameraPanel.querySelector('#cameraReset').remove(); // Enable camera is the single flat/3D switch.
-    const pose=sub('Manual orientation');
-    for(const axis of ['Yaw','Pitch','Roll']){const input=cameraPanel.querySelector('#camera'+axis);pose.lastElementChild.append(input.previousElementSibling,input);}
-    cb.append(pose);
+    const pose=page();
+    for(const axis of ['Yaw','Pitch','Roll']){const input=cameraPanel.querySelector('#camera'+axis);pose.append(input.previousElementSibling,input);}
+    controlPages(cb,'camera-controls',[{title:'Motion',node:motion},{title:'Orientation',node:pose}]);
     const render=category('settings-rendering','Rendering','Clarity · performance'),renderField=document.createElement('fieldset');renderField.id='rain-render-settings';renderField.append(el('rain-rendering-panel'));render.lastElementChild.append(renderField,hint('Rendering options apply to the 3D camera view.'));
     const share=el('rain-share-panel');share.className='settings-category';share.removeAttribute('style');share.querySelector('summary').innerHTML='Configurations<span class="category-note">Copy · paste · share</span>';
     share.querySelector('p').textContent='Share every visual setting in one code. Import keeps listening, playback and Auto Orchestrator activation as they are.';
     content.replaceChildren(rain,audio,camera,render,share);
     window.rainMedia?.mount(content,render);
+    // Native exclusive details plus a fallback for older embedded browsers.
+    const categories=Array.from(content.querySelectorAll(':scope > .settings-category'));
+    categories.forEach((details,index)=>{
+        details.setAttribute('name','omni-settings');details.style.setProperty('--category-row',index+1);
+        details.addEventListener('toggle',()=>{if(!details.open)return;for(const other of categories)if(other!==details)other.open=false;});
+    });
 
     const toggle=el('minimizeBtn');
     const logo='<svg class="settings-launch-icon" viewBox="0 0 40 42" aria-hidden="true"><path fill="currentColor" stroke="#c0ffd7" stroke-width="1.5" d="M20 3l14 17h-9v19H15V20H6Z"/></svg>';
@@ -87,6 +112,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     stop.onclick=()=>rainSessionControls.stopped?rainSessionControls.resume():rainSessionControls.stop();
     const reset=document.createElement('button');reset.id='rain-reset';reset.type='button';reset.textContent='Reset';reset.title='Restore defaults and restart rain';reset.onclick=()=>rainSessionControls.reset();
     headerActions.prepend(stop,reset);
+    const consoleUI=mountSettingsConsole(modal,content,headerActions);
     window.rainSettingsUI={refresh(){
         const collapsed=modal.classList.contains('minimized');
         toggle.setAttribute('aria-label',collapsed?'Open settings':'Collapse settings');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.title=collapsed?'Settings · M':'Collapse settings · M';
@@ -106,6 +132,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         for(const b of patterns.children)b.setAttribute('aria-pressed',String(b.classList.contains('active')));
         shuffle.textContent='Shuffle once';shuffle.disabled=audioReactiveActive;
         for(const id of ['rainDensity','rainSpeed','rainIntensity'])el(id+'Value').textContent=el(id).value+'%';
+        consoleUI.refresh();
     }};
     new MutationObserver(()=>rainSettingsUI.refresh()).observe(modal,{attributes:true,attributeFilter:['class']});
     // Refresh after existing handlers; audio startup is async and announces
