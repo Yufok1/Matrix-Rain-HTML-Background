@@ -1,11 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const storage=initial=>{const values=new Map(Object.entries(initial));return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,String(value))};};
-function loadFlow(localStorage){const window={};vm.runInNewContext(fs.readFileSync('rain-audio-flow.js','utf8')+'\n'+fs.readFileSync('rain-all-directions.js','utf8'),{window,localStorage});return window.rainAllDirections;}
-for(const old of [{},{'matrixRain.flowFollowMusic':'true'}]){
- const saved=storage(old),flow=loadFlow(saved);assert.equal(flow.followMusic,false,'Fresh and upgraded sessions require opt-in');
- flow.setFollowMusic(true);assert.equal(loadFlow(saved).followMusic,true,'Explicit opt-in survives reload');
- flow.setFollowMusic(false);assert.equal(loadFlow(saved).followMusic,false,'Explicit opt-out survives reload');
-}
 function loadTrails(localStorage){
  const controls=new Map(),get=id=>{if(!controls.has(id))controls.set(id,{value:0,checked:false,disabled:false,textContent:''});return controls.get(id);};
  const panel={style:{},querySelector:selector=>get(selector)};
@@ -23,7 +17,6 @@ for(const old of [{},{'matrixRain.trails':JSON.stringify({minimum:24,maximum:90,
 }
 const window={addEventListener(){}};vm.runInNewContext(fs.readFileSync('rain-settings-codec.js','utf8'),{window});
 vm.runInNewContext(fs.readFileSync('rain-settings-share.js','utf8'),{window,document:{getElementById(){}},RainSettingsCodec:window.RainSettingsCodec});
-assert.equal(window.rainSettingsShare.defaults().audio.flowFollow,false,'Reset leaves Follow music off');
+assert.equal(Object.hasOwn(window.rainSettingsShare.defaults().audio,'flowFollow'),false,'Reset has no automatic flow setting');
 assert.equal(window.rainSettingsShare.defaults().trails.enabled,false,'Reset leaves variable tails off');
-assert.doesNotMatch(fs.readFileSync('rain-all-directions.js','utf8'),/Follow music · expand \/ contract|Live expansion and gathering|musical expansion and contraction/,'Remove the wording, retain the feature');
-console.log('PASS fresh, legacy, explicit opt-in, reload and Reset defaults for Follow music and variable tails.');
+console.log('PASS fresh, legacy, explicit opt-in, reload and Reset defaults for variable tails; retired flow absent from Reset.');

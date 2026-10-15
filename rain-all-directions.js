@@ -8,18 +8,17 @@
     const labels=['Single direction','Counterflow','Crossflow · all directions'];
     const notes={directed:'Original shared direction.',crossflow:'All six headings together; four in flat view.',
         counterflow:'Two opposing currents. The existing conductor steers both lanes.'};
-    const state=root.rainAllDirections={mode:'directed',manualMode:'directed',followMusic:false,audioOwned:false,
-        frame:0,depth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0,
-        expansion:null,conductor:root.RainAudioFlow?new root.RainAudioFlow():null};
+    const state=root.rainAllDirections={mode:'directed',manualMode:'directed',
+        frame:0,depth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0};
     Object.defineProperty(state,'enabled',{get(){return this.mode!=='directed';}});
-    Object.defineProperty(state,'liveExpansion',{get(){return this.audioOwned&&this.mode!=='directed'&&this.expansion!==null;}});
-    Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning||this.liveExpansion;}});
-    try{const saved=localStorage.getItem('matrixRain.flow')??localStorage.getItem('matrixRain.angularFlow');if(modes.includes(saved))state.mode=state.manualMode=saved;
-        // The previous release enabled Follow music by default. Require one
-        // explicit opt-in after this correction, preserving every other choice.
-        const optedIn=localStorage.getItem('matrixRain.flowFollowMusic.optIn')==='1';
-        state.followMusic=optedIn&&localStorage.getItem('matrixRain.flowFollowMusic')==='true';
-        if(!optedIn){localStorage.setItem('matrixRain.flowFollowMusic','false');localStorage.setItem('matrixRain.flowFollowMusic.optIn','1');}}catch{}
+    Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning;}});
+    try{
+        const saved=localStorage.getItem('matrixRain.flow')??localStorage.getItem('matrixRain.angularFlow');
+        if(modes.includes(saved))state.mode=state.manualMode=saved;
+        // Retire old automatic preferences while preserving the manual pattern.
+        localStorage.removeItem?.('matrixRain.flowFollowMusic');
+        localStorage.removeItem?.('matrixRain.flowFollowMusic.optIn');
+    }catch{}
     let order=null,ranks=null;
     function rankFor(index){
         const current=root.columnOrder;
@@ -46,20 +45,10 @@
         const depth=typeof rainCamera==='undefined'?true:rainCamera.enabled;
         if(frame<this.lastFrame||depth!==this.depth){this.records.clear();this.clearForks();this.transitioning=false;}
         this.frame=Number.isFinite(frame)?frame:this.frame+1;this.lastFrame=this.frame;this.depth=depth;
-        this.syncAudio();
     };
     state.directionFor=function(index,depth=true){
         if(!this.enabled)return null;
         const rank=rankFor(index),h=heading();
-        if(this.liveExpansion){
-            // A musical bloom changes formation once. Keep its cohorts intact
-            // while individual beats drive the existing fast steering / speed.
-            if(this.mode==='crossflow'){
-                const cohort=depth?['down','right','away','up','left','toward']:['down','right','up','left'];
-                return rotate(cohort[((rank%cohort.length)+cohort.length)%cohort.length],h,depth);
-            }
-            return rotate(rank%2?'up':'down',h,depth);
-        }
         if(this.mode==='crossflow'){
             const cohort=depth?['down','right','away','up','left','toward']:['down','right','up','left'];
             return rotate(cohort[((rank%cohort.length)+cohort.length)%cohort.length],h,depth);
@@ -68,23 +57,16 @@
     };
     state.planStep=function(index,depth,fontSize,speed){
         let r=this.records.get(index);
-        const live=this.liveExpansion;
-        if(!live&&this.mode!=='counterflow'&&!r?.transition)return null;
+        if(this.mode!=='counterflow'&&!r?.transition)return null;
         r=r||record(index);
         const desired=this.directionFor(index,depth)||heading();
-        if(live&&r.desired!==desired){
-            if(!r.last&&typeof rainMotion!=='undefined')r.last=rainMotion.drops[index]?.lastStepDirection||heading();
-            const opening=r.formation!==this.mode;
-            r.formation=this.mode;r.desired=desired;r.transition=r.last!==desired;r.forked=false;
-            r.delay=opening?(r.rank%8)*fontSize*.35:0;r.hold=0;
-        }
         if(!r.unit)r.unit=fontSize;
         // An opposite request gets a real perpendicular segment, not a one-glyph
         // twitch. Reverse flow remains the user's explicit global reversal.
         let actual=r.last||desired;
         if(r.delay>0){r.distanceKey='delay';}
         else if(r.hold<=0){
-            if(actual===opposite[desired]){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*(live?3:6);}
+            if(actual===opposite[desired]){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*6;}
             else actual=desired;
             if(r.transition&&!r.forked&&actual!==r.last){this.spawnFork(index,r.last,fontSize);r.forked=true;}
             if(actual===desired&&r.transition){
@@ -101,7 +83,6 @@
     };
     state.afterStep=function(index,fontSize,speed){
         const r=this.records.get(index);if(!r)return;
-        r.forkTravel=Math.max(0,(r.forkTravel||0)-Math.max(0,speed));
         if(r.distanceKey==='delay'){r.delay=Math.max(0,r.delay-Math.max(0,fontSize*speed));r.distanceKey=null;}
         else if(r.hold>0)r.hold=Math.max(0,r.hold-Math.max(0,fontSize*speed));
         const fork=this.forks.get(index);if(fork){
@@ -118,17 +99,8 @@
     state.spawnFork=function(index,direction,fontSize){
         if(typeof rainMotion==='undefined'||!vectors[direction])return;
         const p=rainMotion.drops[index];if(!p)return;
-        const live=this.liveExpansion;
-        if(live){
-            const r=record(index);
-            // A split is an accent, not a second population on every joint.
-            // Share sparse opportunities fairly as the real heads travel.
-            const population=root.activeColumnsMask?root.activeColumnsMask.filter(Boolean).length:rainMotion.drops.length;
-            if(this.forks.has(index)||r.forkTravel>0||this.forks.size>=Math.max(1,Math.floor(population*.12)))return;
-            r.forkTravel=24;
-        }
         this.removeFork(index);
-        const fork={id:'flow-fork-'+(++this.serial),direction,remaining:live?5:10,head:{...p,sourceId:index,lastStamp:null},fontSize};
+        const fork={id:'flow-fork-'+(++this.serial),direction,remaining:10,head:{...p,sourceId:index,lastStamp:null},fontSize};
         this.forks.set(index,fork);
         if(typeof rainCamera!=='undefined'){
             const stream=rainCamera.streams.get(index);
@@ -177,56 +149,20 @@
         if(typeof recomputeActiveColumnsMask==='function')recomputeActiveColumnsMask();
         this.refresh?.();
     };
-    state.syncAudio=function(){
-        const owned=this.followMusic&&!!(root.audioReactiveActive||root.rainSessionControls?.audioPaused);
-        if(owned===this.audioOwned)return;
-        const seed=owned?'directed':this.manualMode;
-        this.audioOwned=owned;this.expansion=owned?modes.indexOf(seed):null;
-        this.records.clear();this.clearForks();this.transitioning=false;
-        this.conductor?.reset(seed);this.applyMode(seed);this.refresh?.();
-    };
-    state.resetAudio=function(){
-        this.conductor?.reset();
-        if(this.audioOwned){this.expansion=0;this.applyMode('directed');}
-    };
-    state.updateAudio=function(analysis,motion,now){
-        this.syncAudio();if(!this.audioOwned||root.rainSessionControls?.stopped||!this.conductor)return;
-        const out=this.conductor.update(analysis,motion,now);
-        if(out.mode==='directed'){
-            // Single is the original shared-heading renderer, not the bottom
-            // portion of a partially split field. Retire daughter heads and
-            // their route memory; all historical glyphs stay where born.
-            this.expansion=0;this.applyMode('directed');return;
-        }
-        this.expansion=out.expansion;
-        // Keep per-head joints alive while the audio reverses a partial split.
-        // Clearing/restarting every stream here would erase that responsiveness.
-        if(this.mode!==out.mode){this.mode=out.mode;this.refresh?.();}
-    };
-    state.setFollowMusic=function(value){
-        this.followMusic=!!value;try{localStorage.setItem('matrixRain.flowFollowMusic.optIn','1');localStorage.setItem('matrixRain.flowFollowMusic',String(this.followMusic));}catch{}
-        this.syncAudio();this.refresh?.();
-    };
     state.setMode=function(mode){
         if(!modes.includes(mode))return;
         this.manualMode=mode;try{localStorage.setItem('matrixRain.flow',mode);}catch{}
-        this.conductor?.reset(mode);this.applyMode(mode);this.refresh?.();
+        this.applyMode(mode);this.refresh?.();
     };
     state.setEnabled=function(value){this.setMode(value?'crossflow':'directed');};
     state.mount=function(parent){
         const panel=document.createElement('div');panel.id='rain-all-directions';
-        panel.innerHTML='<strong>Flow pattern</strong><div class="settings-row" role="group" aria-label="Flow pattern">'+modes.map(mode=>`<button type="button" data-flow="${mode}"${mode==='directed'?' id="all-directions-off"':mode==='crossflow'?' id="all-directions-on"':''}>${labels[modes.indexOf(mode)]}</button>`).join('')+'</div><label><input type="checkbox" id="flow-follow-music"> Follow music</label><p id="all-directions-status" class="settings-hint" role="status"></p>';
+        panel.innerHTML='<strong>Flow pattern</strong><div class="settings-row" role="group" aria-label="Flow pattern">'+modes.map(mode=>`<button type="button" data-flow="${mode}"${mode==='directed'?' id="all-directions-off"':mode==='crossflow'?' id="all-directions-on"':''}>${labels[modes.indexOf(mode)]}</button>`).join('')+'</div><p id="all-directions-status" class="settings-hint" role="status"></p>';
         parent.append(panel);
-        for(const b of panel.querySelectorAll('[data-flow]'))b.onclick=()=>{if(this.audioOwned)this.setFollowMusic(false);this.setMode(b.dataset.flow);};
-        const follow=panel.querySelector('#flow-follow-music');
-        // Commit before the surrounding panel's input refresh reads controller state.
-        follow.onclick=follow.oninput=follow.onchange=e=>this.setFollowMusic(e.target.checked);
+        for(const b of panel.querySelectorAll('[data-flow]'))b.onclick=()=>this.setMode(b.dataset.flow);
         this.refresh=()=>{
             for(const b of panel.querySelectorAll('[data-flow]'))b.setAttribute('aria-pressed',String(b.dataset.flow===this.mode));
-            panel.querySelector('#flow-follow-music').checked=this.followMusic;
-            panel.querySelector('#all-directions-status').textContent=this.audioOwned?
-                'Following sound: '+labels[modes.indexOf(this.mode)]+'. Single is home; the other patterns are brief musical accents.':
-                notes[this.mode]+(this.followMusic?' Start audio response for brief Counterflow and Crossflow accents.':'');
+            panel.querySelector('#all-directions-status').textContent=notes[this.mode];
         };this.refresh();
     };
 })(typeof window==='undefined'?globalThis:window);

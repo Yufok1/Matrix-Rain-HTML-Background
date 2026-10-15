@@ -15,12 +15,12 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:13,name,
+            v:14,name,
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
                 direction:MatrixRainEngine.rainConfig.direction,reverse:reverseFlowMultiplier===-1,flow:window.rainAllDirections.manualMode},
-            audio:{preset:audioColorPreset,beatTurns:audioReverseEnabled,flowFollow:window.rainAllDirections.followMusic,
+            audio:{preset:audioColorPreset,beatTurns:audioReverseEnabled,
                 fluctuation:colorFluctuationPercent,hueReact:rounded(hueReactivityScale*100),
                 saturationGain:rounded(satGainScale*100),brightnessDepth:rounded(brightnessDepthScale*100),
                 spread:audioHueSpread,trebleHueRange:audioHighModRange,saturationFloor:satFloor,
@@ -39,7 +39,7 @@
             'primaryColor','secondaryColor','colorFluctuationSlider','hueReactSlider','satGainSlider','brightDepthSlider',
             'render-sharp','render-smooth','render-glow','render-contrast','trail-variety','trail-stepped','trail-shortest','trail-longest',
             'cameraEnabled','cameraYaw','cameraPitch','cameraRoll','cameraSpeed','toggleAudioReverseBtn','reverseFlowBtn'];
-        if (!window.matrixRainTrails || !window.rainAllDirections?.setMode || !window.rainAllDirections?.setFollowMusic || !window.RainMediaCharacters?.setMode || required.some(id=>!el(id))) throw Error('Settings are still loading. Try again in a moment.');
+        if (!window.matrixRainTrails || !window.rainAllDirections?.setMode || !window.RainMediaCharacters?.setMode || required.some(id=>!el(id))) throw Error('Settings are still loading. Try again in a moment.');
         const set=(id,value,handler)=>{el(id).value=value;handler();};
         const check=(id,value)=>{el(id).checked=value;el(id).onchange();};
         setRainPattern(s.rain.pattern,document.querySelector(`.pattern-btn[onclick*="'${s.rain.pattern}'"]`));
@@ -51,7 +51,6 @@
         if (audioReverseEnabled!==s.audio.beatTurns) toggleAudioReverse();
         rainCamera.setEnabled(s.camera.enabled);set('rainDirection',s.rain.direction,updateRainDirection);
         window.rainAllDirections.setMode(s.rain.flow);
-        window.rainAllDirections.setFollowMusic(s.audio.flowFollow);
         setColorPreset(s.audio.preset);
         set('colorFluctuationSlider',s.audio.fluctuation,updateColorFluctuation);
         set('hueReactSlider',s.audio.hueReact,updateHueReactivity);
@@ -74,9 +73,9 @@
         window.rainSettingsUI?.refresh();
         return s;
     }
-    function defaults(){return RainSettingsCodec.validate({v:13,name:'',
+    function defaults(){return RainSettingsCodec.validate({v:14,name:'',
         rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'katakana',customCharacters:'',direction:'down',reverse:false,flow:'directed'},
-        audio:{preset:'zen',beatTurns:false,flowFollow:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
+        audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
         camera:{enabled:true,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
         render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:false,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100,characters:'shading',dotDensity:50}
     });}

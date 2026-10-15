@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=9c9b8ab6851a"></script>
+    <script src="rain-settings-codec.js?v=0bf9605a2989"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -3395,7 +3395,6 @@
         let audioMotionSpectrum = null;
         function resetAudioMotion() {
             audioMotion.reset();
-            window.rainAllDirections?.resetAudio?.();
             audioMotionSpectrum = null;
             audioColorFluctuation.reset();
             window.rainMelodyColor.reset();
@@ -3419,7 +3418,6 @@
             const audioNow = performance.now();
             const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), audioNow,
                 config.direction, rainCamera.enabled, audioReverseEnabled);
-            window.rainAllDirections?.updateAudio?.(audioMotion, musicalMotion, audioNow);
             config.speed = musicalMotion.speed;
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
@@ -3547,11 +3545,10 @@
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
-<script src="rain-audio-flow.js?v=eb2c0d22dcd0"></script>
-<script src="rain-all-directions.js?v=1cb577f173fd"></script>
+<script src="rain-all-directions.js?v=e32daf693c68"></script>
 <script src="rain-camera.js?v=5bb30a77b2dc"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=1945b8181d99"></script>
+<script src="rain-settings-share.js?v=d55f6db66fa1"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
 <script type="module" src="rain-settings-ui.js?v=5d2129354039"></script>
 </body>

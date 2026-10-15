@@ -6,7 +6,7 @@ const el=id=>{if(!controls.has(id))controls.set(id,{value:0,checked:false,onchan
 const ctx={console,RainSettingsCodec:codec,localStorage:{setItem(){}},
  document:{getElementById:el,querySelector(){return{onclick(){}};}},
  window:{addEventListener(){},matrixRainTrails:{...fixture.trails},matrixRainRendering:{...fixture.render,glow:.15,contrast:1},
- rainAllDirections:{mode:'directed',manualMode:'directed',followMusic:false,enabled:false,setMode(v){this.mode=this.manualMode=v;this.enabled=v!=='directed';},setFollowMusic(v){this.followMusic=v;}},
+ rainAllDirections:{mode:'directed',manualMode:'directed',enabled:false,setMode(v){this.mode=this.manualMode=v;this.enabled=v!=='directed';}},
  RainMediaCharacters:{mode:'original',density:50,setMode(v){this.mode=v;},setDensity(v){this.density=v;}}},
  MatrixRainEngine:{rainConfig:{...fixture.rain}},reverseFlowMultiplier:1,
  audioColorPreset:fixture.audio.preset,audioReverseEnabled:fixture.audio.beatTurns,
@@ -21,7 +21,7 @@ vm.runInNewContext(fs.readFileSync('rain-settings-share.js','utf8'),ctx);
 const share=ctx.window.rainSettingsShare;
 assert.deepEqual(codec.decode(share.export(fixture.name)),fixture,'Capture includes real controller state');
 for(const mode of ['original','shading','braille','lines']){
- const next=structuredClone(fixture);next.rain.flow='crossflow';next.audio.flowFollow=true;next.media.characters=mode;next.media.dotDensity=87;
+ const next=structuredClone(fixture);next.rain.flow='crossflow';next.media.characters=mode;next.media.dotDensity=87;
  share.import(codec.encode(next));
  assert.equal(ctx.window.rainAllDirections.enabled,true);
  assert.equal(ctx.window.RainMediaCharacters.mode,mode);
@@ -32,7 +32,7 @@ for(const mode of ['original','shading','braille','lines']){
 share.apply(share.defaults());
 assert.equal(ctx.window.rainAllDirections.enabled,false,'Reset restores Single direction');
 assert.equal(ctx.window.RainMediaCharacters.mode,'shading');assert.equal(ctx.window.RainMediaCharacters.density,50);
-assert.equal(ctx.window.rainAllDirections.followMusic,false,'Reset keeps Follow music off');
+assert.equal(Object.hasOwn(share.defaults().audio,'flowFollow'),false,'Retired automatic flow is absent from exports');
 ctx.window.rainAllDirections.mode='crossflow';
 assert.equal(share.capture().rain.flow,'directed','Export saves manual intent, not the passing audio formation');
 const before=JSON.stringify(share.capture());
@@ -41,4 +41,8 @@ assert.equal(JSON.stringify(share.capture()),before,'Invalid shape data cannot p
 const retained=ctx.window.RainMediaCharacters;delete ctx.window.RainMediaCharacters;
 assert.throws(()=>share.apply(fixture),/still loading/,'Missing runtime fails before mutation');
 ctx.window.RainMediaCharacters=retained;assert.equal(JSON.stringify(share.capture()),before);
+const legacy=structuredClone(fixture);legacy.v=13;legacy.rain.flow='counterflow';legacy.audio.flowFollow=true;
+share.import('MR13.'+Buffer.from(JSON.stringify(legacy)).toString('base64url'));
+assert.equal(ctx.window.rainAllDirections.mode,'counterflow','Legacy automatic-on codes import their manual choice');
+assert.equal(Object.hasOwn(share.capture().audio,'flowFollow'),false,'Re-export cannot restore automatic switching');
 console.log('PASS flow and four picture modes capture/apply/reset, tone isolation and rejected-import atomicity.');
