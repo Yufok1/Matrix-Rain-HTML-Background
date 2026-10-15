@@ -31,19 +31,29 @@ const rainCameraGPU = {
             const gl=this.gl=this.canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,preserveDrawingBuffer:new URLSearchParams(location.search).has('audit')});
             if(!gl)throw new Error('WebGL unavailable');this.instances=gl.getExtension('ANGLE_instanced_arrays');if(!this.instances)throw new Error('Instancing unavailable');
             this.derivatives=!!gl.getExtension('OES_standard_derivatives');this.maxSize=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            this.pictureVertexSampling=gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS)>0&&!new URLSearchParams(location.search).has('picture-fragment');
+            const pictureSelection=window.RainMediaCharacters?.selectionGLSL||'';
             this.main=this.program(`
                 attribute vec2 corner;attribute vec4 point,color,atlasRect,shape;attribute vec2 lifetime;attribute vec3 delta;attribute float format;
                 uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase;uniform bool smoothMotion,stepped,variety;
                 varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
+                uniform bool mediaLive;uniform lowp int mediaCharacters;uniform sampler2D mediaImage;uniform mediump float mediaDotAmount,mediaShadeCount;
+                varying vec2 pictureLocal;varying vec4 pictureRect;varying float pictureIndex;
+                ${this.pictureVertexSampling?pictureSelection:''}
                 float level(float p){float s=floor(p*8.);if(s<1.)return 1.;if(s<2.)return .68;if(s<3.)return .45;if(s<4.)return .29;if(s<5.)return .18;if(s<6.)return .105;if(s<7.)return .06;return .032;}
                 void main(){
                     float age=mod(ageNow-lifetime.x+4096.,4096.),length=variety?lifetime.y:40.;
-                    if(age>=length){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=mod(format,2.);imagePotential=0.;return;}
+                    if(age>=length){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=mod(format,2.);imagePotential=0.;pictureLocal=vec2(0.);pictureRect=vec4(0.);pictureIndex=0.;return;}
                     float p=age/length,fade=stepped?level(p):(variety?exp(-4.*p)*(1.-p):pow(.88,age));
                     vec3 location=point.xyz;if(smoothMotion&&age<.5)location-=delta*(1.-phase);
                     vec3 world=location+cell-vec3(0.,0.,focal);
                     vec3 view=vec3(dot(rowX,world),dot(rowY,world),dot(rowZ,world)+focal);
-                    vec2 offset=vec2(mix(shape.x,shape.z,corner.x),mix(shape.y,shape.w,corner.y))*point.w;
+                    vec4 bounds=shape;
+                    if(mediaLive&&mediaCharacters>0)bounds=mediaCharacters==2?vec4(0.,-.8,.6,0.):vec4(-.05,-.85,.65,.25);
+                    vec2 offset=vec2(mix(bounds.x,bounds.z,corner.x),mix(bounds.y,bounds.w,corner.y))*point.w;
+                    pictureLocal=corner;pictureIndex=0.;
+                    pictureRect=vec4(vec2(.5)+(view.xy+bounds.xy*point.w)*focal/(viewport*view.z),(bounds.zw-bounds.xy)*point.w*focal/(viewport*view.z));
+                    ${this.pictureVertexSampling?'if(mediaLive&&mediaCharacters>0&&view.z>range.x&&view.z<range.y&&pictureRect.x<1.&&pictureRect.y<1.&&pictureRect.x+pictureRect.z>0.&&pictureRect.y+pictureRect.w>0.)pictureIndex=chooseMediaPattern(pictureRect);':''}
                     vec2 pixel=(view.xy+offset)*vec2(2.*focal/viewport.x,-2.*focal/viewport.y);
                     float z=(range.y+range.x)/(range.y-range.x)*view.z-2.*range.y*range.x/(range.y-range.x);gl_Position=vec4(pixel,z,view.z);
                     uv=mix(atlasRect.xy,atlasRect.zw,corner);glyphFormat=mod(format,2.);
@@ -57,6 +67,9 @@ const rainCameraGPU = {
                 precision mediump float;
                 #endif
                 uniform sampler2D msdf,raster,mediaImage;uniform vec2 atlasSize,mediaViewport;uniform float pxRange,mediaInfluence;uniform bool mediaLive;varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
+                uniform sampler2D pictureAtlas;uniform lowp int mediaCharacters;uniform mediump float mediaDotAmount,mediaShadeCount;uniform vec2 pictureGrid;uniform float pictureInset;
+                varying vec2 pictureLocal;varying vec4 pictureRect;varying float pictureIndex;
+                ${this.pictureVertexSampling?'':pictureSelection}
                 float median3(vec3 v){return max(min(v.r,v.g),min(max(v.r,v.g),v.b));}
                 void main(){float a;
                     float strength=0.,mediaCoverage=0.;
@@ -71,8 +84,15 @@ const rainCameraGPU = {
                         ink=mix(ink,picture.rgb,picture.a*mediaInfluence);
                     }
                     float emphasis=strength*mediaInfluence;
+                    if(mediaLive&&mediaCharacters>0){
+                        float index=${this.pictureVertexSampling?'floor(pictureIndex+.5)':'chooseMediaPattern(pictureRect)'};
+                        vec2 glyphCell=vec2(mod(index,pictureGrid.x),floor(index/pictureGrid.x));
+                        vec2 pictureUV=(glyphCell+mix(vec2(pictureInset),vec2(1.-pictureInset),pictureLocal))/pictureGrid;
+                        a=texture2D(pictureAtlas,pictureUV).a;
+                    }else{
                     ${this.derivatives?`if(glyphFormat>.5){vec2 screenTexSize=vec2(1.)/max(fwidth(uv),vec2(.000001));float scale=max(.5*dot(vec2(pxRange)/atlasSize,screenTexSize),1.);a=clamp(scale*(median3(texture2D(msdf,uv).rgb)-.5+emphasis*.10)+.5,0.,1.);}else`:''}
                     {a=texture2D(raster,uv).a;}
+                    }
                     // Media supplies its own RGB ink.
                     // Preserve the approved media visibility curve. Trail lifetime
                     // still controls when each glyph disappears.
@@ -83,11 +103,13 @@ const rainCameraGPU = {
                     if(a*alpha<.003)discard;gl_FragColor=vec4(ink,alpha*a);
                 }`,['corner','point','color','atlasRect','shape','lifetime','delta','format']);
             this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
+            Object.assign(this.u,this.uniforms(this.main,['pictureAtlas','mediaCharacters','mediaDotAmount','mediaShadeCount','pictureGrid','pictureInset']));
             this.corners=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
             this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.capacity*this.stride*4,gl.DYNAMIC_DRAW);this.staging=new Float32Array(this.capacity*this.stride);
             this.msdfTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
             this.rasterTexture=this.texture();this.atlas=document.createElement('canvas');this.atlas.width=this.atlas.height=Math.min(1536,this.maxSize);this.grid=Math.floor(this.atlas.width/96);this.ctx=this.atlas.getContext('2d');this.ctx.font='64px monospace';this.ctx.fillStyle='#fff';this.rasterDirty=true;
             this.mediaTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,255]));this.mediaRevision=-1;
+            this.pictureTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));this.pictureRevision=-1;
             const c=document.createElement('canvas');c.width=c.height=1;this.colorCtx=c.getContext('2d',{willReadFrequently:true});this.glyph('�');
             this.fontReady=false;this.loadFont();this.initPost();this.initialized=true;this.invalidate=true;return true;
         }catch(error){this.failed=true;this.hide();console.warn('3D renderer unavailable; using Original View.',error.message);return false;}
@@ -181,6 +203,13 @@ const rainCameraGPU = {
         if(frame){
             if(frame.revision!==this.mediaRevision){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,frame.canvas);this.mediaRevision=frame.revision;}
         }
+        const characters=window.RainMediaCharacters,atlas=window.RainMediaGlyphAtlas;
+        const pictureMode=frame&&characters?.image&&atlas?characters.number():0;
+        gl.uniform1i(u.pictureAtlas,3);gl.uniform1i(u.mediaCharacters,pictureMode);
+        gl.uniform1f(u.mediaDotAmount,(characters?.density??50)/100);gl.uniform1f(u.mediaShadeCount,atlas?.shades.length||1);
+        gl.uniform2f(u.pictureGrid,atlas?.cols||1,atlas?.rows||1);gl.uniform1f(u.pictureInset,atlas?atlas.pad/atlas.tile:0);
+        gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.pictureTexture);
+        if(characters?.image&&this.pictureRevision!==characters.revision){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,characters.image);this.pictureRevision=characters.revision;}
         gl.uniform3f(u.rowX,r[0],r[1],r[2]);gl.uniform3f(u.rowY,r[3],r[4],r[5]);gl.uniform3f(u.rowZ,r[6],r[7],r[8]);gl.uniform2f(u.viewport,width,height);gl.uniform1f(u.focal,rainFocalLength);gl.uniform2f(u.range,camera.near,camera.far);
         gl.uniform1f(u.ageNow,age%4096);gl.uniform1f(u.phase,Math.max(0,Math.min(1,phase)));gl.uniform1i(u.smoothMotion,options.smooth!==false);gl.uniform1i(u.stepped,trails?.stepped!==false);gl.uniform1i(u.variety,trails?.enabled!==false);
 
@@ -189,7 +218,7 @@ const rainCameraGPU = {
         gl.uniform1i(u.mediaLive,false);gl.uniform1f(u.mediaInfluence,0);
         if(post)this.post(glow,contrast,pw,ph);
         this.stats={cells,selectedCells:camera.tiles.length,marks:camera.marks.length,gpuSlots:this.used,instances:cells*this.used,cpuMs:performance.now()-started,uploadedBytes:uploaded,sharp:this.fontReady&&options.sharp!==false,pixelRatio:ratio,size:[pw,ph],glow,phase};
-        const mediaOutput=document.getElementById('media-assembly-status');if(mediaOutput){mediaOutput.dataset.gpuCpuMs=this.stats.cpuMs.toFixed(2);mediaOutput.dataset.worldMarks=String(camera.marks.length);mediaOutput.dataset.cells=String(cells);}
+        const mediaOutput=document.getElementById('media-assembly-status');if(mediaOutput){mediaOutput.dataset.gpuCpuMs=this.stats.cpuMs.toFixed(2);mediaOutput.dataset.worldMarks=String(camera.marks.length);mediaOutput.dataset.cells=String(cells);mediaOutput.dataset.characterMode=pictureMode?characters.mode:'original';mediaOutput.dataset.patternSampling=this.pictureVertexSampling?'vertex':'fragment';}
         if(this.auditCapture){this.auditCapture(this.canvas);this.auditCapture=null;}
     },
     initPost(){

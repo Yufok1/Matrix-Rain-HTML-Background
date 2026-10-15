@@ -113,7 +113,7 @@
     }
     function present(now){
         if(!source||paused||options.influence===0||now-lastSample<1000/24)return;
-        const key=options.exposure+':'+options.contrast+':'+options.gamma;
+        const key=options.exposure+':'+options.contrast+':'+options.gamma+':'+(window.RainMediaCharacters?.mode||'original')+':'+(window.matrixRainRendering?.quality||'balanced');
         
         const isVideo=source===video;
         if(isVideo&&(video.readyState<2||(video.currentTime===lastVideoTime&&key===toneKey)))return;
@@ -124,7 +124,8 @@
         const sh=source.videoHeight||source.naturalHeight||source.height;
         if(!sw||!sh)return;
         const aspect=innerWidth/innerHeight;
-        const width=Math.max(1,Math.round(Math.min(384,480*aspect))),height=Math.max(1,Math.round(width/aspect));
+        const size=window.RainMediaCharacters?.samplingSize(aspect,window.matrixRainRendering?.quality);
+        const width=size?size[0]:Math.max(1,Math.round(Math.min(384,480*aspect))),height=size?size[1]:Math.max(1,Math.round(width/aspect));
         const started=performance.now();
         try{
             if(sampler.width!==width||sampler.height!==height){sampler.width=width;sampler.height=height;}
@@ -214,6 +215,7 @@
             <p class="settings-hint">Images, videos and shared tabs supply their own colors and use the full frame. Omni motion, audio response and trails continue normally. Nothing is recorded or uploaded.</p>
             </div>`;
         content.insertBefore(panel,before);
+        window.RainMediaCharacters?.mount(panel.querySelector('.category-body'));
         // Keep the source inspectable without drawing it over the rain.
         video.id='media-source-video';video.hidden=true;panel.appendChild(video);
         document.getElementById('media-stop').onclick=stop;

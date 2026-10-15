@@ -24,7 +24,7 @@ for (const [, attributes, body] of main.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/
     }
 }
 assert.equal(inlineScripts, 1);
-assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "render-settings.js", "settings-panel.js", "rain-tab-audio.js"].sort());
+assert.deepEqual([...assets].sort(), ["assets/rain-font-msdf.js", "assets/media-characters.js", "rain-media-characters.js", "beat-turns-policy.js", "choreography-preview.js", "color-preview.js", "rain-animation-clock.js", "rain-audio-characters.js", "rain-audio-choreography.js", "rain-audio-color.js", "rain-audio-motion.js", "rain-camera-gpu.js", "rain-camera-motion.js", "rain-camera.js", "rain-color-fluctuation.js", "rain-media-assembly.js", "rain-media-depiction.js", "rain-session-controls.js", "rain-settings-codec.js", "rain-settings-share.js", "rain-settings-ui.js", "rain-all-directions.js", "render-settings.js", "settings-panel.js", "rain-tab-audio.js"].sort());
 const trails = fs.readFileSync(path.join(root, 'trails/rain-trails.js'), 'utf8');
 for (const [, imported] of trails.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
     assert.ok(fs.existsSync(path.resolve(root, 'trails', imported.split('?')[0])), 'Missing trail module: ' + imported);

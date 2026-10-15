@@ -15,11 +15,11 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:10,name,
+            v:11,name,
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
-                direction:MatrixRainEngine.rainConfig.direction,reverse:reverseFlowMultiplier===-1},
+                direction:MatrixRainEngine.rainConfig.direction,reverse:reverseFlowMultiplier===-1,flow:window.rainAllDirections.enabled?'crossflow':'directed'},
             audio:{preset:audioColorPreset,beatTurns:audioReverseEnabled,
                 fluctuation:colorFluctuationPercent,hueReact:rounded(hueReactivityScale*100),
                 saturationGain:rounded(satGainScale*100),brightnessDepth:rounded(brightnessDepthScale*100),
@@ -29,7 +29,7 @@
                 speeds:Object.fromEntries(Object.entries(rainCamera.speeds).map(([k,v])=>[k,rounded(v*100)]))},
             render:{quality:r.quality,sharp:r.sharp,smooth:r.smooth,glow:rounded(r.glow*100),contrast:rounded(r.contrast*100)},
             trails:{enabled:t.enabled,stepped:t.stepped,minimum:t.minimum,maximum:t.maximum},
-            media:{influence:rainMedia.options.influence,exposure:rainMedia.options.exposure,contrast:rainMedia.options.contrast,gamma:rainMedia.options.gamma}
+            media:{influence:rainMedia.options.influence,exposure:rainMedia.options.exposure,contrast:rainMedia.options.contrast,gamma:rainMedia.options.gamma,characters:window.RainMediaCharacters.mode,dotDensity:window.RainMediaCharacters.density}
         });
     }
     function apply(settings) {
@@ -39,7 +39,7 @@
             'primaryColor','secondaryColor','colorFluctuationSlider','hueReactSlider','satGainSlider','brightDepthSlider',
             'render-sharp','render-smooth','render-glow','render-contrast','trail-variety','trail-stepped','trail-shortest','trail-longest',
             'cameraEnabled','cameraYaw','cameraPitch','cameraRoll','cameraSpeed','toggleAudioReverseBtn','reverseFlowBtn'];
-        if (!window.matrixRainTrails || required.some(id=>!el(id))) throw Error('Settings are still loading. Try again in a moment.');
+        if (!window.matrixRainTrails || !window.rainAllDirections?.setEnabled || !window.RainMediaCharacters?.setMode || required.some(id=>!el(id))) throw Error('Settings are still loading. Try again in a moment.');
         const set=(id,value,handler)=>{el(id).value=value;handler();};
         const check=(id,value)=>{el(id).checked=value;el(id).onchange();};
         setRainPattern(s.rain.pattern,document.querySelector(`.pattern-btn[onclick*="'${s.rain.pattern}'"]`));
@@ -50,6 +50,7 @@
         if ((reverseFlowMultiplier===-1)!==s.rain.reverse) toggleReverseFlow();
         if (audioReverseEnabled!==s.audio.beatTurns) toggleAudioReverse();
         rainCamera.setEnabled(s.camera.enabled);set('rainDirection',s.rain.direction,updateRainDirection);
+        window.rainAllDirections.setEnabled(s.rain.flow==='crossflow');
         setColorPreset(s.audio.preset);
         set('colorFluctuationSlider',s.audio.fluctuation,updateColorFluctuation);
         set('hueReactSlider',s.audio.hueReact,updateHueReactivity);
@@ -67,22 +68,23 @@
         set('render-contrast',s.render.contrast,()=>el('render-contrast').oninput());
         check('trail-variety',s.trails.enabled);check('trail-stepped',s.trails.stepped);
         el('trail-shortest').value=s.trails.minimum;el('trail-longest').value=s.trails.maximum;el('trail-shortest').oninput();
-        if(window.rainMedia){Object.assign(rainMedia.options,s.media);rainMedia.saveAppearance?.();rainMedia.refresh();}
+        if(window.rainMedia){for(const key of ['influence','exposure','contrast','gamma'])rainMedia.options[key]=s.media[key];rainMedia.saveAppearance?.();rainMedia.refresh();}
+        window.RainMediaCharacters.setMode(s.media.characters);window.RainMediaCharacters.setDensity(s.media.dotDensity);
         window.rainSettingsUI?.refresh();
         return s;
     }
-    function defaults(){return RainSettingsCodec.validate({v:10,name:'',
-        rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'katakana',customCharacters:'',direction:'down',reverse:false},
+    function defaults(){return RainSettingsCodec.validate({v:11,name:'',
+        rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'katakana',customCharacters:'',direction:'down',reverse:false,flow:'crossflow'},
         audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
         camera:{enabled:true,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
-        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:false,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100}
+        render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:false,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100,characters:'shading',dotDensity:50}
     });}
     window.rainSettingsShare={capture,apply,defaults,export:(name='')=>RainSettingsCodec.encode(capture(name)),import:blob=>apply(RainSettingsCodec.decode(blob))};
     window.addEventListener('DOMContentLoaded',()=>{
         const panel=document.createElement('details');panel.id='rain-share-panel';
         panel.style.cssText='border:1px solid #00ff41;padding:12px;margin:12px 0;background:#071009;text-align:left';
         panel.innerHTML=`<summary style="cursor:pointer"><strong>Save / share configuration</strong></summary>
-            <p style="font-size:12px;margin:10px 0">Copy your rain, audio response, camera and rendering settings into one shareable code. Import restores those choices without starting audio capture.</p>
+            <p style="font-size:12px;margin:10px 0">Copy your rain, flow pattern, audio response, camera, rendering and media appearance settings into one shareable code. Import restores those choices without starting audio capture.</p>
             <label for="rain-share-name">Configuration name (optional)</label>
             <input id="rain-share-name" type="text" maxlength="60" style="width:100%;margin:6px 0 10px;background:#000;color:#00ff41;border:1px solid #29753d;padding:7px;box-sizing:border-box">
             <label for="rain-share-blob">Configuration code</label>

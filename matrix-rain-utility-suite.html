@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=d221a1cd23d0"></script>
+    <script src="rain-settings-codec.js?v=b191a31d920d"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1813,7 +1813,8 @@
             const fontSize = MatrixRainEngine.rainConfig.fontSize;
             const columns = Math.max(1, Math.floor(matrixCanvas.width / 10));
             const densityPercent = parseInt(MatrixRainEngine.rainConfig.density) || 100;
-            const activeCount = Math.max(1, Math.round(columns * densityPercent / 100));
+            const minimumStreams = window.rainAllDirections?.enabled ? Math.min(columns, rainCamera.enabled ? 6 : 4) : 1;
+            const activeCount = Math.max(minimumStreams, Math.round(columns * densityPercent / 100));
 
             // Build or rebuild a stable randomized column order when column count changes
             if (!window.columnOrder || window.columnOrder.length !== columns) {
@@ -1881,7 +1882,7 @@
 
         function advanceRainPosition(i, fontSize, speed) {
             const p = rainPosition(i, fontSize);
-            const requested = MatrixRainEngine.rainConfig.direction;
+            const requested = window.rainAllDirections?.directionFor(i, rainCamera.enabled) || MatrixRainEngine.rainConfig.direction;
             if (rainCamera.enabled && (requested === 'toward' || requested === 'away')) {
                 // A Z segment changes only world depth. Project that one axis;
                 // do not simultaneously advance the previous X/Y direction.
@@ -1900,7 +1901,7 @@
                 p.y = cy + (p.y - cy) * ratio;
                 return;
             }
-            const direction = rainPlanarDirection();
+            const direction = window.rainAllDirections?.enabled ? requested : rainPlanarDirection();
             const step = (rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize) * speed * reverseFlowMultiplier;
             if (direction === 'left') p.x -= step;
             else if (direction === 'right') p.x += step;
@@ -3527,16 +3528,19 @@
 <script src="rain-animation-clock.js?v=716799d6292e"></script>
 <script src="render-settings.js?v=51b3abc3cf18"></script>
 <script src="assets/rain-font-msdf.js?v=a2e4dfe46fde"></script>
-<script src="rain-camera-gpu.js?v=bd942aa61996"></script>
+<script src="assets/media-characters.js?v=21b0aad25a02"></script>
+<script src="rain-media-characters.js?v=268a9ad2014a"></script>
+<script src="rain-camera-gpu.js?v=d63ad5aabce7"></script>
 <script src="rain-camera-motion.js?v=fa4d75e30d2e"></script>
 <script src="rain-audio-characters.js?v=3f847c91d51b"></script>
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
-<script src="rain-media-depiction.js?v=5e394dd492b3"></script>
-<script src="rain-camera.js?v=867de0a858e2"></script>
+<script src="rain-media-depiction.js?v=7bf630fd682b"></script>
+<script src="rain-all-directions.js?v=00e77fa2990c"></script>
+<script src="rain-camera.js?v=e6a3fd02e1b8"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=9310f004505b"></script>
+<script src="rain-settings-share.js?v=3300e9464b4f"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
-<script type="module" src="rain-settings-ui.js?v=6b8fa8fb3a89"></script>
+<script type="module" src="rain-settings-ui.js?v=16f50c28ed51"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
-# Settings coverage audit — revision 13
+# Settings coverage audit — revision 14
 
 The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings logo reuses the Android vector paths.
 
 | Category | Controls | Saved fields |
 | --- | --- | --- |
-| Rain | Pattern, speed, intensity, density, character size | `rain.pattern`, `speed`, `intensity`, `density`, `fontSize` |
+| Rain | Pattern, speed, intensity, density, character size, Crossflow / Single direction | `rain.pattern`, `speed`, `intensity`, `density`, `fontSize`, `flow` |
 | Rain | Primary/secondary colors, character set, custom characters, direction, reverse | `rain.primary`, `secondary`, `characterSet`, `customCharacters`, `direction`, `reverse` |
 | Audio response | Palette, Beat turns, fluctuation, hue range, saturation and brightness response | `audio.preset`, `beatTurns`, `fluctuation`, `hueReact`, `saturationGain`, `brightnessDepth` |
 | Audio response | Preset-derived bounds, retained without standalone sliders | `audio.spread`, `trebleHueRange`, `saturationFloor`, `brightnessMin`, `brightnessMax` |
@@ -13,6 +13,7 @@ The UI keeps the accepted choreography and immutable, cohesive birth colors. Ori
 | Rendering | Quality, sharp letters, smooth motion, glow and contrast | `render.quality`, `sharp`, `smooth`, `glow`, `contrast` |
 | 3D trails | Variable lengths, stepped fade, shortest/longest tails | `trails.enabled`, `stepped`, `minimum`, `maximum` |
 | Media depiction | Influence, exposure, contrast and gamma | `media.influence`, `exposure`, `contrast`, `gamma` |
+| Media depiction | Picture character mode, Custom Braille dot density | `media.characters`, `dotDensity` |
 | Configurations | Optional name and schema version | `name`, `v` |
 
 Size minus/plus buttons change the same `rain.fontSize` field as the slider. Imports restore a palette first, then exact saved tuning and private bounds. All three camera speeds are stored, not just the active slider. Custom Unicode characters and inactive manual settings remain represented. The audit also corrected the initial speed slider: it now matches the actual delay through `101 − delay`, so an immediate startup export/import preserves playback speed.
@@ -25,13 +26,13 @@ Size minus/plus buttons change the same `rain.fontSize` field as the slider. Imp
 
 Validation covers every schema leaf, persistent DOM control, UI round trips across all groups, legacy migration, rejected-import atomicity, live-audio retention, inactive camera speeds, Unicode, mobile/desktop bounds, keyboard navigation and text-field hotkeys. Renderer and audio analysis are unchanged; the comparison facade now uses the accepted controller alone.
 
-**Configuration input:** Paste code reads the clipboard only on a click and stages a fully validated code. Import is a separate action. Invalid, denied and late reads do not overwrite an existing code or change settings. Wallpaper Engine's `configurationcode` text user property provides an alternative in the Installed tab; startup and live property events stage the code without importing it. Existing property callbacks are retained. These are input methods, not additional visual fields; MR3 coverage remains 41 leaves.
+**Configuration input:** Paste code reads the clipboard only on a click and stages a fully validated code. Import is a separate action. Invalid, denied and late reads do not overwrite an existing code or change settings. Wallpaper Engine's `configurationcode` text user property provides an alternative in the Installed tab; startup and live property events stage the code without importing it. Existing property callbacks are retained. These are input methods, not additional visual fields; These input methods do not add visual fields.
 
 Paste stays available during a pending read. A retry retires the preceding attempt, and unresolved reads expire after four seconds. Old responses cannot overwrite newer results. Button paste and text-box paste both replace the full code; neither concatenates configurations.
 
-## MR10 media depiction
+## MR11 media depiction and flow
 
-Four media appearance values are shared: influence, exposure, contrast and gamma. Speech recognition, lyric controls, recognition workers and model runtimes are removed from this browser build. Webcam capture and subject isolation remain absent. MR1–MR9 codes are fully validated before migration; removed speech preferences, webcam fields and MR4's border-glint flag are then discarded. New exports use MR10 and cover 43 visual values plus version/name. Variable tail lengths default to off at first use and Reset; saved choices and imported configurations remain respected.
+Four media appearance values are shared: influence, exposure, contrast and gamma. Speech recognition, lyric controls, recognition workers and model runtimes are removed from this browser build. Webcam capture and subject isolation remain absent. MR1–MR10 codes are fully validated before migration; removed speech preferences, webcam fields and MR4's border-glint flag are then discarded. New exports use MR11 and cover 46 visual values plus version/name. Crossflow, Original/Shading/Lines/Custom Braille and dot density are captured, validated, applied and reset through their real controllers. MR1–MR10 import into Single direction and Original picture characters, preserving their previous appearance. New installations and Reset use Crossflow and Shading. Flat view retains the stored picture choice while rendering Original. Variable tail lengths default to off at first use and Reset; saved choices and imported configurations remain respected.
 
 Local files, tab capture, Play/Pause and Mute/Unmute are session state and never imported. Videos use their own sound for audio response; stopping analysis does not stop audible playback. Shared-tab picture and audio remain live, without a speech head-start buffer. Original-tab sound is monitored only when the browser suppresses it, avoiding duplicate playback. Header Stop suspends playback and analysis, and Resume preserves a deliberate video pause.
 

@@ -24,6 +24,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         const output=document.createElement('output');output.setAttribute('for',id);output.id=id+'Value';output.className='settings-value';control(id).querySelector('label').append(output);
     }
     rb.append(density,size);
+    window.rainAllDirections.mount(rb);
     const manual=document.createElement('fieldset');manual.id='rain-manual-settings';
     const patterns=document.querySelector('.pattern-btn').parentElement;patterns.classList.add('pattern-controls');
     manual.append(hint('Manual appearance. Audio response takes over speed, intensity, direction, colors and characters.'),patterns,
@@ -88,6 +89,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const reset=document.createElement('button');reset.id='rain-reset';reset.type='button';reset.textContent='Reset';reset.title='Restore defaults and restart rain';reset.onclick=()=>rainSessionControls.reset();
     headerActions.prepend(stop,reset);
     window.rainSettingsUI={refresh(){
+        window.rainAllDirections.refresh?.();
         const collapsed=modal.classList.contains('minimized');
         toggle.setAttribute('aria-label',collapsed?'Open settings':'Collapse settings');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.title=collapsed?'Settings · M':'Collapse settings · M';
         const isAudio=audioReactiveActive||rainSessionControls.audioPaused;

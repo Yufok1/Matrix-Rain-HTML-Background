@@ -14,12 +14,12 @@ The 3D arrow has a solid pyramid head with flat cel shading, outlined edges and 
 
 The header has **Stop / Resume** to preserve the current session and **Reset** to restore defaults. Stop pauses rain, the 3D view, audio analysis and auto scenes. Resume keeps your settings; Reset releases loaded media and browser shares and restarts manual rain. An expired browser share must be reconnected.
 
-- **Rain:** density, size, manual patterns, characters, direction, reverse flow, one-time shuffle and auto scenes. 3D trails use stepped digital fading. Defaults: 50% density and uniform 40-character tails, with variable lengths off. Enabling variable lengths uses the optional 12–100-character range.
+- **Rain:** Crossflow (all six directions together) or Single direction, density, size, manual patterns, characters, direction, reverse flow, one-time shuffle and auto scenes. 3D trails use stepped digital fading. Defaults: 50% density and uniform 40-character tails, with variable lengths off. Enabling variable lengths uses the optional 12–100-character range.
 - **Audio response:** start audio, choose a palette and adjust color fluctuation, hue range, saturation and brightness. Beat turns allows musical attacks to steer immediately; off waits for a sustained change. Accents still affect speed in either mode.
 - **Camera:** enable perspective, choose Fixed, Showcase, Corkscrew or Gyroscope, and adjust orientation and motion speed. Each animated mode keeps its own calibrated 0–100% speed, default 25%. Zero holds the view while rain continues. Disable camera for uniform-sized, four-direction original rain.
-- **Media depiction:** load a local image/video, or share a browser tab with its audio. Images, videos and shared tabs supply their RGB colors to the actual moving glyphs using their full frame. Video stretches across the viewport with no extra rain bands, and plays with sound. Play/Pause and Mute/Unmute remain available. Image influence, exposure, contrast and gamma are adjustable and retained locally across reloads. Gamma above 100% lifts dark details. Current media is applied during presentation so old image outlines do not become trail history. Webcam capture and person isolation are not included.
+- **Media depiction:** load a local image/video, or share a browser tab with its audio. Images, videos and shared tabs supply their RGB colors to the actual moving glyphs using their full frame. Video stretches across the viewport with no extra rain bands, and plays with sound. Play/Pause and Mute/Unmute remain available. Image influence, exposure, contrast and gamma are adjustable and retained locally across reloads. Gamma above 100% lifts dark details. Picture characters offers Original, Shading, Lines and optional Custom Braille. Shading is the initial media mode; Lines adds contour strokes, while Braille has its own dot-density control. These modes use the current image to select glyph shapes without changing world trails. They require the 3D camera; flat view retains Original characters. Current media is applied during presentation so old image outlines do not become trail history. Webcam capture and person isolation are not included.
 - **Rendering:** quality, sharp glyphs, smooth motion, glow and contrast. Lower quality, density and trail length reduce drawing work.
-- **Configurations:** export every visual setting into an **MR10** copy/paste code, then import it on another compatible version. Import validates the complete code before applying it and leaves listening, pause and auto-scene activation alone. MR1–MR9 codes are migrated; removed speech and webcam preferences and MR4's removed border effect are discarded after validation. See [settings coverage](SETTINGS-AUDIT.md).
+- **Configurations:** export every visual setting into an **MR11** copy/paste code, then import it on another compatible version. Import validates the complete code before applying it and leaves listening, pause and auto-scene activation alone. MR1–MR10 codes are migrated; removed speech and webcam preferences and MR4's removed border effect are discarded after validation. See [settings coverage](SETTINGS-AUDIT.md).
 
 Active audio weights new characters 55% Katakana and 45% accent alphabets. Silence is entirely Katakana. Default and Reset use Katakana for manual rain.
 
@@ -27,7 +27,7 @@ Audio motion responds to new spectral content and evolving layers, with restrain
 
 ## Audio and platforms
 
-**Wallpaper Engine:** the published Workshop version retains native desktop-audio response and 3D rain. Video/image/tab depiction is available in the browser build, separately from that restored Steam release. Native desktop audio needs no microphone or media-access setting. Configuration import also supports the Installed tab’s **Configuration code** text property.
+**Wallpaper Engine:** the Workshop product retains native desktop-audio response and 3D rain. Crossflow is also available in the updated local Wallpaper Engine package; publishing that package to Workshop is a separate step. Video/image/tab depiction is available in the browser build, separately from that restored Steam release. Native desktop audio needs no microphone or media-access setting. Configuration import also supports the Installed tab’s **Configuration code** text property.
 
 **Browser:** with a loaded video or shared tab, **Start audio response** analyzes that source's sound directly, without another capture picker. Stopping audio response leaves video playback audible. Otherwise use a compatible Chrome/Edge screen or tab share with audio. The browser requires a screen/video track for that API; the audio-only response uses no picture, while **Share tab / screen** also depicts the shared picture. Nothing is recorded or uploaded. Phones can use a local video's audio even when browser system-audio sharing is unavailable.
 
@@ -58,6 +58,18 @@ npm run sync-demo
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Bundled font assets use the SIL Open Font License 1.1. Font credits, MSDF shader attribution and notices are in [assets/THIRD-PARTY.md](assets/THIRD-PARTY.md).
+Original Omni code uses MIT — see [LICENSE](LICENSE). Bundled base font assets use the SIL Open Font License 1.1. Font credits, MSDF shader attribution and notices are in [assets/THIRD-PARTY.md](assets/THIRD-PARTY.md).
 
-The adapted Canvas-5 shared-tab audio module retains their PolyForm Noncommercial 1.0.0 license; see [Canvas-5 notices](vendor/canvas5/NOTICE.md). Commercial use of that component requires a separate written license from Jeff Towers.
+The adapted Canvas-5 shared-tab audio module, media-character selection math and Fine Dots asset retain PolyForm Noncommercial 1.0.0 license; see [shared-tab notices](vendor/canvas5/NOTICE.md) and [media-character notices](assets/Canvas5-NOTICE.md). Commercial use of that component requires a separate written license from Jeff Towers.
+
+### Media character assets
+
+All character assets are bundled; there are no recognition models or runtime downloads. The optional rebuild requires Pillow, fontTools and Brotli, plus a read-only Canvas5 source checkout:
+
+```sh
+python tools/build-media-glyphs.py --canvas5-root /path/to/canvas5/repo
+```
+
+Shading ranks 30 glyphs by measured ink coverage. Lines uses Sobel tangent buckets and shading between edges. Custom Braille samples eight independent image regions; the Fine Dots font draws four circles per Unicode bit. Shape and RGB use the current media texture. This is projected image mapping, not reconstructed 3D video geometry. Larger media samples can cost more processing; Original and Low quality remain available.
+
+The GPU proof at `tests/media-characters-gpu.html?audit=1` checks the actual renderer against the preceding Original path, all Braille masks, Lines orientations, projection, resize and context recovery. Add `&picture-fragment=1` to exercise the fallback. Public test fixtures are the MDN flower video and NASA Eileen Collins portrait distributed by scikit-image.

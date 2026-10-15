@@ -25,6 +25,8 @@ const rainCamera = {
                 updateRainDirection();
             }
         }
+        if (changed && typeof recomputeActiveColumnsMask === 'function') recomputeActiveColumnsMask();
+        window.RainMediaCharacters?.refresh?.();
         this.refreshControls?.();
     },
     setMode(mode) {
@@ -70,7 +72,7 @@ const rainCamera = {
                 stream = { x: raw.x, y: raw.y, z: raw.z, raw, frame: this.frame, delta: [0, 0, 0] };
                 this.streams.set(streamId, stream);
             } else {
-                const direction = MatrixRainEngine.rainConfig.direction;
+                const direction = window.rainAllDirections?.directionFor(streamId, this.enabled) || MatrixRainEngine.rainConfig.direction;
                 let dx = raw.x - stream.raw.x, dy = raw.y - stream.raw.y, dz = raw.z - stream.raw.z;
                 // Undo the original screen-loop seam, then wrap once in the
                 // fixed world lattice. This preserves the existing head step.
