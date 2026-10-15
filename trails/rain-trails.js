@@ -3,6 +3,13 @@ const trails = window.matrixRainTrails = new RainTrailLengths();
 try {
     const saved = JSON.parse(localStorage.getItem('matrixRain.trails'));
     if (saved) { trails.configure(saved.minimum, saved.maximum); trails.enabled = saved.enabled === true; trails.stepped = saved.stepped !== false; }
+    // Earlier desktop builds defaulted this on. Reset only that legacy opt-in
+    // once; retain lengths, fade preference and all unrelated settings.
+    if(localStorage.getItem('matrixRain.trails.optIn')!=='1'){
+        trails.enabled=false;
+        localStorage.setItem('matrixRain.trails',JSON.stringify({minimum:trails.minimum,maximum:trails.maximum,enabled:false,stepped:trails.stepped}));
+        localStorage.setItem('matrixRain.trails.optIn','1');
+    }
 } catch (_) {}
 const panel = document.createElement('div');
 panel.id = 'rain-trails-panel';
@@ -35,6 +42,6 @@ function save() {
 shortest.oninput = () => { trails.configure(shortest.value, Math.max(Number(shortest.value), Number(longest.value))); save(); };
 longest.oninput = () => { trails.configure(Math.min(Number(shortest.value), Number(longest.value)), longest.value); save(); };
 stepped.onchange = () => { trails.stepped = stepped.checked; save(); };
-variety.onchange = () => { trails.enabled = variety.checked; save(); };
+variety.onchange = () => { trails.enabled = variety.checked; try{localStorage.setItem('matrixRain.trails.optIn','1');}catch(_){} save(); };
 window.rainTrailControls = {refresh};
 refresh();

@@ -1,6 +1,6 @@
-// Causal musical bloom: attacks steer the existing fast dancer; formation
-// follows accumulated lift, new layers and release on a longer time scale.
-// Original lightweight implementation; see AUDIO-BLOOM-RESEARCH.md for sources.
+// Single is home. Musical events can launch finite Counterflow / Crossflow accents.
+// Reads the accepted dancer's analysis; never alters its steering, speed or colors.
+// See AUDIO-FLOW-RESEARCH.md: published detection methods vs original visual policy.
 (function(root){
     'use strict';
     const modes=['directed','counterflow','crossflow'];
@@ -8,14 +8,16 @@
     const median=a=>{const s=a.slice().sort((x,y)=>x-y);return s[Math.floor(s.length/2)];};
     class RainAudioFlow {
         constructor(){this.reset();}
-        reset(mode='directed'){
-            this.stage=Math.max(0,modes.indexOf(mode));this.expansion=this.stage;
-            this.at=null;this.trace=[];this.silence=0;this.engaged=false;
+        reset(){
+            // Saved manual patterns are restored by the owner, never inherited
+            // as a permanent automatic formation when listening begins.
+            this.stage=this.expansion=0;this.at=null;this.trace=[];this.silence=0;
             this.body=this.bed=this.deviation=0;this.bands=new Float32Array(6);
             this.fluxMean=this.fluxDeviation=this.previousFlux=0;this.armed=true;
             this.lastOnset=-Infinity;this.intervals=[];this.period=500;this.confidence=0;
-            this.excitement=this.tension=this.up=this.down=0;this.entered=-Infinity;
-            this.snapshot={mode:modes[this.stage],expansion:this.expansion,changed:false,drive:0,reason:'Listening for musical development'};
+            this.events=[];this.excitement=this.tension=0;this.lastAccent=false;
+            this.started=this.deadline=null;this.recoverAt=this.crossRecoverAt=-Infinity;
+            this.snapshot={mode:'directed',expansion:0,changed:false,drive:0,reason:'Listening for musical accents'};
         }
         update(analysis,motion,now){
             if(!Number.isFinite(now))return this.snapshot;
@@ -27,31 +29,40 @@
             for(let i=0;i<6;i++){maximum=Math.max(maximum,Number(fast[i])||0);total+=Math.max(0,Number(fast[i])||0);reference+=this.bands[i];}
             this.silence=maximum<.012?this.silence+dt:0;
             if(gap){
+                this.silence=maximum<.012?dt:0;
+                this.recoverAt=this.crossRecoverAt=-Infinity;
                 this.body=this.bed=energy;this.deviation=0;this.armed=true;
                 this.fluxMean=this.fluxDeviation=this.previousFlux=0;
-                this.excitement=this.up=this.down=0;this.engaged=false;
-                this.lastOnset=-Infinity;this.intervals=[];this.confidence=0;
+                this.excitement=this.tension=0;this.lastOnset=-Infinity;
+                this.intervals=[];this.events=[];this.period=500;this.confidence=0;this.lastAccent=false;
                 for(let i=0;i<6;i++)this.bands[i]=Math.max(0,Number(fast[i])||0);
             }
-            this.body=follow(this.body,energy,220);
+            this.body=follow(this.body,energy,120);
             const level=Math.log((this.body+.035)/(this.bed+.035));
             this.deviation=follow(this.deviation,Math.abs(level),6000);
-            const scale=Math.max(.018,this.deviation*2.4);
+            const scale=Math.max(.04,this.deviation*2.4);
             const lift=clamp(level/scale),fall=clamp(-level/scale);
             for(let i=0;i<6;i++){
                 const value=Math.max(0,Number(fast[i])||0);
                 bandRise+=Math.max(0,Math.log((value+.035)/(this.bands[i]+.035)));
                 if(!gap)shapeChange+=Math.abs(value/Math.max(total,.001)-this.bands[i]/Math.max(reference,.001));
-                this.bands[i]=follow(this.bands[i],value,2200);
+                this.bands[i]=follow(this.bands[i],value,1800);
             }
             bandRise=clamp(bandRise/(6*scale));
-            const layer=clamp(shapeChange/.22);
+            const layer=clamp(shapeChange/.3);
             const flux=Math.max(0,Number(motion.flux)||0);
-            const threshold=Math.max(.002,this.fluxMean+1.6*this.fluxDeviation);
-            // A causal adaptive onset gate, with rearming below its local floor.
-            // No future samples, predicted beats or playback delay are needed.
-            const onset=!gap&&this.silence===0&&now-this.lastOnset>120&&
-                (!!motion.accent||(this.armed&&flux>threshold&&flux>this.previousFlux*1.05));
+            const threshold=Math.max(.012,this.fluxMean+1.5*this.fluxDeviation);
+            const accent=!!motion.accent,freshAccent=accent&&!this.lastAccent;
+            // The dancer already uses log spectral flux with adjacent-bin max
+            // suppression. Only fresh evidence can start a gesture; a level
+            // held above a threshold is never permission to keep one alive.
+            const onset=!gap&&this.silence===0&&now-this.lastOnset>140&&
+                (freshAccent||(this.armed&&flux>threshold&&flux>this.previousFlux*1.05));
+            this.lastAccent=accent;
+            const prominence=clamp((flux-this.fluxMean)/Math.max(.018,2.5*this.fluxDeviation));
+            const strength=clamp(.6*prominence+.25*lift+.15*layer);
+            let rank=0,eventMedian=0;
+            while(this.events.length&&now-this.events[0].time>12000)this.events.shift();
             if(onset){
                 const interval=now-this.lastOnset;
                 if(interval>=200&&interval<=1200){
@@ -61,55 +72,64 @@
                         this.confidence=clamp(1-error/.25);this.period=clamp(p,250,1000);
                     }
                 }
-                this.lastOnset=now;this.armed=false;this.engaged=true;
-                const strength=clamp(.35+.25*Math.max(0,flux/threshold-1)+.25*(motion.impulse||0)+.15*lift);
+                if(this.events.length){
+                    // Ties receive half rank: the same drum hit repeated is
+                    // not forever the most exceptional event in the song.
+                    for(const e of this.events)rank+=strength>e.strength+.025?1:Math.abs(strength-e.strength)<=.025?.5:0;
+                    rank/=this.events.length;eventMedian=median(this.events.map(e=>e.flux));
+                }
+                this.lastOnset=now;this.armed=false;
                 this.excitement=Math.max(this.excitement,strength);
             }
             if(flux<threshold*.65)this.armed=true;
             this.fluxMean=follow(this.fluxMean,flux,1600);
             this.fluxDeviation=follow(this.fluxDeviation,Math.abs(flux-this.fluxMean),1600);
-            this.previousFlux=flux;this.bed=follow(this.bed,energy,3200);
-            if(Math.abs(level)>.012||layer>.06)this.engaged=true;
-            // Pulse spacing only scales how a movement settles. It never emits
-            // an event or schedules a pattern, and uncertain timing falls back.
-            const unit=this.confidence>.55?this.period:500;
-            this.excitement*=Math.exp(-dt/(unit*1.1));
-            const support=clamp(.52*lift+.26*bandRise+.20*layer+.45*this.excitement);
-            this.tension=follow(this.tension,this.silence>100?0:support,support>this.tension?220:650);
+            this.previousFlux=flux;this.bed=follow(this.bed,energy,2400);
             if(now-this.lastOnset>this.period*2.5)this.confidence=follow(this.confidence,0,1500);
-            const release=fall>.18||this.silence>100||this.tension<.22;
-            const age=now-this.entered;
-            // Evidence must accumulate; a beat can animate a held formation
-            // without repeatedly replacing the entire spatial arrangement.
-            const wantsUp=this.stage===0?this.tension>.42:this.tension>.64;
-            this.up=wantsUp?this.up+dt:Math.max(0,this.up-dt*2);
-            const wantsDown=this.stage===2?this.tension<.42:(release&&this.tension<.38);
-            this.down=wantsDown?this.down+dt:Math.max(0,this.down-dt*2);
-            let next=this.stage,reason='Carrying the musical gesture';
-            if(this.engaged){
-                if(this.stage<2&&this.up>=(this.stage===0?100:240)&&age>=unit*.9&&
-                    (onset||lift>.28||layer>.4)){
-                    next++;reason=next===1?'Opening into paired currents':'Blooming on accumulated musical lift';
-                }else if(this.stage>0&&this.down>=unit*.75&&age>=unit*.8){
-                    next--;reason=next===0?'Relaxing into one current':'Gathering from the bloom';
+            // Onset spacing sizes an already triggered gesture. It cannot
+            // generate one, predict a beat, or impose a repeating mode cycle.
+            const unit=this.confidence>.55?this.period:500;
+            this.excitement*=Math.exp(-dt/(unit*.7));
+            const support=clamp(.35*lift+.2*bandRise+.15*layer+.3*this.excitement);
+            this.tension=follow(this.tension,this.silence>100?0:support,180);
+            let next=this.stage,reason=this.stage?'Playing a musical accent':'Single is home';
+            let returned=false;
+            if(this.stage&&(gap||now>=this.deadline||this.silence>120)){
+                next=0;returned=true;reason=this.silence>120?'Single in silence':'Accent finished';
+                // Single gets at least 2.2 times the elapsed accent duration.
+                // This is a ceiling on visual busyness, not a quota or timer
+                // that starts a pattern. Missed events are never queued.
+                const duration=gap?0:Math.max(0,now-this.started);
+                this.recoverAt=now+Math.max(750,duration*2.2);
+                if(this.stage===2)this.crossRecoverAt=now+Math.max(2500,duration*8);
+                this.started=this.deadline=null;
+            }
+            if(!returned&&next===0&&onset&&now>=this.recoverAt){
+                const eligible=strength>=.36&&(this.events.length<4||rank>=.5);
+                // Full-field accents need a standout attack plus a changing
+                // arrangement. Loudness alone, or identical repeated hits,
+                // cannot keep selecting Crossflow.
+                const standout=this.events.length>=4&&rank>=.82&&strength>=.7&&
+                    flux>Math.max(.025,eventMedian*1.35)&&prominence>.65&&(lift>.35||layer>.35);
+                if(eligible){
+                    next=standout&&now>=this.crossRecoverAt?2:1;
+                    const duration=next===2?clamp(unit*(.85+.35*strength),450,980):clamp(unit*(.65+.4*strength),340,780);
+                    this.started=now;this.deadline=now+duration;
+                    reason=next===2?'Standout musical accent':'Musical accent';
                 }
             }
-            if(this.silence>350){next=0;reason='Relaxing in silence';}
+            if(onset){this.events.push({time:now,strength,flux});if(this.events.length>64)this.events.shift();}
             const changed=next!==this.stage;
             if(changed){
-                const from=modes[this.stage];this.stage=next;this.entered=now;this.up=this.down=0;
-                this.trace.push({time:Math.round(now),from,to:modes[next],reason,tension:+this.tension.toFixed(3)});
+                const from=modes[this.stage];this.stage=next;
+                this.trace.push({time:Math.round(now),from,to:modes[next],reason,strength:+strength.toFixed(3)});
                 if(this.trace.length>384)this.trace.shift();
             }
-            // Cohort identity is stable within a formation; this envelope can
-            // breathe without assigning heads to a different axis every frame.
-            if(this.stage===0)this.expansion=0;
-            else this.expansion=follow(this.expansion,this.stage,this.stage>this.expansion?180:350);
-            if(this.silence>450)this.expansion=0;
+            this.expansion=this.stage===0?0:follow(this.expansion,this.stage,100);
             this.pressure=this.tension;
             this.snapshot={mode:modes[this.stage],expansion:this.expansion,changed,reason,drive:support,
                 rise:lift,fall,energyChange:level,dynamics:lift-fall,tension:this.tension,onset,
-                period:unit,confidence:this.confidence,layer};
+                period:unit,confidence:this.confidence,layer,strength,rank,deadline:this.deadline};
             return this.snapshot;
         }
     }

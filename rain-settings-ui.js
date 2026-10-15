@@ -1,4 +1,4 @@
-import './trails/rain-trails.js?v=2680146807bc';
+import './trails/rain-trails.js?v=ac432af0aa79';
 import {createSettingsBeacon} from './rain-settings-beacon.js?v=ff66d04f402d';
 
 // Move the existing controls, preserving their handlers and simulation state.

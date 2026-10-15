@@ -32,7 +32,7 @@ for(const mode of ['original','shading','braille','lines']){
 share.apply(share.defaults());
 assert.equal(ctx.window.rainAllDirections.enabled,false,'Reset restores Single direction');
 assert.equal(ctx.window.RainMediaCharacters.mode,'shading');assert.equal(ctx.window.RainMediaCharacters.density,50);
-assert.equal(ctx.window.rainAllDirections.followMusic,true,'Reset enables musical flow only when audio is started');
+assert.equal(ctx.window.rainAllDirections.followMusic,false,'Reset keeps Follow music off');
 ctx.window.rainAllDirections.mode='crossflow';
 assert.equal(share.capture().rain.flow,'directed','Export saves manual intent, not the passing audio formation');
 const before=JSON.stringify(share.capture());

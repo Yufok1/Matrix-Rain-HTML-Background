@@ -11,6 +11,8 @@ function setup(){
  vm.runInContext(fs.readFileSync('rain-camera.js','utf8').split("window.addEventListener('DOMContentLoaded'")[0],ctx);
  vm.runInContext(`globalThis.camera=rainCamera;globalThis.motion=rainMotion;globalThis.tick=(speed=1)=>{prepareRainMotion(10);for(let i=0;i<32;i++){const p=rainPosition(i,10);paintRainCharacter('カ',p.x,p.y,i,10);advanceRainPosition(i,10,speed);}rainCamera.frame++;};
  for(let i=0;i<80;i++){const p=rainPosition(i,10);p.depth=100+(i%4)*125;p.x=100+(i%16)*40;p.y=200+(i%3)*30;}`,ctx);
+ // These integration scenarios explicitly opt into the optional feature.
+ ctx.window.rainAllDirections.setFollowMusic(true);
  return ctx;
 }
 function audioFrame(ctx,mode,expansion,now=0){
@@ -142,10 +144,10 @@ console.log('PASS coherent Counterflow / Crossflow cohorts remain stable through
 
 // Replay real audio envelopes through the unmodified conductor AND renderer.
 // The private fixture is optional and is never distributed with the wallpaper.
-if(fs.existsSync('tests/real-music-features.private.json')){
+for(const fixture of ['tests/real-music-features.private.json','tests/second-track-features.private.json'])if(fs.existsSync(fixture)){
  const ctx=setup(),flow=ctx.window.rainAllDirections;ctx.window.audioReactiveActive=true;flow.syncAudio();
  let singleFrames=0,accentFrames=0;
- for(const [t,f,s,p,fast,slow,m] of JSON.parse(fs.readFileSync('tests/real-music-features.private.json','utf8'))){
+ for(const [t,f,s,p,fast,slow,m] of JSON.parse(fs.readFileSync(fixture,'utf8'))){
   ctx.MatrixRainEngine.rainConfig.direction=m.direction||'down';
   flow.updateAudio({fastEnergy:f,slowEnergy:s,energyPeak:p,bandFast:fast,bandSlow:slow},m,t);ctx.tick(.85);
   if(flow.mode==='directed'){
@@ -156,5 +158,15 @@ if(fs.existsSync('tests/real-music-features.private.json')){
   }else accentFrames++;
  }
  assert.ok(singleFrames>0&&accentFrames>0);
+ assert.ok(singleFrames>accentFrames*2,'Single stays physically dominant on recorded music');
  console.log(`PASS real-song renderer: ${singleFrames} physically Single frames and ${accentFrames} accent frames.`);
+}
+
+for(const manual of ['counterflow','crossflow']){
+ const ctx=setup(),flow=ctx.window.rainAllDirections;flow.setMode(manual);
+ ctx.window.audioReactiveActive=true;flow.syncAudio();
+ assert.equal(flow.mode,'directed','Enabling Follow music starts in Single');
+ assert.equal(flow.manualMode,manual,'The manual choice is retained');
+ flow.setFollowMusic(false);
+ assert.equal(flow.mode,manual,'The saved manual pattern returns when Follow music stops');
 }

@@ -8,14 +8,18 @@
     const labels=['Single direction','Counterflow','Crossflow · all directions'];
     const notes={directed:'Original shared direction.',crossflow:'All six headings together; four in flat view.',
         counterflow:'Two opposing currents. The existing conductor steers both lanes.'};
-    const state=root.rainAllDirections={mode:'directed',manualMode:'directed',followMusic:true,audioOwned:false,
+    const state=root.rainAllDirections={mode:'directed',manualMode:'directed',followMusic:false,audioOwned:false,
         frame:0,depth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0,
         expansion:null,conductor:root.RainAudioFlow?new root.RainAudioFlow():null};
     Object.defineProperty(state,'enabled',{get(){return this.mode!=='directed';}});
     Object.defineProperty(state,'liveExpansion',{get(){return this.audioOwned&&this.mode!=='directed'&&this.expansion!==null;}});
     Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning||this.liveExpansion;}});
     try{const saved=localStorage.getItem('matrixRain.flow')??localStorage.getItem('matrixRain.angularFlow');if(modes.includes(saved))state.mode=state.manualMode=saved;
-        const follow=localStorage.getItem('matrixRain.flowFollowMusic');if(follow!==null)state.followMusic=follow==='true';}catch{}
+        // The previous release enabled Follow music by default. Require one
+        // explicit opt-in after this correction, preserving every other choice.
+        const optedIn=localStorage.getItem('matrixRain.flowFollowMusic.optIn')==='1';
+        state.followMusic=optedIn&&localStorage.getItem('matrixRain.flowFollowMusic')==='true';
+        if(!optedIn){localStorage.setItem('matrixRain.flowFollowMusic','false');localStorage.setItem('matrixRain.flowFollowMusic.optIn','1');}}catch{}
     let order=null,ranks=null;
     function rankFor(index){
         const current=root.columnOrder;
@@ -176,11 +180,15 @@
     state.syncAudio=function(){
         const owned=this.followMusic&&!!(root.audioReactiveActive||root.rainSessionControls?.audioPaused);
         if(owned===this.audioOwned)return;
-        this.audioOwned=owned;this.expansion=owned?modes.indexOf(this.manualMode):null;
+        const seed=owned?'directed':this.manualMode;
+        this.audioOwned=owned;this.expansion=owned?modes.indexOf(seed):null;
         this.records.clear();this.clearForks();this.transitioning=false;
-        this.conductor?.reset(this.manualMode);this.applyMode(this.manualMode);this.refresh?.();
+        this.conductor?.reset(seed);this.applyMode(seed);this.refresh?.();
     };
-    state.resetAudio=function(){this.conductor?.reset(this.mode);};
+    state.resetAudio=function(){
+        this.conductor?.reset();
+        if(this.audioOwned){this.expansion=0;this.applyMode('directed');}
+    };
     state.updateAudio=function(analysis,motion,now){
         this.syncAudio();if(!this.audioOwned||root.rainSessionControls?.stopped||!this.conductor)return;
         const out=this.conductor.update(analysis,motion,now);
@@ -196,7 +204,7 @@
         if(this.mode!==out.mode){this.mode=out.mode;this.refresh?.();}
     };
     state.setFollowMusic=function(value){
-        this.followMusic=!!value;try{localStorage.setItem('matrixRain.flowFollowMusic',String(this.followMusic));}catch{}
+        this.followMusic=!!value;try{localStorage.setItem('matrixRain.flowFollowMusic.optIn','1');localStorage.setItem('matrixRain.flowFollowMusic',String(this.followMusic));}catch{}
         this.syncAudio();this.refresh?.();
     };
     state.setMode=function(mode){
@@ -207,7 +215,7 @@
     state.setEnabled=function(value){this.setMode(value?'crossflow':'directed');};
     state.mount=function(parent){
         const panel=document.createElement('div');panel.id='rain-all-directions';
-        panel.innerHTML='<strong>Flow pattern</strong><div class="settings-row" role="group" aria-label="Flow pattern">'+modes.map(mode=>`<button type="button" data-flow="${mode}"${mode==='directed'?' id="all-directions-off"':mode==='crossflow'?' id="all-directions-on"':''}>${labels[modes.indexOf(mode)]}</button>`).join('')+'</div><label><input type="checkbox" id="flow-follow-music"> Follow music · expand / contract</label><p id="all-directions-status" class="settings-hint" role="status"></p>';
+        panel.innerHTML='<strong>Flow pattern</strong><div class="settings-row" role="group" aria-label="Flow pattern">'+modes.map(mode=>`<button type="button" data-flow="${mode}"${mode==='directed'?' id="all-directions-off"':mode==='crossflow'?' id="all-directions-on"':''}>${labels[modes.indexOf(mode)]}</button>`).join('')+'</div><label><input type="checkbox" id="flow-follow-music"> Follow music</label><p id="all-directions-status" class="settings-hint" role="status"></p>';
         parent.append(panel);
         for(const b of panel.querySelectorAll('[data-flow]'))b.onclick=()=>{if(this.audioOwned)this.setFollowMusic(false);this.setMode(b.dataset.flow);};
         const follow=panel.querySelector('#flow-follow-music');
@@ -217,8 +225,8 @@
             for(const b of panel.querySelectorAll('[data-flow]'))b.setAttribute('aria-pressed',String(b.dataset.flow===this.mode));
             panel.querySelector('#flow-follow-music').checked=this.followMusic;
             panel.querySelector('#all-directions-status').textContent=this.audioOwned?
-                'Following sound: '+labels[modes.indexOf(this.mode)]+'. Live expansion and gathering. Choose a pattern to hold it.':
-                notes[this.mode]+(this.followMusic?' Start audio response for musical expansion and contraction.':'');
+                'Following sound: '+labels[modes.indexOf(this.mode)]+'. Single is home; the other patterns are brief musical accents.':
+                notes[this.mode]+(this.followMusic?' Start audio response for brief Counterflow and Crossflow accents.':'');
         };this.refresh();
     };
 })(typeof window==='undefined'?globalThis:window);
