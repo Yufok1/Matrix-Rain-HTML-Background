@@ -4,7 +4,7 @@
     'use strict';
     const vectors={down:[0,1,0],up:[0,-1,0],right:[1,0,0],left:[-1,0,0],away:[0,0,1],toward:[0,0,-1]};
     const names=new Map(Object.entries(vectors).map(([name,v])=>[v.join(','),name]));
-    const state=root.rainAllDirections={enabled:true};
+    const state=root.rainAllDirections={enabled:false};
     try{const saved=localStorage.getItem('matrixRain.flow');if(saved==='directed'||saved==='crossflow')state.enabled=saved==='crossflow';}catch{}
     let order=null,ranks=null;
     state.directionFor=function(index,depth=true){

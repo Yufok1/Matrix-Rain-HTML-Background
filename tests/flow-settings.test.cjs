@@ -30,7 +30,7 @@ for(const mode of ['original','shading','braille','lines']){
  assert.deepEqual(codec.decode(share.export(fixture.name)),next,'Applied choices recapture into the same code');
 }
 share.apply(share.defaults());
-assert.equal(ctx.window.rainAllDirections.enabled,true);
+assert.equal(ctx.window.rainAllDirections.enabled,false,'Reset restores Single direction');
 assert.equal(ctx.window.RainMediaCharacters.mode,'shading');assert.equal(ctx.window.RainMediaCharacters.density,50);
 const before=JSON.stringify(share.capture());
 const bad=structuredClone(fixture);bad.media.dotDensity=-1;assert.throws(()=>share.apply(bad));

@@ -24,6 +24,8 @@ vm.runInContext(`
  for(let i=0;i<80;i++){const p=rainPosition(i,10);p.x=160+(i%20)*20;p.y=100+Math.floor(i/20)*60;p.depth=450;}
 `,ctx);
 const mode=ctx.window.rainAllDirections,headings=['down','up','right','left','toward','away'];
+assert.equal(mode.enabled,false,'Fresh sessions start with Single direction');
+mode.setEnabled(true);
 for(const heading of headings){
  ctx.MatrixRainEngine.rainConfig.direction=heading;
  const counts=Object.fromEntries(headings.map(h=>[h,0]));
