@@ -1,10 +1,10 @@
-# Settings coverage audit — revision 14
+# Settings coverage audit — revision 15
 
-The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings logo reuses the Android vector paths.
+The UI keeps the accepted choreography and immutable, cohesive birth colors. Original/Refined and Original/Cohesive comparisons, their numeric shortcuts, the preview badge, Hard Refresh, redundant Original View and redundant primary-color swatches are removed. Camera alone controls flat versus 3D. The settings launcher uses the approved projected pyramid and exhaust mesh.
 
 | Category | Controls | Saved fields |
 | --- | --- | --- |
-| Rain | Pattern, speed, intensity, density, character size, Crossflow / Single direction | `rain.pattern`, `speed`, `intensity`, `density`, `fontSize`, `flow` |
+| Rain | Pattern, speed, intensity, density, character size, Single / Counterflow / Crossflow | `rain.pattern`, `speed`, `intensity`, `density`, `fontSize`, `flow` |
 | Rain | Primary/secondary colors, character set, custom characters, direction, reverse | `rain.primary`, `secondary`, `characterSet`, `customCharacters`, `direction`, `reverse` |
 | Audio response | Palette, Beat turns, fluctuation, hue range, saturation and brightness response | `audio.preset`, `beatTurns`, `fluctuation`, `hueReact`, `saturationGain`, `brightnessDepth` |
 | Audio response | Preset-derived bounds, retained without standalone sliders | `audio.spread`, `trebleHueRange`, `saturationFloor`, `brightnessMin`, `brightnessMax` |
@@ -30,10 +30,18 @@ Validation covers every schema leaf, persistent DOM control, UI round trips acro
 
 Paste stays available during a pending read. A retry retires the preceding attempt, and unresolved reads expire after four seconds. Old responses cannot overwrite newer results. Button paste and text-box paste both replace the full code; neither concatenates configurations.
 
-## MR11 media depiction and flow
+## MR13 media depiction and musical flow
 
-Four media appearance values are shared: influence, exposure, contrast and gamma. Speech recognition, lyric controls, recognition workers and model runtimes are removed from this browser build. Webcam capture and subject isolation remain absent. MR1–MR10 codes are fully validated before migration; removed speech preferences, webcam fields and MR4's border-glint flag are then discarded. New exports use MR11 and cover 46 visual values plus version/name. Crossflow, Original/Shading/Lines/Custom Braille and dot density are captured, validated, applied and reset through their real controllers. MR1–MR10 import into Single direction and Original picture characters, preserving their previous appearance. New installations and Reset use Single direction and Shading. Crossflow remains opt-in; saved choices and imported configurations are respected. Flat view retains the stored picture choice while rendering Original. Variable tail lengths default to off at first use and Reset; saved choices and imported configurations remain respected.
+Four media appearance values are shared: influence, exposure, contrast and gamma. Speech recognition, lyric controls, recognition workers and model runtimes are removed from this browser build. Webcam capture and subject isolation remain absent. MR1–MR10 codes are fully validated before migration; removed speech preferences, webcam fields and MR4's border-glint flag are then discarded. New exports use MR13 and cover 47 visual values plus version/name, including `audio.flowFollow`. Crossflow, Original/Shading/Lines/Custom Braille and dot density are captured, validated, applied and reset through their real controllers. MR1–MR10 import into Single direction and Original picture characters, preserving their previous appearance. New installations and Reset use Single direction and Shading. Manual flow starts in Single direction. Follow music is ready by default and only acts while audio response is active; manually choosing a flow while it is following music disables the policy. Saved choices and imported configurations are respected. Flat view retains the stored picture choice while rendering Original. Variable tail lengths default to off at first use and Reset; saved choices and imported configurations remain respected.
 
 Local files, tab capture, Play/Pause and Mute/Unmute are session state and never imported. Videos use their own sound for audio response; stopping analysis does not stop audible playback. Shared-tab picture and audio remain live, without a speech head-start buffer. Original-tab sound is monitored only when the browser suppresses it, avoiding duplicate playback. Header Stop suspends playback and analysis, and Resume preserves a deliberate video pause.
 
 RGB depiction affects only the ink of existing moving rain; birth history, world geometry and choreography remain intact. Media appearance preferences are retained locally across reloads. Reset and initial rain use Katakana.
+
+## Musical flow preferences and session ownership
+
+`rain.flow` saves the manual pattern, rather than whatever temporary formation the music currently uses. `audio.flowFollow` saves whether audio should orchestrate formations. MR1–MR12 imports set it false, preserving their existing manual behavior; it does not start capture. Stopping audio restores the manual pattern. Emergency Stop/Resume preserves the live formation and settings. Reset selects Single with Follow music ready for the next audio session.
+
+The phrase conductor keeps bounded causal memory of recent spectral/accent gestures. It compares repeating shapes and intervals, aligns expansion and gathering with their strong/soft landmarks, and admits new musical gestures and releases without imposing a four-hit cycle. It does not claim time-signature or instrument recognition. A strong breakdown may gather Crossflow directly into Single. Ordinary transitions still pass through Counterflow.
+
+At a transition, live heads fork briefly while the old continuation retires after ten glyph steps. Opposite requests use a right-angle bridge. Existing glyph positions and birth colors stay immutable. Density does not grow permanently. Tests cover flat/3D/reverse, source gaps, bounded history, deterministic audio, preserved fast steering and settings round trips.

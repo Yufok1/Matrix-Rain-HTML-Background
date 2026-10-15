@@ -57,11 +57,12 @@ const rainCamera = {
         this.streams.clear(); this.marks.length = 0; this.pending.length = 0;
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
-    capture(char, x, y, depth, fontSize, alpha, color, streamId) {
+    capture(char, x, y, depth, fontSize, alpha, color, streamId, headOverride = null) {
         if (!this.enabled) return;
         this.ensureVolume();
         const scale = rainFocalLength / depth, box = this.volume;
-        const head = Number.isInteger(streamId) && rainMotion.drops[streamId];
+        const head = headOverride || (Number.isInteger(streamId) && rainMotion.drops[streamId]);
+        const appearanceId = headOverride?.sourceId ?? streamId;
         const hx = head ? head.x : x, hy = head ? head.y : y;
         const raw = { x: (hx - matrixCanvas.width / 2) / scale,
             y: (hy - matrixCanvas.height / 2) / scale, z: depth };
@@ -72,7 +73,7 @@ const rainCamera = {
                 stream = { x: raw.x, y: raw.y, z: raw.z, raw, frame: this.frame, delta: [0, 0, 0] };
                 this.streams.set(streamId, stream);
             } else {
-                const direction = window.rainAllDirections?.directionFor(streamId, this.enabled) || MatrixRainEngine.rainConfig.direction;
+                const direction = head.lastStepDirection || window.rainAllDirections?.directionFor(streamId, this.enabled) || MatrixRainEngine.rainConfig.direction;
                 let dx = raw.x - stream.raw.x, dy = raw.y - stream.raw.y, dz = raw.z - stream.raw.z;
                 // Undo the original screen-loop seam, then wrap once in the
                 // fixed world lattice. This preserves the existing head step.
@@ -92,13 +93,13 @@ const rainCamera = {
             y: this.wrap(position.y + (y - hy) / scale, box.y),
             z: this.wrap(position.z, box.z, box.zMin),
             fontSize, alpha, color, frame: this.frame, streamId,
-            trailLength: window.matrixRainTrails?.lengthFor(streamId) ?? 40,
+            appearanceId, trailLength: window.matrixRainTrails?.lengthFor(appearanceId) ?? 40,
             delta: position.delta || [0, 0, 0] };
         // Capture color now. Uploading, aging, font changes and palette
         // changes must never recolor a character that already exists.
         const palette = window.rainAudioPalette;
         if (palette?.active) {
-            const tone = ((Number(streamId)||0)*.618033988749895%1+1)%1;
+            const tone = ((Number(appearanceId)||0)*.618033988749895%1+1)%1;
             mark.rgb = Object.freeze(palette.colorA.map((value, channel) => value + (palette.colorB[channel]-value)*tone));
         }
         this.marks.push(mark); this.pending.push(mark);
@@ -210,7 +211,7 @@ const rainCamera = {
         const trails = window.matrixRainTrails;
         if (!trails || (this.trailRevision === trails.revision && this.trailVariety === trails.enabled)) return;
         this.trailRevision = trails.revision; this.trailVariety = trails.enabled;
-        for (const mark of this.marks) mark.trailLength = trails.lengthFor(mark.streamId);
+        for (const mark of this.marks) mark.trailLength = trails.lengthFor(mark.appearanceId ?? mark.streamId);
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
     render() {this.advanceFrame();this.present(performance.now(),1);}

@@ -24,9 +24,11 @@
         trails:{enabled:bool,stepped:bool,minimum:integer(12,160),maximum:integer(12,160)},
         media:{influence:integer(0,100),exposure:integer(50,200),contrast:integer(50,200),gamma:integer(50,300)}
     };
-    const schema={...legacy10Schema,v:choice(11),
+    const legacy11Schema={...legacy10Schema,v:choice(11),
         rain:{...legacy10Schema.rain,flow:choice('directed','crossflow')},
         media:{...legacy10Schema.media,characters:choice('original','shading','braille','lines'),dotDensity:integer(0,100)}};
+    const legacy12Schema={...legacy11Schema,v:choice(12),rain:{...legacy11Schema.rain,flow:choice('directed','crossflow','counterflow')}};
+    const schema={...legacy12Schema,v:choice(13),audio:{...legacy12Schema.audio,flowFollow:bool}};
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
     const legacyWords={maxWords:integer(1,5),bufferMs:integer(0,3500),verticalOrder:choice('down','up')};
     const legacy9Schema={...legacy10Schema,v:choice(9),words:legacyWords};
@@ -40,7 +42,7 @@
     const legacy5Schema={...schema6,v:choice(5),media:legacyMedia};
     const legacy3Schema={...oldSchema,v:choice(3)};
     const legacy2Schema={...oldSchema,v:choice(2),preview:previewSchema};
-    const legacySchema={...legacy2Schema,v:choice(1),audio:{...schema.audio,depth:bool}};
+    const legacySchema={...legacy2Schema,v:choice(1),audio:{...legacy10Schema.audio,depth:bool}};
     function check(value, rule, path) {
         const fail = () => {throw Error('Invalid setting: '+path);};
         if (rule.kind) {
@@ -75,6 +77,8 @@
         if(settings?.v===8){settings=check(settings,legacy8Schema,'');delete settings.media.mirror;delete settings.media.isolate;settings.v=9;}
         if(settings?.v===9){settings=check(settings,legacy9Schema,'');delete settings.words;settings.v=10;}
         if(settings?.v===10){settings=check(settings,legacy10Schema,'');settings.rain.flow='directed';settings.media.characters='original';settings.media.dotDensity=50;settings.v=11;}
+        if(settings?.v===11){settings=check(settings,legacy11Schema,'');settings.v=12;}
+        if(settings?.v===12){settings=check(settings,legacy12Schema,'');settings.audio.flowFollow=false;settings.v=13;}
         const clean=check(settings,schema,'');
         if (clean.trails.minimum>clean.trails.maximum) throw Error('Shortest trail exceeds longest trail.');
         if (clean.audio.brightnessMin>clean.audio.brightnessMax) throw Error('Invalid brightness range.');
@@ -85,12 +89,12 @@
     function encode(settings) {
         const bytes=new TextEncoder().encode(JSON.stringify(validate(settings)));
         let binary='';for (const byte of bytes) binary+=String.fromCharCode(byte);
-        return 'MR11.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        return 'MR13.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     function decode(blob) {
         if (typeof blob!=='string' || blob.length>24000) throw Error('Configuration is too large.');
         const compact=blob.replace(/[\t\r\n ]/g,'');
-        const prefix=compact.match(/^MR(11|10|[1-9])\./);
+        const prefix=compact.match(/^MR(13|12|11|10|[1-9])\./);
         if (!prefix) throw Error('Expected a Matrix Rain configuration.');
         const payload=compact.slice(prefix[0].length);
         if (!payload || payload.length>12000 || !/^[A-Za-z0-9_-]+$/.test(payload) || payload.length%4===1) throw Error('Damaged configuration.');

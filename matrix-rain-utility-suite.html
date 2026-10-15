@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=b191a31d920d"></script>
+    <script src="rain-settings-codec.js?v=9c9b8ab6851a"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1882,10 +1882,13 @@
 
         function advanceRainPosition(i, fontSize, speed) {
             const p = rainPosition(i, fontSize);
-            const requested = window.rainAllDirections?.directionFor(i, rainCamera.enabled) || MatrixRainEngine.rainConfig.direction;
+            const route = window.rainAllDirections?.planStep?.(i, rainCamera.enabled, fontSize, speed);
+            speed = route?.speed ?? speed;
+            const requested = route?.direction || window.rainAllDirections?.directionFor(i, rainCamera.enabled) || MatrixRainEngine.rainConfig.direction;
             if (rainCamera.enabled && (requested === 'toward' || requested === 'away')) {
                 // A Z segment changes only world depth. Project that one axis;
                 // do not simultaneously advance the previous X/Y direction.
+                p.lastStepDirection = requested;
                 const oldScale = rainDepthScale(p.depth);
                 const cx = matrixCanvas.width / 2, cy = matrixCanvas.height / 2;
                 // The same world-space character pitch drives X, Y and Z.
@@ -1899,9 +1902,11 @@
                 const ratio = rainDepthScale(p.depth) / oldScale;
                 p.x = cx + (p.x - cx) * ratio;
                 p.y = cy + (p.y - cy) * ratio;
+                window.rainAllDirections?.afterStep?.(i, fontSize, speed);
                 return;
             }
-            const direction = window.rainAllDirections?.enabled ? requested : rainPlanarDirection();
+            const direction = route?.direction || (window.rainAllDirections?.enabled ? requested : rainPlanarDirection());
+            p.lastStepDirection = direction;
             const step = (rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize) * speed * reverseFlowMultiplier;
             if (direction === 'left') p.x -= step;
             else if (direction === 'right') p.x += step;
@@ -1913,6 +1918,7 @@
             const wrap = (v, span) => ((v + pad) % (span + pad * 2) + span + pad * 2) % (span + pad * 2) - pad;
             if (direction === 'left' || direction === 'right') p.x = wrap(p.x, matrixCanvas.width);
             else p.y = wrap(p.y, matrixCanvas.height);
+            window.rainAllDirections?.afterStep?.(i, fontSize, speed);
         }
 
         function paintRainCharacter(char, x, y, i, fontSize) {
@@ -1927,12 +1933,14 @@
             }
             matrixCtx.globalAlpha = alpha;
             p.lastStamp = { x, y, depth: p.depth };
+            window.rainAllDirections?.paintFork?.(i, char, fontSize, alpha, matrixCtx.fillStyle);
         }
 
         function prepareRainMotion(fontSize) {
+            window.rainAllDirections?.beginFrame?.(rainCamera.frame);
             rainPlanarDirection();
             const direction = MatrixRainEngine.rainConfig.direction;
-            const changed = direction !== rainMotion.direction || reverseFlowMultiplier !== rainMotion.reverse;
+            const changed = (!window.rainAllDirections?.independentTurns && direction !== rainMotion.direction) || reverseFlowMultiplier !== rainMotion.reverse;
             const count = Math.max(1, Math.floor(matrixCanvas.width / 10));
             for (let i = 0; i < count; i++) {
                 const p = rainPosition(i, fontSize);
@@ -3387,6 +3395,7 @@
         let audioMotionSpectrum = null;
         function resetAudioMotion() {
             audioMotion.reset();
+            window.rainAllDirections?.resetAudio?.();
             audioMotionSpectrum = null;
             audioColorFluctuation.reset();
             window.rainMelodyColor.reset();
@@ -3407,8 +3416,10 @@
 
             const spectrum = isWallpaperEngine ? audioMotionSpectrum :
                 RainAudioMotion.browserSpectrum(audioDataArray, audioContext.sampleRate / audioAnalyser.fftSize);
-            const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), performance.now(),
+            const audioNow = performance.now();
+            const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), audioNow,
                 config.direction, rainCamera.enabled, audioReverseEnabled);
+            window.rainAllDirections?.updateAudio?.(audioMotion, musicalMotion, audioNow);
             config.speed = musicalMotion.speed;
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
@@ -3536,10 +3547,11 @@
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
-<script src="rain-all-directions.js?v=2735001105a5"></script>
-<script src="rain-camera.js?v=e6a3fd02e1b8"></script>
+<script src="rain-audio-flow.js?v=d4246f985f01"></script>
+<script src="rain-all-directions.js?v=d6a2882d8d28"></script>
+<script src="rain-camera.js?v=5bb30a77b2dc"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=77d0c4f6a700"></script>
+<script src="rain-settings-share.js?v=066c5305ae36"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
 <script type="module" src="rain-settings-ui.js?v=16f50c28ed51"></script>
 </body>
