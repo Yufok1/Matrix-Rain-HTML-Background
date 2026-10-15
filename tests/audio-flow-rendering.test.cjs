@@ -13,6 +13,13 @@ function setup(){
  for(let i=0;i<80;i++){const p=rainPosition(i,10);p.depth=100+(i%4)*125;p.x=100+(i%16)*40;p.y=200+(i%3)*30;}`,ctx);
  return ctx;
 }
+function audioFrame(ctx,mode,expansion,now=0){
+ const flow=ctx.window.rainAllDirections;
+ // Exercise the same controller-to-renderer boundary as live music. Assigning
+ // expansion alone misses disagreements between the highlighted mode and heads.
+ flow.conductor.update=()=>({mode,expansion});
+ flow.updateAudio({}, {},now);
+}
 
 // Music changes formation through actual branching heads; no whole-field jump.
 for(const flat of [false,true])for(const reverse of [1,-1]){
@@ -61,3 +68,93 @@ console.log('PASS bounded mitosis branches, flat/3D/reverse axes, immutable hist
  follow.checked=false;follow.onclick({target:follow});flow.refresh();assert.equal(flow.followMusic,false);
 }
 console.log('PASS Follow music survives the surrounding settings panel event refresh.');
+
+// Continuous live pressure reaches actual heads without restarting the field.
+for(const flat of [false,true])for(const reverse of [1,-1]){
+ const ctx=setup(),flow=ctx.window.rainAllDirections;ctx.camera.enabled=!flat;ctx.reverseFlowMultiplier=reverse;ctx.tick();
+ ctx.window.audioReactiveActive=true;flow.syncAudio();
+ const old=ctx.camera.marks.map(m=>[m.x,m.y,m.z,m.color]);let forkCount=0,swaps=0,last=new Map();
+ for(let frame=0;frame<240;frame++){
+  const pressure=frame<20?0:frame<80?2:frame<120?.55:frame<150?1.8:0;
+  audioFrame(ctx,pressure>1.5?'crossflow':pressure>.59?'counterflow':'directed',pressure,frame*16.67);
+  ctx.tick(.85);forkCount=Math.max(forkCount,flow.forks.size);
+  const active=ctx.window.activeColumnsMask?.filter(Boolean).length??ctx.motion.drops.length;
+  assert.ok(flow.forks.size<=Math.max(1,Math.floor(active*.12)),'Audio accents never add more than twelve percent temporary heads');
+  for(let i=0;i<32;i++){
+   const dir=ctx.motion.drops[i].lastStepDirection;
+   if(last.has(i)&&last.get(i)!==dir)swaps++;last.set(i,dir);
+  }
+  if(!flat)for(const mark of ctx.camera.marks.filter(m=>m.frame===ctx.camera.frame-1)){
+   assert.ok(mark.delta.filter(n=>Math.abs(n)>1e-5).length<=1,'Pressure cannot create diagonal movement');
+   assert.ok(mark.delta.every(n=>Math.abs(n)<=(frame===0?10.00001:8.50001)),'Live split and gathering cannot teleport '+JSON.stringify({frame,mark}));
+  }
+ }
+ assert.ok(forkCount>0&&swaps>20,'Partial live pressure actually steers and branches heads');
+ assert.equal(flow.forks.size,0,'Rapid reversible splits do not grow permanent density');
+ assert.ok(ctx.motion.drops.slice(0,32).every(p=>p.lastStepDirection==='down'),'A full release actually gathers into Single');
+ if(!flat)assert.deepEqual(ctx.camera.marks.slice(0,32).map(m=>[m.x,m.y,m.z,m.color]),old,'Old trail birth colors and coordinates remain immutable');
+}
+console.log('PASS continuous audio pressure physically opens and regathers bounded, axis-aligned live heads without changing their trail history.');
+
+// Single must be geometrically single, including nonzero subthreshold pressure
+// and after an actual split. The old renderer kept opposing cohorts here.
+for(const flat of [false,true])for(const reverse of [1,-1]){
+ const ctx=setup(),flow=ctx.window.rainAllDirections;ctx.camera.enabled=!flat;ctx.reverseFlowMultiplier=reverse;ctx.tick();
+ ctx.window.audioReactiveActive=true;flow.syncAudio();
+ const old=ctx.camera.marks.map(m=>[m.x,m.y,m.z,m.color]);
+ for(const heading of (flat?['down','left','up','right']:Object.keys(vectors))){
+  ctx.MatrixRainEngine.rainConfig.direction=heading;
+  for(const pressure of [.17,.39,.58])for(const accent of ['counterflow','crossflow']){
+   for(let n=0;n<12;n++){audioFrame(ctx,accent,accent==='crossflow'?2:1);ctx.tick();}
+   assert.ok(new Set(ctx.motion.drops.slice(0,32).map(p=>p.lastStepDirection)).size>=2,'Accent really opens opposing currents before release');
+   audioFrame(ctx,'directed',pressure);ctx.tick();
+   assert.equal(flow.mode,'directed');assert.equal(flow.liveExpansion,false);assert.equal(flow.independentTurns,false);
+   assert.equal(flow.records.size,0,'Single retires per-head route memory');assert.equal(flow.forks.size,0,'Single has no daughter heads');
+   for(let n=0;n<4;n++){
+    // Fast shared steering remains free to dance while the formation is Single.
+    const shared=(flat?['down','left','up','right']:Object.keys(vectors))[n];
+    ctx.MatrixRainEngine.rainConfig.direction=shared;audioFrame(ctx,'directed',pressure);ctx.tick(.85);
+    for(let i=0;i<32;i++){
+     assert.equal(flow.directionFor(i,!flat),null,'Single delegates to original shared heading');
+     assert.equal(ctx.motion.drops[i].lastStepDirection,shared,'Highlighted Single means every real head shares its direction');
+    }
+   }
+  }
+ }
+ if(!flat)assert.deepEqual(ctx.camera.marks.slice(0,32).map(m=>[m.x,m.y,m.z,m.color]),old,'Gathering never edits the previously drawn trail');
+}
+console.log('PASS actual Single heads agree with the mode at partial pressure, after both accents, in every heading, flat/3D and reverse flow.');
+
+// Beats can breathe inside a formation without continuously reassigning axes.
+for(const flat of [false,true])for(const mode of ['counterflow','crossflow']){
+ const ctx=setup(),flow=ctx.window.rainAllDirections;ctx.camera.enabled=!flat;ctx.tick();
+ ctx.window.audioReactiveActive=true;flow.syncAudio();
+ for(let n=0;n<16;n++){audioFrame(ctx,mode,1);ctx.tick();}
+ const settled=ctx.motion.drops.slice(0,32).map(p=>p.lastStepDirection);
+ assert.equal(new Set(settled).size,mode==='counterflow'?2:flat?4:6,'The actual settled formation has the correct headings');
+ for(let n=0;n<100;n++){
+  audioFrame(ctx,mode,n%2?.05:1.95);ctx.tick();
+  assert.deepEqual(ctx.motion.drops.slice(0,32).map(p=>p.lastStepDirection),settled,'Intra-formation fluctuations cannot reshuffle the actual heads');
+ }
+ assert.equal(flow.forks.size,0,'A held formation cannot keep generating phantom branches');
+}
+console.log('PASS coherent Counterflow / Crossflow cohorts remain stable through continuous envelope fluctuations.');
+
+// Replay real audio envelopes through the unmodified conductor AND renderer.
+// The private fixture is optional and is never distributed with the wallpaper.
+if(fs.existsSync('tests/real-music-features.private.json')){
+ const ctx=setup(),flow=ctx.window.rainAllDirections;ctx.window.audioReactiveActive=true;flow.syncAudio();
+ let singleFrames=0,accentFrames=0;
+ for(const [t,f,s,p,fast,slow,m] of JSON.parse(fs.readFileSync('tests/real-music-features.private.json','utf8'))){
+  ctx.MatrixRainEngine.rainConfig.direction=m.direction||'down';
+  flow.updateAudio({fastEnergy:f,slowEnergy:s,energyPeak:p,bandFast:fast,bandSlow:slow},m,t);ctx.tick(.85);
+  if(flow.mode==='directed'){
+   singleFrames++;
+   assert.equal(new Set(ctx.motion.drops.slice(0,32).map(p=>p.lastStepDirection)).size,1,'Real-song Single must actually have one shared heading');
+   assert.ok(ctx.motion.drops.slice(0,32).every(p=>p.lastStepDirection===ctx.MatrixRainEngine.rainConfig.direction),'Single follows the actual recorded fast steering');
+   assert.equal(flow.forks.size,0,'No stale daughter heads during real-song Single');
+  }else accentFrames++;
+ }
+ assert.ok(singleFrames>0&&accentFrames>0);
+ console.log(`PASS real-song renderer: ${singleFrames} physically Single frames and ${accentFrames} accent frames.`);
+}

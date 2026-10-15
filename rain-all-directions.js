@@ -10,9 +10,10 @@
         counterflow:'Two opposing currents. The existing conductor steers both lanes.'};
     const state=root.rainAllDirections={mode:'directed',manualMode:'directed',followMusic:true,audioOwned:false,
         frame:0,depth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0,
-        conductor:root.RainAudioFlow?new root.RainAudioFlow():null};
+        expansion:null,conductor:root.RainAudioFlow?new root.RainAudioFlow():null};
     Object.defineProperty(state,'enabled',{get(){return this.mode!=='directed';}});
-    Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning;}});
+    Object.defineProperty(state,'liveExpansion',{get(){return this.audioOwned&&this.mode!=='directed'&&this.expansion!==null;}});
+    Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning||this.liveExpansion;}});
     try{const saved=localStorage.getItem('matrixRain.flow')??localStorage.getItem('matrixRain.angularFlow');if(modes.includes(saved))state.mode=state.manualMode=saved;
         const follow=localStorage.getItem('matrixRain.flowFollowMusic');if(follow!==null)state.followMusic=follow==='true';}catch{}
     let order=null,ranks=null;
@@ -46,6 +47,15 @@
     state.directionFor=function(index,depth=true){
         if(!this.enabled)return null;
         const rank=rankFor(index),h=heading();
+        if(this.liveExpansion){
+            // A musical bloom changes formation once. Keep its cohorts intact
+            // while individual beats drive the existing fast steering / speed.
+            if(this.mode==='crossflow'){
+                const cohort=depth?['down','right','away','up','left','toward']:['down','right','up','left'];
+                return rotate(cohort[((rank%cohort.length)+cohort.length)%cohort.length],h,depth);
+            }
+            return rotate(rank%2?'up':'down',h,depth);
+        }
         if(this.mode==='crossflow'){
             const cohort=depth?['down','right','away','up','left','toward']:['down','right','up','left'];
             return rotate(cohort[((rank%cohort.length)+cohort.length)%cohort.length],h,depth);
@@ -54,16 +64,23 @@
     };
     state.planStep=function(index,depth,fontSize,speed){
         let r=this.records.get(index);
-        if(this.mode!=='counterflow'&&!r?.transition)return null;
+        const live=this.liveExpansion;
+        if(!live&&this.mode!=='counterflow'&&!r?.transition)return null;
         r=r||record(index);
         const desired=this.directionFor(index,depth)||heading();
+        if(live&&r.desired!==desired){
+            if(!r.last&&typeof rainMotion!=='undefined')r.last=rainMotion.drops[index]?.lastStepDirection||heading();
+            const opening=r.formation!==this.mode;
+            r.formation=this.mode;r.desired=desired;r.transition=r.last!==desired;r.forked=false;
+            r.delay=opening?(r.rank%8)*fontSize*.35:0;r.hold=0;
+        }
         if(!r.unit)r.unit=fontSize;
         // An opposite request gets a real perpendicular segment, not a one-glyph
         // twitch. Reverse flow remains the user's explicit global reversal.
         let actual=r.last||desired;
         if(r.delay>0){r.distanceKey='delay';}
         else if(r.hold<=0){
-            if(actual===opposite[desired]){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*6;}
+            if(actual===opposite[desired]){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*(live?3:6);}
             else actual=desired;
             if(r.transition&&!r.forked&&actual!==r.last){this.spawnFork(index,r.last,fontSize);r.forked=true;}
             if(actual===desired&&r.transition){
@@ -80,6 +97,7 @@
     };
     state.afterStep=function(index,fontSize,speed){
         const r=this.records.get(index);if(!r)return;
+        r.forkTravel=Math.max(0,(r.forkTravel||0)-Math.max(0,speed));
         if(r.distanceKey==='delay'){r.delay=Math.max(0,r.delay-Math.max(0,fontSize*speed));r.distanceKey=null;}
         else if(r.hold>0)r.hold=Math.max(0,r.hold-Math.max(0,fontSize*speed));
         const fork=this.forks.get(index);if(fork){
@@ -96,8 +114,17 @@
     state.spawnFork=function(index,direction,fontSize){
         if(typeof rainMotion==='undefined'||!vectors[direction])return;
         const p=rainMotion.drops[index];if(!p)return;
+        const live=this.liveExpansion;
+        if(live){
+            const r=record(index);
+            // A split is an accent, not a second population on every joint.
+            // Share sparse opportunities fairly as the real heads travel.
+            const population=root.activeColumnsMask?root.activeColumnsMask.filter(Boolean).length:rainMotion.drops.length;
+            if(this.forks.has(index)||r.forkTravel>0||this.forks.size>=Math.max(1,Math.floor(population*.12)))return;
+            r.forkTravel=24;
+        }
         this.removeFork(index);
-        const fork={id:'flow-fork-'+(++this.serial),direction,remaining:10,head:{...p,sourceId:index,lastStamp:null},fontSize};
+        const fork={id:'flow-fork-'+(++this.serial),direction,remaining:live?5:10,head:{...p,sourceId:index,lastStamp:null},fontSize};
         this.forks.set(index,fork);
         if(typeof rainCamera!=='undefined'){
             const stream=rainCamera.streams.get(index);
@@ -149,12 +176,24 @@
     state.syncAudio=function(){
         const owned=this.followMusic&&!!(root.audioReactiveActive||root.rainSessionControls?.audioPaused);
         if(owned===this.audioOwned)return;
-        this.audioOwned=owned;this.conductor?.reset(this.manualMode);this.applyMode(this.manualMode);this.refresh?.();
+        this.audioOwned=owned;this.expansion=owned?modes.indexOf(this.manualMode):null;
+        this.records.clear();this.clearForks();this.transitioning=false;
+        this.conductor?.reset(this.manualMode);this.applyMode(this.manualMode);this.refresh?.();
     };
     state.resetAudio=function(){this.conductor?.reset(this.mode);};
     state.updateAudio=function(analysis,motion,now){
         this.syncAudio();if(!this.audioOwned||root.rainSessionControls?.stopped||!this.conductor)return;
-        const out=this.conductor.update(analysis,motion,now);if(out.changed)this.applyMode(out.mode,true);
+        const out=this.conductor.update(analysis,motion,now);
+        if(out.mode==='directed'){
+            // Single is the original shared-heading renderer, not the bottom
+            // portion of a partially split field. Retire daughter heads and
+            // their route memory; all historical glyphs stay where born.
+            this.expansion=0;this.applyMode('directed');return;
+        }
+        this.expansion=out.expansion;
+        // Keep per-head joints alive while the audio reverses a partial split.
+        // Clearing/restarting every stream here would erase that responsiveness.
+        if(this.mode!==out.mode){this.mode=out.mode;this.refresh?.();}
     };
     state.setFollowMusic=function(value){
         this.followMusic=!!value;try{localStorage.setItem('matrixRain.flowFollowMusic',String(this.followMusic));}catch{}
@@ -178,7 +217,7 @@
             for(const b of panel.querySelectorAll('[data-flow]'))b.setAttribute('aria-pressed',String(b.dataset.flow===this.mode));
             panel.querySelector('#flow-follow-music').checked=this.followMusic;
             panel.querySelector('#all-directions-status').textContent=this.audioOwned?
-                'Following music: '+labels[modes.indexOf(this.mode)]+'. Breathing with musical gestures. Choose a pattern to hold it.':
+                'Following sound: '+labels[modes.indexOf(this.mode)]+'. Live expansion and gathering. Choose a pattern to hold it.':
                 notes[this.mode]+(this.followMusic?' Start audio response for musical expansion and contraction.':'');
         };this.refresh();
     };

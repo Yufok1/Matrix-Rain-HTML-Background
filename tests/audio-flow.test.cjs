@@ -1,65 +1,54 @@
-const assert=require('node:assert/strict'),fs=require('node:fs');
+const assert=require('node:assert/strict');
 const load=require('./load-runtime.cjs'),Motion=load('beat-turns-policy.js'),Flow=load('rain-audio-flow.js');
-const modes=['directed','counterflow','crossflow'];
-function run({period=500,beatTurns=true,scale=1,seed='directed',generate,seconds=48}={}){
- const motion=new Motion(),untouched=new Motion(),flow=new Flow();flow.reset(seed);
- let heading='down',baseline='down';const snapshots=[];
- for(let frame=0;frame<seconds*60;frame++){
-  const now=frame*1000/60,phase=Math.floor(now/12000)%4,hit=now%period<90;
-  const s=generate?generate(now):new Float32Array(64);
-  if(!generate){
-   if(phase===0){s.fill(.001);s[24]=hit?.25:.04;}
-   if(phase===1){s.fill(hit?.35:.1);s[24]=.3;}
-   if(phase===2){s.fill(.0001);s[24]=hit?.04:.001;}
-  }
-  for(let i=0;i<s.length;i++)s[i]*=scale;
-  const out=motion.update(s,now,heading,true,beatTurns),base=untouched.update(s,now,baseline,true,beatTurns);
-  const before=JSON.stringify(out),bands=[...motion.bandFast];
-  flow.update(motion,out,now);heading=out.direction;baseline=base.direction;
-  assert.equal(JSON.stringify(out),before,'Formation observation cannot alter the accepted motion result');
-  assert.deepEqual([...motion.bandFast],bands,'Existing envelopes are read only');
-  assert.deepEqual(out,base,'Fast steering, propulsion and Beat turns stay exactly as before');
-  snapshots.push(flow.snapshot.mode);
+function direct({seconds=8,seed='directed',signal}={}){
+ const f=new Flow();f.reset(seed);const samples=[];
+ for(let i=0;i<seconds*120;i++){
+  const t=i*1000/120,v=signal(t),a={bandFast:Float32Array.from(v.bands||Array(6).fill(v.fast)),bandSlow:Float32Array.from(v.slowBands||Array(6).fill(v.slow)),fastEnergy:v.fast,slowEnergy:v.slow};
+  const m={impulse:v.impulse||0,accent:!!v.accent,flux:v.flux||0};
+  const before=JSON.stringify(a),out=f.update(a,m,t);assert.equal(JSON.stringify(a),before);samples.push({t,...out});
  }
- for(const step of flow.trace){const distance=Math.abs(modes.indexOf(step.from)-modes.indexOf(step.to));assert.ok(distance===1||(step.from==='crossflow'&&step.to==='directed'&&step.reason==='Gathering on a breakdown'),'Only a real breakdown can gather Crossflow directly into Single');}
- return {flow,motion,snapshots};
+ return {f,samples};
 }
-for(const beatTurns of [false,true])for(const period of [333.3333,500,750]){
- const result=run({period,beatTurns});
- assert.deepEqual(new Set(result.flow.trace.map(t=>t.to)),new Set(modes),'Music visits every formation');
- assert.equal(result.flow.trace.at(-1).to,'directed','The final silence settles to Single');
- assert.ok(result.flow.trace.length>=8,'Pulsed sections keep breathing rather than parking in Crossflow');
- for(let i=1;i<result.flow.trace.length;i++)assert.ok(result.flow.trace[i].time-result.flow.trace[i-1].time>=1399,'Formation has room to be seen');
- assert.ok(result.motion.eventCount>20,'The faster dancing controller still detects music');
- assert.deepEqual(run({period,beatTurns}).flow.trace,result.flow.trace,'The same music yields the same formation decisions');
+for(const seed of ['directed','counterflow','crossflow']){
+ const r=direct({seed,signal:()=>({fast:.3,slow:.3})});
+ assert.equal(r.f.trace.length,0,'An unchanging sound cannot invent formation changes');
+ assert.equal(r.f.expansion,['directed','counterflow','crossflow'].indexOf(seed));
 }
-const steady=run({generate:()=>new Float32Array(64).fill(.12)});
-assert.equal(steady.flow.trace.length,0,'Elapsed time cannot cycle a held sound');
-const narrow=run({generate:now=>{const s=new Float32Array(64);s[8]=now%500<90?.25:.02;return s;}});
-assert.ok(narrow.flow.trace.length>8,'A recurring real beat gives the formation a musical breathing cadence');
-assert.deepEqual(narrow.flow.trace.slice(0,4).map(t=>t.to),['counterflow','crossflow','counterflow','directed'],'A steady pulse traces the ordered expansion and contraction');
-const silence=run({seed:'crossflow',generate:()=>new Float32Array(64),seconds:12});
-assert.equal(silence.flow.trace.at(-1).to,'directed','Silence resolves to Single');assert.ok(silence.flow.trace.length<=2,'Silence cannot cycle formations');
-const quiet=run({scale:.1});assert.ok(quiet.flow.trace.some(t=>t.to==='crossflow'),'Lower playback level remains responsive');
-{
- const result=run({seconds:24}),f=result.flow,before=f.snapshot.mode;
- const noAttack={accent:false,flux:0,impulse:0};
- f.update(result.motion,noAttack,120000);assert.equal(f.snapshot.mode,before,'Returning after a gap cannot create a transition');
- assert.equal(f.confidence,0,'An old pulse estimate is not carried across a pause');
+const isolated=direct({signal:t=>({fast:t>=1000&&t<1100?.9:.15,slow:.15,impulse:t>=1000&&t<1100?.8:0,accent:t>=1000&&t<1009})});
+assert.ok(isolated.f.trace.some(v=>v.to==='counterflow'),'An isolated clear accent can open the paired current');
+assert.ok(!isolated.f.trace.some(v=>v.to==='crossflow'),'One short hit cannot fire the entire bloom');
+assert.equal(isolated.f.snapshot.mode,'directed','The isolated gesture relaxes afterwards');
+const buildSignal=t=>{
+ if(t<700)return {fast:.12,slow:.12};
+ if(t>3500)return {fast:.07,slow:.25};
+ const age=t-700,pulse=age%400<125;
+ const fast=.18+Math.min(age/2400,1)*.52+(pulse?.22:0);
+ return {fast,slow:.2,impulse:pulse?.8:0,accent:age%400<9,flux:pulse?.03:0};
+};
+const r=direct({signal:buildSignal});
+assert.ok(r.f.trace.some(v=>v.to==='counterflow')&&r.f.trace.some(v=>v.to==='crossflow'),'Developing musical support reaches both bloom stages');
+assert.ok(r.f.trace[0].time<1250,'A clear buildup begins opening within half a second');
+assert.equal(r.f.snapshot.mode,'directed','Falling support relaxes into a true Single');
+assert.ok(r.f.trace.length<12,'One buildup is a coherent gesture, not dozens of threshold flips');
+for(let i=0;i<r.f.trace.length;i++){
+ const step=r.f.trace[i];assert.equal(Math.abs(['directed','counterflow','crossflow'].indexOf(step.to)-['directed','counterflow','crossflow'].indexOf(step.from)),1,'Audible development progresses through adjacent bloom stages');
+ if(i)assert.ok(step.time-r.f.trace[i-1].time>=250,'A formation has time to become readable');
 }
-const html=fs.readFileSync('matrix-rain-utility-suite.html','utf8');
-assert.match(html,/rainAllDirections\?\.updateAudio\?\.\(audioMotion, musicalMotion, audioNow\)/,'Actual HTML feeds the accepted analysis into flow');
-const codec=load('rain-settings-codec.js'),fixture=require('./settings-codec-ui.test.cjs');
-for(const flowFollow of [true,false])for(const flow of modes){
- const s=structuredClone(fixture);s.rain.flow=flow;s.audio.flowFollow=flowFollow;
- assert.deepEqual(codec.decode(codec.encode(s)),s);
+const jitter=direct({signal:t=>({fast:.3+.002*Math.sin(t/70),slow:.3})});
+assert.equal(jitter.f.trace.length,0,'Small fluctuations cannot reshuffle the formation');
+const fade=direct({seed:'crossflow',signal:t=>t<500?{fast:.3,slow:.3}:{fast:0,slow:.3}});
+assert.equal(fade.f.snapshot.mode,'directed');assert.equal(fade.f.expansion,0,'Silence cannot pump the pattern');
+assert.deepEqual(direct({signal:buildSignal}).samples,direct({signal:buildSignal}).samples,'The same musical development reproduces the same bloom');
+// Exercise the real accepted analyser too; observing it must leave all fast
+// headings, propulsion and colors' inputs exactly as before.
+for(const beatTurns of [false,true]){
+ const a=new Motion(),b=new Motion(),f=new Flow();let h='down',baseline='down';
+ for(let i=0;i<3600;i++){
+  const t=i*1000/60,arrangement=i<1200?.3:i<2400?1.6:.2;
+  const s=Float32Array.from({length:64},(_,k)=>i>=3000?0:.002+arrangement*(t%((k%3+1)*173)<73?.2:.01));
+  const m=a.update(s,t,h,true,beatTurns),ref=b.update(s,t,baseline,true,beatTurns);
+  f.update(a,m,t);assert.deepEqual(m,ref);h=m.direction;baseline=ref.direction;
+ }
+ assert.ok(f.trace.some(v=>v.to==='counterflow')&&f.trace.some(v=>v.to==='directed'),'Actual audio analysis opens and relaxes with arrangement changes');
 }
-for(const length of [3,4,7]){
- const f=new Flow();for(let i=0;i<length*7;i++){const shape=Array(6).fill(.03);shape[i%length%6]=.85;f.remember(i*500,shape,(i%length===0?1.1:.3)+(i%length)*.03);}
- assert.equal(f.phraseLength,length,'Repeated spectral/rhythmic motif length is learned, not fixed at four');
-}
-{const f=new Flow();for(let i=0;i<120;i++)f.remember(i*500,Array(6).fill(1/6),.6);assert.equal(f.phraseLength,0,'Unaccented identical pulses cannot prove a meter');assert.equal(f.notes.length,72,'Memory is bounded');}
-assert.equal(silence.flow.trace[0].from,'crossflow');assert.equal(silence.flow.trace[0].to,'directed','A real breakdown can gather Crossflow directly into Single');
-const old=structuredClone(fixture);old.v=12;delete old.audio.flowFollow;
-assert.equal(codec.decode('MR12.'+Buffer.from(JSON.stringify(old)).toString('base64url')).audio.flowFollow,false,'Old codes retain manual formation');
-console.log('PASS musical builds/releases at three pulse rates, ordered breathing and meaningful breakdown collapses, quiet playback, deterministic timing, no timer cycling, exact fast-motion parity, pause recovery and MR13 preference round trips.');
+console.log('PASS staged musical bloom / release, isolated-hit restraint, no threshold chatter or clock-driven cycles, silence, determinism and exact accepted fast steering / propulsion parity.');

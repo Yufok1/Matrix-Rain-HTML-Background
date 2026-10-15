@@ -52,3 +52,6 @@ matrix-rain-android*.zip
 **/resource-audit.json
 **/apk-manifest-check.txt
 **/core-tests/
+
+# Private soundtrack fixtures and local research outputs.
+tests/*.private.*
