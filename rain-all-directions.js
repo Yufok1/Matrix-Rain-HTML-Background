@@ -42,9 +42,15 @@
         return r;
     }
     state.beginFrame=function(frame){
-        const depth=typeof rainCamera==='undefined'?true:rainCamera.enabled;
+        const depth=typeof rainCamera==='undefined'?true:(rainCamera.active ?? rainCamera.enabled);
         if(frame<this.lastFrame||depth!==this.depth){this.records.clear();this.clearForks();this.transitioning=false;}
         this.frame=Number.isFinite(frame)?frame:this.frame+1;this.lastFrame=this.frame;this.depth=depth;
+        if(this.transitioning&&root.activeColumnsMask){
+            // A density reduction retires heads. They cannot finish a pending
+            // turn, so they must not keep the entire scene waiting forever.
+            for(const [index,r] of this.records)if(!root.activeColumnsMask[index])r.transition=false;
+            this.transitioning=[...this.records.values()].some(r=>r.transition);
+        }
     };
     state.directionFor=function(index,depth=true){
         if(!this.enabled)return null;

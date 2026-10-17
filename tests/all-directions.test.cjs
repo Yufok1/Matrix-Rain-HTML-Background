@@ -72,4 +72,8 @@ assert.equal(ctx.camera.marks.length,history,'Switching modes never clears trail
 ctx.tick();ctx.tick();
 for(const mark of ctx.camera.marks.slice(-40))for(let j=0;j<3;j++)assert.ok(Math.abs(mark.delta[j]-[0,-10,0][j])<1e-7);
 assert.ok(ctx.camera.marks.every(m=>m.char==='カ'&&m.color==='#00ff41'),'Characters and birth colors remain intact');
+mode.records.set(79,{transition:true});mode.transitioning=true;
+ctx.window.activeColumnsMask[79]=false;mode.lastFrame=ctx.camera.frame;mode.depth=true;
+mode.beginFrame(ctx.camera.frame+1);
+assert.equal(mode.transitioning,false,'Retired heads cannot keep Auto waiting on a turn forever');
 console.log('PASS balanced simultaneous axes, coherent conductor rotations, 260 frames of X/Y/Z wrapping, fixed world velocity, turn joints, reverse flow, density stability, flat four-direction mode, original single-direction fallback and intact history/colors.');

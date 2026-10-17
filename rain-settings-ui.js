@@ -1,4 +1,4 @@
-import './trails/rain-trails.js?v=ac432af0aa79';
+import './trails/rain-trails.js?v=99cc5ae002ef';
 import {createSettingsBeacon} from './rain-settings-beacon.js?v=ff66d04f402d';
 
 // Move the existing controls, preserving their handlers and simulation state.
@@ -32,7 +32,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     const colors=document.createElement('div');colors.className='settings-grid';colors.append(control('primaryColor'),control('secondaryColor'));manual.append(colors);
     const manualDetails=sub('Manual appearance');manualDetails.lastElementChild.append(manual);rb.append(manualDetails);
     const auto=el('autoOrchestratorBtn'),reverse=el('reverseFlowBtn'),shuffle=document.querySelector('[onclick="activateChaosRandomizer()"]');
+    auto.title='Explore connected variations at your chosen interval. Bigger changes take intermediate steps; depth changes retain the rain and viewing angle. Runs separately from audio response.';
     shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle,auto));
+    const sceneTiming=document.createElement('div');sceneTiming.className='control-item';
+    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="2" max="60" step="1"><small>Transitions finish before another shift starts. Stop Auto scenes to use audio response.</small>';
+    rb.append(sceneTiming);
+    sceneTiming.querySelector('#autoSceneInterval').oninput=event=>window.rainAutoScenes.setInterval(event.target.value);
     const trailDetails=sub('3D trails'),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';
     trailField.append(el('rain-trails-panel'));trailDetails.lastElementChild.append(trailField,hint('Tail length and stepped fade apply to the 3D camera view.'));rb.append(trailDetails);
 
@@ -67,6 +72,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const share=el('rain-share-panel');share.className='settings-category';share.removeAttribute('style');share.querySelector('summary').innerHTML='Configurations<span class="category-note">Copy · paste · share</span>';
     share.querySelector('p').textContent='Share every visual setting in one code. Import keeps listening, playback and Auto Orchestrator activation as they are.';
     content.replaceChildren(rain,audio,camera,render,share);
+    window.rainAutoScenes.setInterval(window.rainAutoScenes.intervalSeconds,false);
     window.rainMedia?.mount(content,render);
 
     const toggle=el('minimizeBtn');
@@ -76,8 +82,8 @@ window.addEventListener('DOMContentLoaded',()=>{
         direction:MatrixRainEngine.rainConfig.direction,
         reverse:reverseFlowMultiplier,
         color:MatrixRainEngine.rainConfig.primaryColor,
-        view:rainCamera.enabled?rainCamera.viewRotation():null,
-        focal:rainCamera.enabled?rainFocalLength:0,
+        view:rainCamera.active?rainCamera.viewRotation():null,
+        focal:rainCamera.active?rainFocalLength:0,
         speed:MatrixRainEngine.rainConfig.speed,
         audio:window.audioReactiveActive?{...window.rainAudioMotion.snapshot,at:window.rainAudioMotion.sampledAt}:null
     }));
@@ -94,12 +100,12 @@ window.addEventListener('DOMContentLoaded',()=>{
         toggle.setAttribute('aria-label',collapsed?'Open settings':'Collapse settings');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.title=collapsed?'Settings · M':'Collapse settings · M';
         const isAudio=audioReactiveActive||rainSessionControls.audioPaused;
         el('rain-manual-settings').disabled=isAudio;
-        el('audioModeSettings').disabled=!isAudio;
-        el('rain-trail-settings').disabled=el('rain-render-settings').disabled=!rainCamera.enabled;
+        el('audioModeSettings').disabled=!isAudio||!!window.rainAudioStarting;
+        el('rain-trail-settings').disabled=el('rain-render-settings').disabled=!rainCamera.active;
         reverse.textContent='Reverse flow';reverse.setAttribute('aria-pressed',String(reverseFlowMultiplier===-1));
         auto.textContent=autoOrchestratorActive?'Stop auto scenes':'Auto scenes';auto.setAttribute('aria-pressed',String(autoOrchestratorActive));
         el('audioReactiveBtn').textContent=isAudio?'Stop audio response':'Start audio response';el('audioReactiveBtn').setAttribute('aria-pressed',String(isAudio));
-        el('audioReactiveBtn').disabled=rainSessionControls.stopped||autoOrchestratorActive||!canCaptureRainAudio();auto.disabled=rainSessionControls.stopped||audioReactiveActive;
+        el('audioReactiveBtn').disabled=rainSessionControls.stopped||autoOrchestratorActive||!!window.rainAudioStarting||!canCaptureRainAudio();auto.disabled=rainSessionControls.stopped||isAudio;
         stop.textContent=rainSessionControls.stopped?'Resume':'Stop';stop.title=rainSessionControls.stopped?'Resume with your settings intact':'Emergency stop — preserve this session';
         stop.dataset.state=rainSessionControls.stopped?'stopped':'running';
         header.querySelector('.panel-drag-hint').textContent=rainSessionControls.stopped?'Stopped · settings preserved':'Settings · drag to reposition';
@@ -113,7 +119,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     // Refresh after existing handlers; audio startup is async and announces
     // state through status/buttons. No polling or work in the animation loop.
     content.addEventListener('click',()=>queueMicrotask(()=>rainSettingsUI.refresh()));
-    content.addEventListener('input',()=>rainSettingsUI.refresh());
+    content.addEventListener('input',event=>{if(event.target.id!=='autoSceneInterval')window.rainAutoScenes?.reset();rainSettingsUI.refresh();});
+    content.addEventListener('click',event=>{
+        if(event.target.closest('.setting-choice,[data-camera-mode],.pattern-btn,[data-flow]'))window.rainAutoScenes?.reset();
+    });
     new MutationObserver(()=>rainSettingsUI.refresh()).observe(el('audioStatus'),{childList:true,subtree:true});
     document.addEventListener('keydown',event=>{
         if(event.ctrlKey||event.metaKey||event.altKey||event.repeat||event.target.isContentEditable||event.target.closest('input,textarea,select'))return;
@@ -125,7 +134,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     document.querySelector('[data-control="rainDirection"]').setAttribute('aria-label','Rain direction');
     for(const id of ['rainSpeed','rainIntensity','rainDensity'])el(id).oninput=el(id).onchange;
     const orchestrate=window.orchestrateRandomChange;
-    window.orchestrateRandomChange=()=>{orchestrate();rainSettingsUI.refresh();};
+    window.orchestrateRandomChange=()=>{const changed=orchestrate();rainSettingsUI.refresh();return changed;};
     window.rainSettingsUI.refresh();
     modal.dataset.settingsReady='true';
     rainSettingsBeacon.update();

@@ -41,3 +41,10 @@ RGB depiction affects only the ink of existing moving rain; birth history, world
 ## Musical flow preferences and session ownership
 
 `rain.flow` saves the selected manual pattern. Audio response, Beat turns, Stop/Resume and elapsed time never change it. Reset selects Single. MR13 codes are validated in full, then their retired automatic-flow flag is discarded. Invalid legacy flags still reject the entire code before any preference changes. The retired controller, checkbox, startup hooks and timing comparisons are absent from the runtime. All three manual patterns retain the existing direction, speed and color response.
+
+
+## MR15 connected Auto scenes
+
+The new fields are `camera.continuous` (the retained flat/3D world) and `auto.interval` (2–60 seconds, default 12). Current exports cover 50 leaves including version and name. MR14 and earlier codes migrate with the original camera behavior and a 12-second Auto interval. Session activation remains excluded. Auto scenes and audio response are mutually exclusive; stopping Auto preserves its view and starting audio cancels its pending setting changes. The established standalone audio motion, color and character engines are unchanged.
+
+Auto uses the same world and glyph history through projection changes. Density, font size and pacing transitions accept numeric slider values after import. Manual settings cancel pending Auto plans; the timing control reschedules its single timer without resetting the view.

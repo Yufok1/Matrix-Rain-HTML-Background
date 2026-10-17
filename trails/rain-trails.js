@@ -28,7 +28,7 @@ const stepped = panel.querySelector('#trail-stepped');
 function refresh() {
     stepped.checked = trails.stepped;
     shortest.value = trails.minimum; longest.value = trails.maximum; variety.checked = trails.enabled;
-    const cameraOff = typeof rainCamera !== 'undefined' && !rainCamera.enabled;
+    const cameraOff = typeof rainCamera !== 'undefined' && !(rainCamera.active ?? rainCamera.enabled);
     shortest.disabled = longest.disabled = cameraOff || !trails.enabled;
     variety.disabled = stepped.disabled = cameraOff;
     panel.title = cameraOff ? 'Enable 3D Camera to adjust these trails. Original View uses its original fade.' : '';

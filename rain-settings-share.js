@@ -15,7 +15,7 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:14,name,
+            v:15,name,auto:{interval:window.rainAutoScenes?.intervalSeconds??12},
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
@@ -25,9 +25,9 @@
                 saturationGain:rounded(satGainScale*100),brightnessDepth:rounded(brightnessDepthScale*100),
                 spread:audioHueSpread,trebleHueRange:audioHighModRange,saturationFloor:satFloor,
                 brightnessMin,brightnessMax},
-            camera:{enabled:rainCamera.enabled,mode:rainCamera.mode,yaw:rounded(rainCamera.yaw),pitch:rounded(rainCamera.pitch),roll:rounded(rainCamera.roll),
+            camera:{enabled:rainCamera.enabled,continuous:!!rainCamera.continuous,mode:rainCamera.mode,yaw:rounded(rainCamera.yaw),pitch:rounded(rainCamera.pitch),roll:rounded(rainCamera.roll),
                 speeds:Object.fromEntries(Object.entries(rainCamera.speeds).map(([k,v])=>[k,rounded(v*100)]))},
-            render:{quality:r.quality,sharp:r.sharp,smooth:r.smooth,glow:rounded(r.glow*100),contrast:rounded(r.contrast*100)},
+            render:{quality:r.quality,sharp:r.sharp,smooth:r.smooth,glow:Math.round(r.glow*100),contrast:Math.round(r.contrast*100)},
             trails:{enabled:t.enabled,stepped:t.stepped,minimum:t.minimum,maximum:t.maximum},
             media:{influence:rainMedia.options.influence,exposure:rainMedia.options.exposure,contrast:rainMedia.options.contrast,gamma:rainMedia.options.gamma,characters:window.RainMediaCharacters.mode,dotDensity:window.RainMediaCharacters.density}
         });
@@ -49,7 +49,12 @@
         el('primaryColor').value=s.rain.primary;el('secondaryColor').value=s.rain.secondary;updateRainColors();
         if ((reverseFlowMultiplier===-1)!==s.rain.reverse) toggleReverseFlow();
         if (audioReverseEnabled!==s.audio.beatTurns) toggleAudioReverse();
-        rainCamera.setEnabled(s.camera.enabled);set('rainDirection',s.rain.direction,updateRainDirection);
+        window.rainAutoScenes?.reset();
+        window.rainAutoScenes?.setInterval(s.auto.interval);
+        rainCamera.continuous=false;rainCamera.depthTransition=null;rainCamera.motionFade=null;rainCamera.motionGain=1;
+        rainCamera.setEnabled(s.camera.enabled);
+        rainCamera.continuous=s.camera.continuous;rainCamera.perspective=s.camera.enabled?1:0;
+        set('rainDirection',s.rain.direction,updateRainDirection);
         window.rainAllDirections.setMode(s.rain.flow);
         setColorPreset(s.audio.preset);
         set('colorFluctuationSlider',s.audio.fluctuation,updateColorFluctuation);
@@ -73,10 +78,10 @@
         window.rainSettingsUI?.refresh();
         return s;
     }
-    function defaults(){return RainSettingsCodec.validate({v:14,name:'',
+    function defaults(){return RainSettingsCodec.validate({v:15,name:'',auto:{interval:12},
         rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'katakana',customCharacters:'',direction:'down',reverse:false,flow:'directed'},
         audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
-        camera:{enabled:true,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
+        camera:{enabled:true,continuous:false,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},
         render:{quality:'balanced',sharp:true,smooth:true,glow:15,contrast:100},trails:{enabled:false,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100,characters:'shading',dotDensity:50}
     });}
     window.rainSettingsShare={capture,apply,defaults,export:(name='')=>RainSettingsCodec.encode(capture(name)),import:blob=>apply(RainSettingsCodec.decode(blob))};

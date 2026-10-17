@@ -24,12 +24,12 @@ function fixture({capture, wallpaper = false, secure = true, localVideo = false}
         navigator:{mediaDevices:capture ? {getDisplayMedia:capture} : {}},
         document:{getElementById:id => elements[id]}, console:{error(){}},
         MatrixRainEngine:{logActivity(){}}, analyzeAudio(){}, resetAudioMotion(){},
-        stopAudioReactive() { if(context.activeStream())context.activeStream().getTracks().forEach(t=>t.stop()); released++; }
+        stopAudioReactive() { context.window.rainAudioStarting=false;if(context.activeStream())context.activeStream().getTracks().forEach(t=>t.stop()); released++; }
     });
     vm.runInContext('let rainAudioRequestVersion=0; let audioReactiveActive=false, audioUsesLocalVideo=false, audioStream=null, audioContext=null, audioAnalyser=null, audioBufferLength=0, audioDataArray=null;\n' +
         ['canCaptureRainAudio','updateModeButtons','toggleAudioReactive'].map(source).join('\n') +
         '\nglobalThis.controls={refresh:updateModeButtons,toggle:toggleAudioReactive}; globalThis.activeStream=()=>audioStream;', context);
-    return {elements, controls:context.controls, released:()=>released, connected:()=>connected};
+    return {elements, controls:context.controls, released:()=>released, connected:()=>connected, setAuto:value=>{context.window.autoOrchestratorActive=value;}};
 }
 function stream(audio = true) {
     const track = {stops:0, events:{}, stop(){this.stops++;}, addEventListener(name,fn){this.events[name]=fn;}};
@@ -75,9 +75,17 @@ function stream(audio = true) {
     finish(liveStream);await pending;
     assert.equal(live.elements.audioModeSettings.disabled,false);
     assert.equal(live.elements.audioReactiveBtn.disabled,false);
-    assert.equal(live.elements.autoOrchestratorBtn.disabled,true);
+    assert.equal(live.elements.autoOrchestratorBtn.disabled,true,'Audio excludes Auto scenes');
+    live.controls.refresh(null);
+    assert.equal(live.elements.autoOrchestratorBtn.disabled,true,'Refresh cannot unlock Auto during audio');
     liveStream.track.events.ended();
     assert.equal(live.elements.audioModeSettings.disabled,true,'Stopping sharing disables audio settings again');
     assert.equal(live.elements.autoOrchestratorBtn.disabled,false);
+    const exclusive=fixture({localVideo:true});exclusive.setAuto(true);exclusive.controls.refresh('orchestrator');
+    assert.equal(exclusive.elements.audioReactiveBtn.disabled,true,'Auto excludes audio capture');
+    await exclusive.controls.toggle();assert.equal(exclusive.connected(),0,'Direct handler cannot start capture during Auto');
+    exclusive.setAuto(false);exclusive.controls.refresh(null);
+    assert.equal(exclusive.elements.audioReactiveBtn.disabled,false,'Stopping Auto unlocks audio');
+    await exclusive.controls.toggle();assert.equal(exclusive.connected(),1,'Audio starts normally after Auto stops');
     console.log('Unsupported capture, insecure contexts, Wallpaper Engine, canceled/no-audio shares, pending capture and stop-sharing controls passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -44,7 +44,7 @@ const codec=require('./load-runtime.cjs')('rain-settings-codec.js'),fixture=requ
 for(const mode of ['directed','crossflow','counterflow']){
  const s=structuredClone(fixture);s.rain.flow=mode;assert.equal(codec.decode(codec.encode(s)).rain.flow,mode);
 }
-const old=structuredClone(fixture);old.v=11;delete old.audio.flowFollow;const raw='MR11.'+Buffer.from(JSON.stringify(old)).toString('base64url');assert.equal(codec.decode(raw).rain.flow,'directed');
+const old=structuredClone(fixture);old.v=11;delete old.camera.continuous;delete old.auto;delete old.audio.flowFollow;const raw='MR11.'+Buffer.from(JSON.stringify(old)).toString('base64url');assert.equal(codec.decode(raw).rain.flow,'directed');
 console.log('PASS flat view, Reverse flow, three-mode configuration round trips and MR11 migration.');
 
 for(const mode of ['layers','boxes','staircase','corner-waves']){

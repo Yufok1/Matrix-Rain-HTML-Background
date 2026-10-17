@@ -41,7 +41,7 @@ assert.equal(JSON.stringify(share.capture()),before,'Invalid shape data cannot p
 const retained=ctx.window.RainMediaCharacters;delete ctx.window.RainMediaCharacters;
 assert.throws(()=>share.apply(fixture),/still loading/,'Missing runtime fails before mutation');
 ctx.window.RainMediaCharacters=retained;assert.equal(JSON.stringify(share.capture()),before);
-const legacy=structuredClone(fixture);legacy.v=13;legacy.rain.flow='counterflow';legacy.audio.flowFollow=true;
+const legacy=structuredClone(fixture);legacy.v=13;delete legacy.camera.continuous;delete legacy.auto;legacy.rain.flow='counterflow';legacy.audio.flowFollow=true;
 share.import('MR13.'+Buffer.from(JSON.stringify(legacy)).toString('base64url'));
 assert.equal(ctx.window.rainAllDirections.mode,'counterflow','Legacy automatic-on codes import their manual choice');
 assert.equal(Object.hasOwn(share.capture().audio,'flowFollow'),false,'Re-export cannot restore automatic switching');

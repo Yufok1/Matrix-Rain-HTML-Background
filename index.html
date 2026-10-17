@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=0bf9605a2989"></script>
+    <script src="rain-settings-codec.js?v=659de56cc1dc"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -1263,9 +1263,9 @@
             const orchestratorBtn = document.getElementById('autoOrchestratorBtn');
             const audioBtn = document.getElementById('audioReactiveBtn');
 
-            orchestratorBtn.disabled = false;
-            audioBtn.disabled = !canCaptureRainAudio();
-            document.getElementById('audioModeSettings').disabled = activeMode !== 'audio';
+            orchestratorBtn.disabled = !!window.rainSessionControls?.stopped || audioReactiveActive;
+            audioBtn.disabled = !!window.rainSessionControls?.stopped || !!window.autoOrchestratorActive || !!window.rainAudioStarting || !canCaptureRainAudio();
+            document.getElementById('audioModeSettings').disabled = !audioReactiveActive || !!window.rainAudioStarting;
             if (!canCaptureRainAudio()) {
                 document.getElementById('audioStatus').textContent = 'Tab audio capture is unavailable in this browser. Try Auto Orchestrator for changing visuals.';
                 audioBtn.title = 'This browser cannot share tab audio';
@@ -1273,11 +1273,6 @@
                 audioBtn.title = '';
             }
 
-            if (activeMode === 'orchestrator') {
-                audioBtn.disabled = true;
-            } else if (activeMode === 'audio') {
-                orchestratorBtn.disabled = true;
-            }
         }
 
 
@@ -1858,9 +1853,9 @@
             return rainMotion.planar;
         }
 
-        function rainDepthScale(depth) { return rainCamera.enabled ? rainFocalLength / depth : 1; }
+        function rainDepthScale(depth) { return (rainCamera.active ?? rainCamera.enabled) ? rainFocalLength / depth : 1; }
         function rainDepthAlpha(depth) {
-            if (!rainCamera.enabled) return 1;
+            if (!(rainCamera.active ?? rainCamera.enabled)) return 1;
             const near = rainFocalLength / 8, far = rainFocalLength / 0.25;
             const edge = Math.max(0, Math.min(1, (depth - near) / 35, (far - depth) / 80));
             return edge * edge * (3 - 2 * edge);
@@ -1882,10 +1877,10 @@
 
         function advanceRainPosition(i, fontSize, speed) {
             const p = rainPosition(i, fontSize);
-            const route = window.rainAllDirections?.planStep?.(i, rainCamera.enabled, fontSize, speed);
+            const route = window.rainAllDirections?.planStep?.(i, rainCamera.active ?? rainCamera.enabled, fontSize, speed);
             speed = route?.speed ?? speed;
-            const requested = route?.direction || window.rainAllDirections?.directionFor(i, rainCamera.enabled) || MatrixRainEngine.rainConfig.direction;
-            if (rainCamera.enabled && (requested === 'toward' || requested === 'away')) {
+            const requested = route?.direction || window.rainAllDirections?.directionFor(i, rainCamera.active ?? rainCamera.enabled) || MatrixRainEngine.rainConfig.direction;
+            if ((rainCamera.active ?? rainCamera.enabled) && (requested === 'toward' || requested === 'away')) {
                 // A Z segment changes only world depth. Project that one axis;
                 // do not simultaneously advance the previous X/Y direction.
                 p.lastStepDirection = requested;
@@ -1907,7 +1902,7 @@
             }
             const direction = route?.direction || (window.rainAllDirections?.enabled ? requested : rainPlanarDirection());
             p.lastStepDirection = direction;
-            const step = (rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize) * speed * reverseFlowMultiplier;
+            const step = ((rainCamera.active ?? rainCamera.enabled) ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize) * speed * reverseFlowMultiplier;
             if (direction === 'left') p.x -= step;
             else if (direction === 'right') p.x += step;
             else if (direction === 'up') p.y -= step;
@@ -1924,11 +1919,11 @@
         function paintRainCharacter(char, x, y, i, fontSize) {
             const p = rainPosition(i, fontSize);
             const alpha = matrixCtx.globalAlpha;
-            const size = rainCamera.enabled ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize;
+            const size = (rainCamera.active ?? rainCamera.enabled) ? fontSize * rainDepthScale(p.depth) : MatrixRainEngine.rainConfig.fontSize;
             matrixCtx.font = `${size}px monospace`;
             matrixCtx.globalAlpha = alpha * rainDepthAlpha(p.depth);
-            if (rainCamera.enabled) rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
-            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) {
+            rainCamera.capture(char, x, y, p.depth, fontSize, alpha, matrixCtx.fillStyle, i);
+            if (!(rainCamera.active ?? rainCamera.enabled) || rainCameraGPU.failed || rainCameraGPU.lost) {
                 matrixCtx.fillText(char, x, y);
             }
             matrixCtx.globalAlpha = alpha;
@@ -1974,7 +1969,7 @@
             // Fade character trails toward black; audio changes glyph colors only.
             // Reset alpha left by the 3D renderer before the full-canvas fade.
             matrixCtx.globalAlpha = 1;
-            if (!rainCamera.enabled || rainCameraGPU.failed || rainCameraGPU.lost) {
+            if (!(rainCamera.active ?? rainCamera.enabled) || rainCameraGPU.failed || rainCameraGPU.lost) {
                 // Same .88 fade over black, stored as glyph alpha. Source RGB
                 // is applied only during presentation, never into trail history.
                 matrixCtx.save();matrixCtx.globalCompositeOperation='destination-out';matrixCtx.globalAlpha=.12;matrixCtx.fillStyle='#000';
@@ -2971,6 +2966,7 @@
         window.autoOrchestratorActive = false; // Expose globally for Ollama integration
 
         function toggleAutoOrchestrator() {
+            if (!autoOrchestratorActive && (audioReactiveActive || window.rainSessionControls?.stopped)) return;
             autoOrchestratorActive = !autoOrchestratorActive;
             window.autoOrchestratorActive = autoOrchestratorActive; // Sync global
             const btn = document.getElementById('autoOrchestratorBtn');
@@ -2980,17 +2976,20 @@
                 btn.style.background = '#ff4444';
                 startAutoOrchestrator();
                 MatrixRainEngine.logActivity('🎭 Auto Orchestrator STARTED - continuous random evolution!', 'success');
-                updateModeButtons('orchestrator'); // Disable other mode buttons
+                updateModeButtons('orchestrator');
             } else {
                 btn.textContent = '🎭 AUTO ORCHESTRATOR';
                 btn.style.background = '#0080ff';
                 stopAutoOrchestrator();
+                window.rainAutoScenes?.cancelPlan();
                 MatrixRainEngine.logActivity('🎭 Auto Orchestrator STOPPED', 'info');
                 updateModeButtons(null); // Re-enable all buttons
             }
         }
 
         function startAutoOrchestrator() {
+            stopAutoOrchestrator();
+            window.rainAutoScenes?.cancelPlan();
             // Run first change immediately
             orchestrateRandomChange();
 
@@ -2998,91 +2997,19 @@
             scheduleNextChange();
         }
 
-        function scheduleNextChange() {
+        function scheduleNextChange(waitForTransition = false) {
             if (!autoOrchestratorActive) return;
 
-            // Random interval: 8-15 seconds (longer to enjoy each scene)
-            const interval = 8000 + Math.floor(Math.random() * 7000);
-            const seconds = Math.round(interval / 1000);
-
-            console.log(`⏱️ Next orchestrator change in ${seconds} seconds...`);
-            MatrixRainEngine.logActivity(`⏱️ Next change in ${seconds}s`, 'info');
-
+            const interval = waitForTransition ? 250 : (window.rainAutoScenes?.intervalSeconds ?? 12) * 1000;
             autoOrchestratorInterval = setTimeout(() => {
-                orchestrateRandomChange();
-                scheduleNextChange(); // Schedule next one
+                const changed = orchestrateRandomChange();
+                scheduleNextChange(changed === false);
             }, interval);
         }
 
         function orchestrateRandomChange() {
-            if (!autoOrchestratorActive) return;
-
-            console.log('🎭 ORCHESTRATOR: Running change cycle...');
-
-            // Store previous pattern to detect changes
-            const previousPattern = MatrixRainEngine.rainConfig.pattern;
-            const previousDirection = MatrixRainEngine.rainConfig.direction;
-
-            // All available patterns
-            const patterns = ['classic', 'rainbow', 'pentad', 'chaos', 'harmonic'];
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8000', '#8000ff', '#00ff41'];
-            const characterSets = ['matrix', 'binary', 'hex', 'symbols', 'katakana'];
-            const directions = rainCamera.enabled ? ['down', 'up', 'left', 'right', 'toward', 'away'] : ['down', 'up', 'left', 'right'];
-
-            // Randomize EVERYTHING
-            const newPattern = patterns[Math.floor(Math.random() * patterns.length)];
-            const patternChanged = newPattern !== previousPattern;
-            MatrixRainEngine.rainConfig.pattern = newPattern;
-            MatrixRainEngine.rainConfig.primaryColor = colors[Math.floor(Math.random() * colors.length)];
-            MatrixRainEngine.rainConfig.secondaryColor = colors[Math.floor(Math.random() * colors.length)];
-            MatrixRainEngine.rainConfig.speed = 20 + Math.floor(Math.random() * 70); // 20-90
-            MatrixRainEngine.rainConfig.intensity = 40 + Math.floor(Math.random() * 60); // 40-100
-            // Do NOT change density here; keep manual control
-            MatrixRainEngine.rainConfig.characterSet = characterSets[Math.floor(Math.random() * characterSets.length)];
-            const newDirection = directions[Math.floor(Math.random() * directions.length)];
-
-            // Shared rain positions are preserved when direction changes.
-
-            MatrixRainEngine.rainConfig.direction = newDirection;
-
-            // Reverse flow is now controlled only by manual toggle or audio setting; no orchestrator reversals
-
-            // Update UI to reflect changes
-            document.getElementById('rainSpeed').value = 101 - MatrixRainEngine.rainConfig.speed;
-            document.getElementById('rainIntensity').value = MatrixRainEngine.rainConfig.intensity;
-            document.getElementById('rainDensity').value = MatrixRainEngine.rainConfig.density;
-            document.getElementById('primaryColor').value = MatrixRainEngine.rainConfig.primaryColor;
-            document.getElementById('secondaryColor').value = MatrixRainEngine.rainConfig.secondaryColor;
-            document.getElementById('characterSet').value = MatrixRainEngine.rainConfig.characterSet;
-            document.getElementById('rainDirection').value = MatrixRainEngine.rainConfig.direction;
-
-            // Update active pattern button
-            document.querySelectorAll('.pattern-btn').forEach(btn => btn.classList.remove('active'));
-            const patternBtn = document.querySelector(`[onclick="setRainPattern('${MatrixRainEngine.rainConfig.pattern}')"]`);
-            if (patternBtn) patternBtn.classList.add('active');
-
-            // Log the changes with CLEAR visibility
-            const directionChanged = MatrixRainEngine.rainConfig.direction !== previousDirection;
-            console.log(`\n========================================`);
-            console.log(`🎭 ORCHESTRATOR CHANGE:`);
-            console.log(`   Pattern: ${previousPattern} → ${MatrixRainEngine.rainConfig.pattern}`);
-            console.log(`   Direction: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`);
-            console.log(`   Reverse Flow: ${reverseFlowMultiplier === -1 ? '⏪ REWINDING' : '⏩ FORWARD'}`);
-            console.log(`========================================\n`);
-
-            // Show direction change notification
-            if (directionChanged) {
-                MatrixRainEngine.logActivity(`↗️ DIRECTION CHANGED: ${previousDirection} → ${MatrixRainEngine.rainConfig.direction}`, 'success');
-            }
-
-            if (patternChanged) {
-                MatrixRainEngine.logActivity(`🎭 NEW Pattern: ${MatrixRainEngine.rainConfig.pattern} | Dir: ${MatrixRainEngine.rainConfig.direction} | ${MatrixRainEngine.rainConfig.characterSet}`, 'success');
-            } else {
-                MatrixRainEngine.logActivity(`🔄 Settings update | Dir: ${MatrixRainEngine.rainConfig.direction} | Rev: ${reverseFlowMultiplier === -1 ? 'YES' : 'NO'}`, 'info');
-            }
-
-            // Always just update config - smooth transitions, no resets!
-            updateRainConfig();
+            if (!autoOrchestratorActive || audioReactiveActive || window.rainSessionControls?.stopped) return;
+            return window.rainAutoScenes.next();
         }
 
         function stopAutoOrchestrator() {
@@ -3136,9 +3063,11 @@
         };
 
         async function toggleAudioReactive() {
+            if (!audioReactiveActive && (window.autoOrchestratorActive || window.rainSessionControls?.stopped)) return;
             if (!canCaptureRainAudio()) { updateModeButtons(null); return; }
             audioReactiveActive = !audioReactiveActive;
             window.audioReactiveActive = audioReactiveActive; // Sync global
+            if (audioReactiveActive) window.rainAutoScenes?.reset();
             const btn = document.getElementById('audioReactiveBtn');
             const status = document.getElementById('audioStatus');
 
@@ -3167,7 +3096,7 @@
                         secondaryColorLabel.style.opacity = '0.5';
                     }
 
-                    updateModeButtons('audio'); // Disable other mode buttons
+                    updateModeButtons('audio');
 
                     // That's it! The analyzeAudio() function is already being called by the listener
                     return;
@@ -3176,6 +3105,7 @@
                 // BROWSER MODE - Request desktop/tab audio capture
                 status.textContent = window.rainMedia?.hasAudioSource ? 'Connecting the loaded video’s sound…' : 'Choose a tab or screen and enable Share audio.';
                 btn.disabled = true;
+                window.rainAudioStarting = true;
 
                 try {
                     if (window.rainMedia?.hasAudioSource) {
@@ -3229,10 +3159,11 @@
                         secondaryColorLabel.style.opacity = '0.5';
                     }
 
+                    window.rainAudioStarting = false;
                     // Start audio analysis loop
                     analyzeAudio();
 
-                    updateModeButtons('audio'); // Disable other mode buttons
+                    updateModeButtons('audio');
 
                     audioStream?.getTracks().forEach(track => track.addEventListener('ended', () => {
                         if (requestVersion === rainAudioRequestVersion && audioReactiveActive) toggleAudioReactive();
@@ -3292,6 +3223,7 @@
 
         function stopAudioReactive() {
             rainAudioRequestVersion++;
+            window.rainAudioStarting = false;
             window.rainAudioPalette.active = false;
             if (audioAnimationFrame) {
                 cancelAnimationFrame(audioAnimationFrame);
@@ -3535,21 +3467,22 @@
         }
     </script>
 <script src="rain-animation-clock.js?v=716799d6292e"></script>
-<script src="render-settings.js?v=51b3abc3cf18"></script>
+<script src="render-settings.js?v=0c92402aeb0a"></script>
 <script src="assets/rain-font-msdf.js?v=a2e4dfe46fde"></script>
 <script src="assets/media-characters.js?v=21b0aad25a02"></script>
 <script src="rain-media-characters.js?v=268a9ad2014a"></script>
-<script src="rain-camera-gpu.js?v=d63ad5aabce7"></script>
+<script src="rain-camera-gpu.js?v=14e8f4044484"></script>
 <script src="rain-camera-motion.js?v=fa4d75e30d2e"></script>
 <script src="rain-audio-characters.js?v=3f847c91d51b"></script>
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
-<script src="rain-all-directions.js?v=e32daf693c68"></script>
-<script src="rain-camera.js?v=5bb30a77b2dc"></script>
+<script src="rain-all-directions.js?v=ba3d9db77e48"></script>
+<script src="rain-auto-scenes.js?v=bd7dccdea31d"></script>
+<script src="rain-camera.js?v=66c01263774f"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=d55f6db66fa1"></script>
+<script src="rain-settings-share.js?v=0e29494cecc8"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
-<script type="module" src="rain-settings-ui.js?v=5d2129354039"></script>
+<script type="module" src="rain-settings-ui.js?v=b6cd5f3ac021"></script>
 </body>
 </html>

@@ -36,5 +36,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     glow.oninput=()=>{settings.glow=Number(glow.value)/100;save();};
     contrast.oninput=()=>{settings.contrast=Number(contrast.value)/100;save();};
     for(const button of panel.querySelectorAll('[data-quality]'))button.onclick=()=>{settings.quality=button.dataset.quality;save();};
+    window.rainRenderingControls = {refresh};
     refresh();
 });

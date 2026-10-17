@@ -29,7 +29,8 @@
         media:{...legacy10Schema.media,characters:choice('original','shading','braille','lines'),dotDensity:integer(0,100)}};
     const legacy12Schema={...legacy11Schema,v:choice(12),rain:{...legacy11Schema.rain,flow:choice('directed','crossflow','counterflow')}};
     const legacy13Schema={...legacy12Schema,v:choice(13),audio:{...legacy12Schema.audio,flowFollow:bool}};
-    const schema={...legacy12Schema,v:choice(14)};
+    const legacy14Schema={...legacy12Schema,v:choice(14)};
+    const schema={...legacy14Schema,v:choice(15),camera:{...legacy14Schema.camera,continuous:bool},auto:{interval:integer(2,60)}};
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
     const legacyWords={maxWords:integer(1,5),bufferMs:integer(0,3500),verticalOrder:choice('down','up')};
     const legacy9Schema={...legacy10Schema,v:choice(9),words:legacyWords};
@@ -81,22 +82,23 @@
         if(settings?.v===11){settings=check(settings,legacy11Schema,'');settings.v=12;}
         if(settings?.v===12){settings=check(settings,legacy12Schema,'');settings.audio.flowFollow=false;settings.v=13;}
         if(settings?.v===13){settings=check(settings,legacy13Schema,'');delete settings.audio.flowFollow;settings.v=14;}
+        if(settings?.v===14){settings=check(settings,legacy14Schema,'');settings.camera.continuous=false;settings.auto={interval:12};settings.v=15;}
         const clean=check(settings,schema,'');
         if (clean.trails.minimum>clean.trails.maximum) throw Error('Shortest trail exceeds longest trail.');
         if (clean.audio.brightnessMin>clean.audio.brightnessMax) throw Error('Invalid brightness range.');
         if (clean.rain.characterSet==='custom' && !clean.rain.customCharacters.trim()) throw Error('Custom characters are empty.');
-        if (!clean.camera.enabled && ['toward','away'].includes(clean.rain.direction)) throw Error('Toward/away needs Camera enabled.');
+        if (!clean.camera.enabled && !clean.camera.continuous && ['toward','away'].includes(clean.rain.direction)) throw Error('Toward/away needs Camera enabled.');
         return clean;
     }
     function encode(settings) {
         const bytes=new TextEncoder().encode(JSON.stringify(validate(settings)));
         let binary='';for (const byte of bytes) binary+=String.fromCharCode(byte);
-        return 'MR14.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        return 'MR15.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     function decode(blob) {
         if (typeof blob!=='string' || blob.length>24000) throw Error('Configuration is too large.');
         const compact=blob.replace(/[\t\r\n ]/g,'');
-        const prefix=compact.match(/^MR(14|13|12|11|10|[1-9])\./);
+        const prefix=compact.match(/^MR(15|14|13|12|11|10|[1-9])\./);
         if (!prefix) throw Error('Expected a Matrix Rain configuration.');
         const payload=compact.slice(prefix[0].length);
         if (!payload || payload.length>12000 || !/^[A-Za-z0-9_-]+$/.test(payload) || payload.length%4===1) throw Error('Damaged configuration.');

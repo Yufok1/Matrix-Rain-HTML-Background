@@ -4,11 +4,61 @@ const rainCamera = {
     mode: 'fixed', motionTime: 0, motionBase: {yaw: 0, pitch: 0, roll: 0},
     speeds: {showcase: .25, corkscrew: .25, gyroscope: .25},
     phaseRates: {showcase: 10, corkscrew: 3, gyroscope: 1},
+    continuous: false, perspective: 1, depthTransition: null, motionGain: 1,
+    get active() { return this.enabled || this.continuous; },
+    projectionDepth(z) { return rainFocalLength + (z - rainFocalLength) * (this.continuous ? this.perspective : 1); },
+    beginContinuousView() {
+        if (this.continuous) return;
+        this.continuous = true; this.perspective = this.enabled ? 1 : 0;
+        if (!this.enabled) {
+            // Flat history has been recorded at its actual screen coordinates.
+            // Adopt that field, including its tails, before adding perspective.
+            this.yaw = this.pitch = this.roll = 0;
+            this.setMode('fixed');
+            for (const p of rainMotion.drops) if (p) {
+                p.depth = rainFocalLength;
+                if (p.lastStamp) p.lastStamp.depth = rainFocalLength;
+            }
+        }
+        rainCameraGPU.invalidate = true;
+        this.refreshControls?.();
+    },
+    transitionDepth(enabled, duration = 4) {
+        this.beginContinuousView();
+        this.enabled = !!enabled;
+        const target = enabled ? 1 : 0;
+        if (this.perspective === target && !this.depthTransition) { this.refreshControls?.(); return; }
+        // Keep the original viewpoint and motion mode during the morph.
+        this.depthTransition = {from:this.perspective,to:target,elapsed:0,duration};
+        this.refreshControls?.();
+    },
+    settleMotion() { this.motionFade = {from: this.motionGain, to: 0, elapsed: 0}; },
+    resumeMotion(mode) {
+        this.setMode(mode); this.motionGain = 0;
+        this.motionFade = {from: 0, to: 1, elapsed: 0};
+    },
+    advanceTransitions(dt) {
+        const ease = t => t*t*t*(t*(t*6-15)+10);
+        const depth = this.depthTransition;
+        if (depth) {
+            depth.elapsed = Math.min(depth.duration, depth.elapsed + dt);
+            this.perspective=depth.from+(depth.to-depth.from)*ease(depth.elapsed/depth.duration);
+            if (depth.elapsed === depth.duration) this.depthTransition = null;
+        }
+        const motion = this.motionFade;
+        if (motion) {
+            motion.elapsed = Math.min(2, motion.elapsed + dt);
+            this.motionGain = motion.from + (motion.to-motion.from)*ease(motion.elapsed/2);
+            if (motion.elapsed === 2) this.motionFade = null;
+        }
+    },
     pending: [], bounds: null, streams: new Map(), volume: null, tiles: [], near: 40, far: 2000,
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
     },
     setEnabled(enabled) {
+        // Manual changes within an adopted world also retain its geometry.
+        if (this.continuous) { this.transitionDepth(enabled); return; }
         const changed = this.enabled !== !!enabled;
         this.enabled = !!enabled; this.lastTime = null;
         if (changed) {
@@ -32,6 +82,7 @@ const rainCamera = {
     setMode(mode) {
         if (!window.RainCameraMotion.modes.includes(mode)) return;
         this.mode = mode; this.orbit = mode === 'showcase'; this.motionTime = 0; this.lastTime = null;
+        this.motionGain = 1; this.motionFade = null;
         this.motionBase = {yaw: this.yaw, pitch: this.pitch, roll: this.roll};
         this.refreshControls?.();
     },
@@ -58,8 +109,8 @@ const rainCamera = {
         if (typeof rainCameraGPU !== 'undefined') rainCameraGPU.invalidate = true;
     },
     capture(char, x, y, depth, fontSize, alpha, color, streamId, headOverride = null) {
-        if (!this.enabled) return;
         this.ensureVolume();
+        if (!this.active) depth = rainFocalLength;
         const scale = rainFocalLength / depth, box = this.volume;
         const head = headOverride || (Number.isInteger(streamId) && rainMotion.drops[streamId]);
         const appearanceId = headOverride?.sourceId ?? streamId;
@@ -73,7 +124,7 @@ const rainCamera = {
                 stream = { x: raw.x, y: raw.y, z: raw.z, raw, frame: this.frame, delta: [0, 0, 0] };
                 this.streams.set(streamId, stream);
             } else {
-                const direction = head.lastStepDirection || window.rainAllDirections?.directionFor(streamId, this.enabled) || MatrixRainEngine.rainConfig.direction;
+                const direction = head.lastStepDirection || window.rainAllDirections?.directionFor(streamId, this.active) || MatrixRainEngine.rainConfig.direction;
                 let dx = raw.x - stream.raw.x, dy = raw.y - stream.raw.y, dz = raw.z - stream.raw.z;
                 // Undo the original screen-loop seam, then wrap once in the
                 // fixed world lattice. This preserves the existing head step.
@@ -110,16 +161,16 @@ const rainCamera = {
         const pad = Math.max(150, (this.bounds?.pad || 0) + (this.bounds?.motionMargin || 0));
         const cached = this._viewState;
         if (cached && cached.volume === this.volume && cached.yaw === this.yaw
-            && cached.pitch === this.pitch && cached.roll === this.roll && cached.near === this.near && cached.far === this.far && cached.pad === pad) return;
-        this._viewState = { volume: this.volume, yaw: this.yaw, pitch: this.pitch, roll: this.roll, near: this.near, far: this.far, pad };
+            && cached.pitch === this.pitch && cached.roll === this.roll && cached.near === this.near && cached.far === this.far && cached.pad === pad && cached.perspective === this.perspective) return;
+        this._viewState = { volume: this.volume, yaw: this.yaw, pitch: this.pitch, roll: this.roll, near: this.near, far: this.far, pad, perspective: this.perspective };
         this.rotation = this.viewRotation();
         const box = this.volume;
         const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
         // Inverse-project all frustum corners to select whatever cells this
         // orientation needs, including behind the original viewing direction.
         for (const z of [this.near, this.far]) for (const xs of [-1, 1]) for (const ys of [-1, 1]) {
-            const x = xs * (box.width / 2 * z / rainFocalLength + pad);
-            const y = ys * (box.height / 2 * z / rainFocalLength + pad);
+            const x = xs * (box.width / 2 * this.projectionDepth(z) / rainFocalLength + pad);
+            const y = ys * (box.height / 2 * this.projectionDepth(z) / rainFocalLength + pad);
             const dz = z - rainFocalLength;
             // Transpose the complete orthonormal rotation, including roll.
             // Tile selection and GPU projection must describe the same view.
@@ -133,7 +184,9 @@ const rainCamera = {
         const lo = min.map((value, axis) => Math.ceil((value - base[axis] - spans[axis] / 2) / spans[axis]));
         const hi = max.map((value, axis) => Math.floor((value - base[axis] + spans[axis] / 2) / spans[axis]));
         const r = this.rotation, sx = box.width / (2 * rainFocalLength), syf = box.height / (2 * rainFocalLength);
-        const planes = [[1, 0, sx, pad], [-1, 0, sx, pad], [0, 1, syf, pad], [0, -1, syf, pad], [0, 0, 1, -this.near], [0, 0, -1, this.far]];
+        const mix = this.continuous ? this.perspective : 1;
+        const px = pad + box.width / 2 * (1-mix), py = pad + box.height / 2 * (1-mix);
+        const planes = [[1, 0, sx*mix, px], [-1, 0, sx*mix, px], [0, 1, syf*mix, py], [0, -1, syf*mix, py], [0, 0, 1, -this.near], [0, 0, -1, this.far]];
         const half = spans.map(span => span / 2), tiles = [];
         for (let ix = lo[0]; ix <= hi[0]; ix++) for (let iy = lo[1]; iy <= hi[1]; iy++) for (let iz = lo[2]; iz <= hi[2]; iz++) {
             const offset = [ix * box.x, iy * box.y, iz * box.z];
@@ -159,14 +212,14 @@ const rainCamera = {
         const y = r[3] * mark.x + r[4] * mark.y + r[5] * dz;
         const z = r[6] * mark.x + r[7] * mark.y + r[8] * dz + rainFocalLength;
         if (z <= 25) return null;
-        const scale = rainFocalLength / z;
+        const scale = rainFocalLength / this.projectionDepth(z);
         return { x: matrixCanvas.width / 2 + x * scale,
             y: matrixCanvas.height / 2 + y * scale, size: mark.fontSize * scale, z };
     },
     advanceFrame() {
         this.syncTrailSettings();
         // Compact history in place once per character step, never per repaint.
-        if(!this.enabled || (typeof rainCameraGPU!=='undefined' && (rainCameraGPU.failed || rainCameraGPU.lost))){
+        if(!this.active || (typeof rainCameraGPU!=='undefined' && (rainCameraGPU.failed || rainCameraGPU.lost))){
             this.pending.length=0;
             if(typeof rainCameraGPU!=='undefined')rainCameraGPU.invalidate=true;
         }
@@ -191,9 +244,11 @@ const rainCamera = {
         window.rainMedia?.present(now);
         const gap=this.lastTime===null?0:Math.max(0,now-this.lastTime);
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
-        if(this.enabled){
+        this.advanceTransitions(dt);
+        window.rainAutoScenes?.advance(dt);
+        if(this.active){
             if(this.mode!=='fixed'){
-                this.motionTime+=dt*this.speeds[this.mode]*this.phaseRates[this.mode];
+                this.motionTime+=dt*this.speeds[this.mode]*this.phaseRates[this.mode]*this.motionGain*(this.continuous?this.perspective:1);
                 const angles=window.RainCameraMotion.angles(this.mode,this.motionTime),degrees=180/Math.PI;
                 for(const axis of ['yaw','pitch','roll'])this[axis]=this.wrap(this.motionBase[axis]+angles[axis]*degrees,360);
                 if(now-(this.lastControlUpdate||0)>100){this.refreshControls?.(true);this.lastControlUpdate=now;}
@@ -203,7 +258,7 @@ const rainCamera = {
             this.lastQuality=quality;this.lastPaint=now;
             this.prepareView();rainCameraGPU.render(this,phase);
         }else rainCameraGPU.hide();
-        window.rainMedia?.presentFlat(!this.enabled||rainCameraGPU.failed||rainCameraGPU.lost);
+        window.rainMedia?.presentFlat(!this.active||rainCameraGPU.failed||rainCameraGPU.lost);
         window.rainSettingsBeacon?.update(now);
     },
     // Diagnostic compatibility: one complete simulation step and presentation.
@@ -260,8 +315,8 @@ window.addEventListener('DOMContentLoaded', () => {
         yaw.value = rainCamera.yaw; pitch.value = rainCamera.pitch; roll.value = rainCamera.roll;
         speed.disabled = !rainCamera.enabled || rainCamera.mode === 'fixed';
         yaw.disabled = pitch.disabled = roll.disabled = !rainCamera.enabled;
-        document.getElementById('cameraViewPolicy').textContent = rainCamera.enabled ? '3D view · perspective fonts · six directions' : 'Original view · one font size · four directions';
-        for (const button of document.querySelectorAll('[data-control="rainDirection"] [data-value="toward"], [data-control="rainDirection"] [data-value="away"]')) button.disabled = !rainCamera.enabled;
+        document.getElementById('cameraViewPolicy').textContent = rainCamera.depthTransition ? 'Changing depth · same rain · retained angle' : rainCamera.continuous && !rainCamera.enabled ? 'Flat projection · uniform fonts · retained roll' : rainCamera.enabled ? '3D view · perspective fonts · six directions' : 'Original view · one font size · four directions';
+        for (const button of document.querySelectorAll('[data-control="rainDirection"] [data-value="toward"], [data-control="rainDirection"] [data-value="away"]')) button.disabled = !rainCamera.active;
         speed.value = Math.round((rainCamera.speeds[rainCamera.mode] ?? 1) * 100);
         document.getElementById('cameraSpeedValue').textContent = speed.value + '%';
         for (const button of panel.querySelectorAll('[data-camera-mode]')) {

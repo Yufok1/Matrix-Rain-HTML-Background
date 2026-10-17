@@ -35,7 +35,7 @@ const rainCameraGPU = {
             const pictureSelection=window.RainMediaCharacters?.selectionGLSL||'';
             this.main=this.program(`
                 attribute vec2 corner;attribute vec4 point,color,atlasRect,shape;attribute vec2 lifetime;attribute vec3 delta;attribute float format;
-                uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase;uniform bool smoothMotion,stepped,variety;
+                uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase,perspective;uniform bool smoothMotion,stepped,variety;
                 varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
                 uniform bool mediaLive;uniform lowp int mediaCharacters;uniform sampler2D mediaImage;uniform mediump float mediaDotAmount,mediaShadeCount;
                 varying vec2 pictureLocal;varying vec4 pictureRect;varying float pictureIndex;
@@ -48,14 +48,17 @@ const rainCameraGPU = {
                     vec3 location=point.xyz;if(smoothMotion&&age<.5)location-=delta*(1.-phase);
                     vec3 world=location+cell-vec3(0.,0.,focal);
                     vec3 view=vec3(dot(rowX,world),dot(rowY,world),dot(rowZ,world)+focal);
+                    float projectedDepth=mix(focal,view.z,perspective);
                     vec4 bounds=shape;
                     if(mediaLive&&mediaCharacters>0)bounds=mediaCharacters==2?vec4(0.,-.8,.6,0.):vec4(-.05,-.85,.65,.25);
                     vec2 offset=vec2(mix(bounds.x,bounds.z,corner.x),mix(bounds.y,bounds.w,corner.y))*point.w;
                     pictureLocal=corner;pictureIndex=0.;
-                    pictureRect=vec4(vec2(.5)+(view.xy+bounds.xy*point.w)*focal/(viewport*view.z),(bounds.zw-bounds.xy)*point.w*focal/(viewport*view.z));
+                    pictureRect=vec4(vec2(.5)+(view.xy+bounds.xy*point.w)*focal/(viewport*projectedDepth),(bounds.zw-bounds.xy)*point.w*focal/(viewport*projectedDepth));
                     ${this.pictureVertexSampling?'if(mediaLive&&mediaCharacters>0&&view.z>range.x&&view.z<range.y&&pictureRect.x<1.&&pictureRect.y<1.&&pictureRect.x+pictureRect.z>0.&&pictureRect.y+pictureRect.w>0.)pictureIndex=chooseMediaPattern(pictureRect);':''}
                     vec2 pixel=(view.xy+offset)*vec2(2.*focal/viewport.x,-2.*focal/viewport.y);
-                    float z=(range.y+range.x)/(range.y-range.x)*view.z-2.*range.y*range.x/(range.y-range.x);gl_Position=vec4(pixel,z,view.z);
+                    float nearW=mix(focal,range.x,perspective),farW=mix(focal,range.y,perspective);
+                    float z=(nearW+farW)/(range.y-range.x)*(view.z-range.x)-nearW;
+                    gl_Position=vec4(pixel,z,projectedDepth);
                     uv=mix(atlasRect.xy,atlasRect.zw,corner);glyphFormat=mod(format,2.);
                     float frustum=smoothstep(range.x,range.x+40.,view.z)*(1.-smoothstep(range.y-300.,range.y,view.z));
                     tint=vec4(color.rgb,color.a*fade*frustum);
@@ -102,7 +105,7 @@ const rainCameraGPU = {
                     float alpha=tint.a+(1.-tint.a)*clamp(visibility*imagePotential*1.8,0.,1.);
                     if(a*alpha<.003)discard;gl_FragColor=vec4(ink,alpha*a);
                 }`,['corner','point','color','atlasRect','shape','lifetime','delta','format']);
-            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
+            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','perspective','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
             Object.assign(this.u,this.uniforms(this.main,['pictureAtlas','mediaCharacters','mediaDotAmount','mediaShadeCount','pictureGrid','pictureInset']));
             this.corners=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
             this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.capacity*this.stride*4,gl.DYNAMIC_DRAW);this.staging=new Float32Array(this.capacity*this.stride);
@@ -173,7 +176,8 @@ const rainCameraGPU = {
         const x=b.center[0]+tile.offset[0],y=b.center[1]+tile.offset[1],z=b.center[2]+tile.offset[2]-rainFocalLength;
         const vx=r[0]*x+r[1]*y+r[2]*z,vy=r[3]*x+r[4]*y+r[5]*z,vz=r[6]*x+r[7]*y+r[8]*z+rainFocalLength;
         const sx=matrixCanvas.width/(2*rainFocalLength),sy=matrixCanvas.height/(2*rainFocalLength);
-        for(const [a,c,d,e]of [[1,0,sx,0],[-1,0,sx,0],[0,1,sy,0],[0,-1,sy,0],[0,0,1,-camera.near],[0,0,-1,camera.far]]){
+        const mix=camera.continuous?camera.perspective:1,px=matrixCanvas.width/2*(1-mix),py=matrixCanvas.height/2*(1-mix);
+        for(const [a,c,d,e]of [[1,0,sx*mix,px],[-1,0,sx*mix,px],[0,1,sy*mix,py],[0,-1,sy*mix,py],[0,0,1,-camera.near],[0,0,-1,camera.far]]){
             const extent=Math.abs(a*r[0]+c*r[3]+d*r[6])*b.half[0]+Math.abs(a*r[1]+c*r[4]+d*r[7])*b.half[1]+Math.abs(a*r[2]+c*r[5]+d*r[8])*b.half[2]+b.pad*(Math.abs(a)+Math.abs(c));
             if(a*vx+c*vy+d*vz+e+extent<0)return false;
         }return true;
@@ -211,6 +215,7 @@ const rainCameraGPU = {
         gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.pictureTexture);
         if(characters?.image&&this.pictureRevision!==characters.revision){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,characters.image);this.pictureRevision=characters.revision;}
         gl.uniform3f(u.rowX,r[0],r[1],r[2]);gl.uniform3f(u.rowY,r[3],r[4],r[5]);gl.uniform3f(u.rowZ,r[6],r[7],r[8]);gl.uniform2f(u.viewport,width,height);gl.uniform1f(u.focal,rainFocalLength);gl.uniform2f(u.range,camera.near,camera.far);
+        gl.uniform1f(u.perspective,camera.continuous?camera.perspective:1);
         gl.uniform1f(u.ageNow,age%4096);gl.uniform1f(u.phase,Math.max(0,Math.min(1,phase)));gl.uniform1i(u.smoothMotion,options.smooth!==false);gl.uniform1i(u.stepped,trails?.stepped!==false);gl.uniform1i(u.variety,trails?.enabled!==false);
 
         const start=this.batches[this.batchFirst]?.start||0,first=Math.min(this.used,this.capacity-start);let cells=0;

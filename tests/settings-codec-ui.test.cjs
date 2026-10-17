@@ -1,23 +1,23 @@
 const assert=require('node:assert/strict'),codec=require('./load-runtime.cjs')('rain-settings-codec.js');
 const legacyWords={maxWords:3,bufferMs:1900,verticalOrder:'down'};
-const fixture={v:14,name:'Zen 雨 🎵',
+const fixture={v:15,auto:{interval:12},name:'Zen 雨 🎵',
     rain:{pattern:'classic',speed:35,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'custom',customCharacters:'雨∑M123🪐',direction:'down',reverse:false,flow:'directed'},
     audio:{preset:'zen',beatTurns:false,fluctuation:500,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
-    camera:{enabled:true,mode:'gyroscope',yaw:15.25,pitch:20,roll:-10,speeds:{showcase:25,corkscrew:30,gyroscope:20}},
+    camera:{enabled:true,continuous:false,mode:'gyroscope',yaw:15.25,pitch:20,roll:-10,speeds:{showcase:25,corkscrew:30,gyroscope:20}},
     render:{quality:'sharp',sharp:true,smooth:true,glow:15,contrast:100},
     trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100,characters:'original',dotDensity:50}};
-const blob=codec.encode(fixture);assert.match(blob,/^MR14\.[A-Za-z0-9_-]+$/);assert.deepEqual(codec.decode(blob),fixture);
+const blob=codec.encode(fixture);assert.match(blob,/^MR15\.[A-Za-z0-9_-]+$/);assert.deepEqual(codec.decode(blob),fixture);
 assert.equal(codec.encode(codec.decode(blob)),blob);assert.deepEqual(codec.decode(blob.slice(0,40)+'\n'+blob.slice(40)),fixture);
 const raw=x=>'MR'+x.v+'.'+Buffer.from(JSON.stringify(x)).toString('base64url');
 const fail=edit=>{const x=structuredClone(fixture);edit(x);assert.throws(()=>codec.decode(raw(x)));};
-fail(x=>x.v=15);fail(x=>x.rain.flow='random');fail(x=>x.media.characters='pixels');fail(x=>x.media.dotDensity=101);fail(x=>x.media.dotDensity=2.5);fail(x=>x.rain.fontSize=101);fail(x=>x.camera.speeds.gyroscope=-1);fail(x=>x.render.glow='15');
+fail(x=>x.v=16);fail(x=>x.rain.flow='random');fail(x=>x.media.characters='pixels');fail(x=>x.media.dotDensity=101);fail(x=>x.media.dotDensity=2.5);fail(x=>x.rain.fontSize=101);fail(x=>x.camera.speeds.gyroscope=-1);fail(x=>x.render.glow='15');
 fail(x=>x.rain.fontSize=23.2);fail(x=>x.trails.minimum=120);fail(x=>x.audio.brightnessMin=99);fail(x=>x.rain.characterSet='particles');
 fail(x=>x.rain.primary='<script>');fail(x=>x.rain.customCharacters='x'.repeat(513));fail(x=>x.name='x'.repeat(61));
 fail(x=>x.rain.customCharacters=' ');fail(x=>{x.camera.enabled=false;x.rain.direction='toward';});
 fail(x=>x.preview={motion:'original',color:'original'});fail(x=>x.audio.mediaAccess=true);fail(x=>x.audio.depth=true);
 const paths=codec.paths();
 for(const follow of [false,true]){
- const legacy=structuredClone(fixture);legacy.v=13;legacy.audio.flowFollow=follow;
+ const legacy=structuredClone(fixture);delete legacy.camera.continuous;delete legacy.auto;legacy.v=13;legacy.audio.flowFollow=follow;
  assert.deepEqual(codec.decode(raw(legacy)),fixture,'MR13 preserves visuals and retires automatic flow');
  legacy.audio.flowFollow='true';assert.throws(()=>codec.decode(raw(legacy)),'Validate retired flags before discarding them');
 }
@@ -26,9 +26,11 @@ assert.ok(!paths.includes('audio.flowFollow'));
 
 fail(x=>x.words={...legacyWords}); // Removed controls cannot enter new exports.
 const tuned=structuredClone(fixture);tuned.rain.flow='crossflow';tuned.media={influence:62,exposure:142,contrast:176,gamma:220,characters:'braille',dotDensity:81};
+ tuned.camera.continuous=true;tuned.camera.enabled=false;tuned.camera.roll=43;tuned.auto.interval=7;
 assert.deepEqual(codec.decode(codec.encode(tuned)),tuned,'all new visual controls round trip');
 for(const p of paths){const x=structuredClone(fixture),keys=p.split('.'),leaf=keys.pop();let parent=x;for(const k of keys)parent=parent[k];delete parent[leaf];assert.throws(()=>codec.validate(x),p);}
-const old=structuredClone(fixture);delete old.audio.flowFollow;delete old.rain.flow;delete old.media.characters;delete old.media.dotDensity;old.v=10;
+const previous=structuredClone(fixture);previous.v=14;delete previous.camera.continuous;delete previous.auto;assert.deepEqual(codec.decode(raw(previous)),fixture);
+const old=structuredClone(fixture);delete old.camera.continuous;delete old.auto;delete old.audio.flowFollow;delete old.rain.flow;delete old.media.characters;delete old.media.dotDensity;old.v=10;
 assert.deepEqual(codec.decode(raw(old)),fixture,'MR10 retains its original single-direction character presentation');
 const legacy2={...structuredClone(old),v:2,preview:{motion:'original',color:'original'}};delete legacy2.media;delete legacy2.words;
 const legacy3={...structuredClone(old),v:3};delete legacy3.media;delete legacy3.words;
@@ -53,10 +55,10 @@ assert.deepEqual(codec.decode(raw(legacy2)),fixture);
 const legacy1={...structuredClone(legacy2),v:1};legacy1.audio.depth=false;
 assert.deepEqual(codec.decode(raw(legacy1)),fixture,'legacy depth does not override camera');
 legacy1.camera.enabled=false;legacy1.rain.direction='toward';
-const migrated=codec.decode(raw(legacy1));assert.equal(migrated.v,14);assert.equal(migrated.rain.direction,'down');assert.equal(Object.hasOwn(migrated.audio,'depth'),false);
+const migrated=codec.decode(raw(legacy1));assert.equal(migrated.v,15);assert.equal(migrated.rain.direction,'down');assert.equal(Object.hasOwn(migrated.audio,'depth'),false);
 assert.throws(()=>codec.decode('MR1.'+blob.slice(5)));
 assert.throws(()=>codec.validate({...fixture,audio:{...fixture.audio,hueReact:NaN}}));
-const polluted=JSON.parse(JSON.stringify(fixture).replace('"v":14','"__proto__":{"polluted":true},"v":9'));
+const polluted=JSON.parse(JSON.stringify(fixture).replace('"v":15','"__proto__":{"polluted":true},"v":9'));
 assert.throws(()=>codec.decode(raw(polluted)));assert.equal({}.polluted,undefined);
 for(const broken of ['', 'MR4.foo', 'MR3.=', 'MR3.a', 'MR3.%%%','MR3.'+'a'.repeat(12001),'MR3._w'])assert.throws(()=>codec.decode(broken));
 assert.throws(()=>codec.decode('MR3.'+Buffer.from('not json').toString('base64url')));
