@@ -1263,8 +1263,8 @@
             const orchestratorBtn = document.getElementById('autoOrchestratorBtn');
             const audioBtn = document.getElementById('audioReactiveBtn');
 
-            orchestratorBtn.disabled = !!window.rainSessionControls?.stopped || audioReactiveActive;
-            audioBtn.disabled = !!window.rainSessionControls?.stopped || !!window.autoOrchestratorActive || !!window.rainAudioStarting || !canCaptureRainAudio();
+            orchestratorBtn.disabled = !!window.rainSessionControls?.stopped;
+            audioBtn.disabled = !!window.rainSessionControls?.stopped || !!window.rainAudioStarting || !canCaptureRainAudio();
             document.getElementById('audioModeSettings').disabled = !audioReactiveActive || !!window.rainAudioStarting;
             if (!canCaptureRainAudio()) {
                 document.getElementById('audioStatus').textContent = 'Tab audio capture is unavailable in this browser. Try Auto Orchestrator for changing visuals.';
@@ -2966,7 +2966,7 @@
         window.autoOrchestratorActive = false; // Expose globally for Ollama integration
 
         function toggleAutoOrchestrator() {
-            if (!autoOrchestratorActive && (audioReactiveActive || window.rainSessionControls?.stopped)) return;
+            if (!autoOrchestratorActive && window.rainSessionControls?.stopped) return;
             autoOrchestratorActive = !autoOrchestratorActive;
             window.autoOrchestratorActive = autoOrchestratorActive; // Sync global
             const btn = document.getElementById('autoOrchestratorBtn');
@@ -3000,7 +3000,8 @@
         function scheduleNextChange(waitForTransition = false) {
             if (!autoOrchestratorActive) return;
 
-            const interval = waitForTransition ? 250 : (window.rainAutoScenes?.intervalSeconds ?? 12) * 1000;
+            const continuingAudioRoute = window.audioReactiveActive && window.rainAutoScenes?.queue.length;
+            const interval = waitForTransition || continuingAudioRoute ? 250 : (window.rainAutoScenes?.intervalSeconds ?? 12) * 1000;
             autoOrchestratorInterval = setTimeout(() => {
                 const changed = orchestrateRandomChange();
                 scheduleNextChange(changed === false);
@@ -3008,7 +3009,7 @@
         }
 
         function orchestrateRandomChange() {
-            if (!autoOrchestratorActive || audioReactiveActive || window.rainSessionControls?.stopped) return;
+            if (!autoOrchestratorActive || window.rainSessionControls?.stopped) return;
             return window.rainAutoScenes.next();
         }
 
@@ -3063,11 +3064,11 @@
         };
 
         async function toggleAudioReactive() {
-            if (!audioReactiveActive && (window.autoOrchestratorActive || window.rainSessionControls?.stopped)) return;
+            if (!audioReactiveActive && window.rainSessionControls?.stopped) return;
             if (!canCaptureRainAudio()) { updateModeButtons(null); return; }
             audioReactiveActive = !audioReactiveActive;
             window.audioReactiveActive = audioReactiveActive; // Sync global
-            if (audioReactiveActive) window.rainAutoScenes?.reset();
+            window.rainAutoScenes?.syncAudioOwnership();
             const btn = document.getElementById('audioReactiveBtn');
             const status = document.getElementById('audioStatus');
 
@@ -3349,7 +3350,7 @@
                 RainAudioMotion.browserSpectrum(audioDataArray, audioContext.sampleRate / audioAnalyser.fftSize);
             const audioNow = performance.now();
             const musicalMotion = audioMotion.update(spectrum || new Float32Array(64), audioNow,
-                config.direction, rainCamera.enabled, audioReverseEnabled);
+                config.direction, rainCamera.enabled && !window.rainAutoScenes?.preparingFlat, audioReverseEnabled);
             config.speed = musicalMotion.speed;
 
             // LOW-MID + MID → COLOR HUE (MAXIMUM sensitivity to musical notes)
@@ -3477,12 +3478,12 @@
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
-<script src="rain-all-directions.js?v=ba3d9db77e48"></script>
-<script src="rain-auto-scenes.js?v=2642c13d5852"></script>
+<script src="rain-all-directions.js?v=be66450c30c4"></script>
+<script src="rain-auto-scenes.js?v=e13f2d2fe794"></script>
 <script src="rain-camera.js?v=a54c05a113b1"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
 <script src="rain-settings-share.js?v=0e6d4a1f3e30"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
-<script type="module" src="rain-settings-ui.js?v=4e7124e711e0"></script>
+<script type="module" src="rain-settings-ui.js?v=2b7d028fb1e1"></script>
 </body>
 </html>

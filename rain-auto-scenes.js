@@ -10,7 +10,7 @@
     const planar = ['down','right','up','left'];
     const axes = [...planar,'toward','away'];
     const el = id => document.getElementById(id);
-    const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12};
+    const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12,preparingFlat:false,families:[]};
     try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isInteger(saved)&&saved>=1&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
     state.setInterval = function(seconds,save=true){
         this.intervalSeconds=clamp(Math.round(Number(seconds)||12),1,60);
@@ -20,6 +20,38 @@
         if(input)input.value=this.intervalSeconds;if(value)value.textContent=this.intervalSeconds+'s';
     };
     const config = () => MatrixRainEngine.rainConfig;
+    const spatialKinds = new Set(['hold viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
+    const spatialFamilies = ['camera','depth','flow','density','size','render','tails'];
+    function nextSpatialFamily() {
+        if(!state.families.length){
+            // Cover the major controls in random order before visiting any again.
+            // This prevents long runs of tiny rendering/tail changes.
+            state.families=['camera','depth','flow','density','size',pick(['render','tails'])];
+            for(let i=state.families.length-1;i>0;i--){const j=integer(0,i);[state.families[i],state.families[j]]=[state.families[j],state.families[i]];}
+            if(state.families[0]===state.last)[state.families[0],state.families[1]]=[state.families[1],state.families[0]];
+        }
+        return state.families.shift();
+    }
+    function separatedTarget(current,values,gap) {
+        const candidates=values.filter(value=>Math.abs(value-Number(current))>=gap);
+        return candidates.length?pick(candidates):values.reduce((best,value)=>Math.abs(value-current)>Math.abs(best-current)?value:best);
+    }
+    const canFlattenWithAudio = () => window.rainAllDirections.mode==='directed' && planar.includes(config().direction)
+        && rainMotion.drops.every((head,index)=>!head || (window.activeColumnsMask && !window.activeColumnsMask[index])
+            || !head.lastStepDirection || planar.includes(head.lastStepDirection))
+        && [...window.rainAllDirections.forks.values()].every(fork=>!fork.remaining || planar.includes(fork.direction)
+            || (window.activeColumnsMask && !window.activeColumnsMask[fork.head.sourceId]));
+    state.syncAudioOwnership = function() {
+        const audio = !!(window.audioReactiveActive || window.rainAudioStarting || window.rainSessionControls?.audioPaused);
+        if(audio){
+            // A queued direction/palette change or an already-running pace tween
+            // must not compete with the next audio analysis frame.
+            this.queue=this.queue.filter(step=>spatialKinds.has(step.kind));
+            this.tweens=this.tweens.filter(t=>t.object!==config() || !['speed','intensity'].includes(t.key));
+        }
+        this.audioOwned=audio;
+        return audio;
+    };
     const ease = t => t*t*t*(t*(t*6-15)+10);
     function tween(object,key,to,duration=3,rounded=false,changed=null,delay=0) {
         // DOM sliders (including configuration imports) supply text values.
@@ -56,6 +88,8 @@
         if(auto?.dataset){auto.dataset.sceneStep=state.description;auto.dataset.scenePending=String(state.queue.length);}
     }
     state.advance = function(dt) {
+        this.syncAudioOwnership();
+        if(this.preparingFlat && !rainCamera.enabled && !rainCamera.depthTransition)this.preparingFlat=false;
         // Emergency Stop does not advance the presentation clock. Stopping
         // Auto scenes lets an already-started interpolation land gently.
         for(const t of this.tweens){
@@ -70,15 +104,24 @@
             if(this.refreshTime>=.1){this.refreshTime=0;sync();}
         }else if(this.refreshTime){this.refreshTime=0;sync();}
     };
-    state.cancelPlan = function(){this.queue.length=0;};
-    state.reset = function(){this.queue.length=0;this.tweens.length=0;this.last=null;};
+    state.cancelPlan = function(){this.queue.length=0;this.preparingFlat=false;};
+    state.reset = function(){this.queue.length=0;this.tweens.length=0;this.last=null;this.preparingFlat=false;this.families.length=0;};
     state.apply = function(step) {
+        const audio = this.syncAudioOwnership();
+        if(audio && !spatialKinds.has(step.kind))return false;
         const c=config(),flow=window.rainAllDirections,render=window.matrixRainRendering,trails=window.matrixRainTrails;
+        // Closing only starts from a compatible current heading. Audio then
+        // sees enabled=false and keeps its existing four-direction steering.
+        // Preparation lets the audio controller choose a planar heading, and
+        // existing native paths finish their depth segments before closing.
+        if(audio && step.kind==='depth' && !step.value && !canFlattenWithAudio())return false;
         this.description=step.kind;this.last=step.family||step.kind;
         switch(step.kind){
+            case 'prepare flat': this.preparingFlat=true;break;
             case 'hold viewpoint': rainCamera.settleMotion(); break;
             case 'depth':
                 rainCamera.setMode('fixed');rainCamera.motionGain=1;rainCamera.motionFade=null;
+                if(step.value)this.preparingFlat=false;
                 rainCamera.transitionDepth(step.value);matchDensity(!step.value);break;
             case 'camera':
                 if(step.value!=='fixed')rainCamera.speeds[step.value]=integer(18,36)/100;
@@ -88,8 +131,8 @@
             case 'flow':
                 flow.manualMode=step.value;flow.applyMode(step.value,true);
                 {const [lo,hi]=densityRange();tween(c,'density',clamp(c.density,lo,hi),3,true,recomputeActiveColumnsMask);}break;
-            case 'density': {const [lo,hi]=densityRange();tween(c,'density',clamp(Number(c.density)+pick([-12,12]),lo,hi),3,true,recomputeActiveColumnsMask);break;}
-            case 'size': tween(c,'fontSize',clamp(Number(c.fontSize)+pick([-2,2]),8,24),4,true);break;
+            case 'density': {const [lo,hi]=densityRange();const target=audio?separatedTarget(c.density,[lo,Math.round((lo+hi)/2),hi],15):clamp(Number(c.density)+pick([-12,12]),lo,hi);tween(c,'density',target,3,true,recomputeActiveColumnsMask);break;}
+            case 'size': tween(c,'fontSize',audio?separatedTarget(c.fontSize,[8,12,16,20,24],4):clamp(Number(c.fontSize)+pick([-2,2]),8,24),4,true);break;
             case 'pace':
                 tween(c,'speed',clamp(Number(c.speed)+pick([-10,10]),22,80),3,true);
                 tween(c,'intensity',clamp(Number(c.intensity)+pick([-8,8]),50,90),3,true);break;
@@ -110,7 +153,7 @@
                 el('customCharacters').style.display=step.value==='custom'?'block':'none';
                 c.characterSet=step.value==='custom'?el('customCharacters').value.trim():step.value;break;
             case 'render': {
-                const option=pick(['sharp','smooth','glow','contrast']);
+                const option=pick(audio?['sharp','glow','contrast']:['sharp','smooth','glow','contrast']);
                 if(option==='sharp'||option==='smooth'){render[option]=!render[option];if(option==='sharp')rainCameraGPU.invalidate=true;}
                 else tween(render,option,option==='glow'?integer(5,40)/100:integer(85,125)/100);
                 break;
@@ -133,19 +176,22 @@
                 break;
         }
         sync();
+        return true;
     };
     state.next = function(requestedFamily) {
-        if(window.audioReactiveActive)return false;
-        if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade||window.rainAllDirections.transitioning)return false;
+        const audio = this.syncAudioOwnership();
+        if(audio && requestedFamily && !spatialFamilies.includes(requestedFamily))return false;
+        if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade||(!audio&&window.rainAllDirections.transitioning))return false;
         rainCamera.beginContinuousView();
-        if(this.queue.length){this.apply(this.queue.shift());return true;}
+        if(this.queue.length){const applied=this.apply(this.queue[0]);if(applied)this.queue.shift();return applied;}
         const c=config(),flow=window.rainAllDirections;
-        const family=requestedFamily||other(['direction','direction','flow','camera','depth','palette','pace','density','size','characters','pattern','render','tails','reverse'],this.last);
+        let family=requestedFamily||(audio?nextSpatialFamily():other(['direction','direction','flow','camera','depth','palette','pace','density','size','characters','pattern','render','tails','reverse'],this.last));
         const add=(kind,value)=>this.queue.push({kind,value,family});
         if(family==='depth'){
             if(rainCamera.enabled){
+                if(audio)add('prepare flat');
                 if(flow.mode!=='directed')add('flow','directed');
-                if(!planar.includes(c.direction))add('direction',pick(planar));
+                if(!audio && !planar.includes(c.direction))add('direction',pick(planar));
                 if(rainCamera.mode!=='fixed'&&rainCamera.motionGain>0)add('hold viewpoint');
                 add('depth',false);
             }else{add('depth',true);add('camera',pick(['showcase','corkscrew','gyroscope']));}
@@ -180,6 +226,6 @@
             else if(Math.random()<.5){add('tails','uniform');add('tails','disable');}
             else add('tails','vary');
         }else add(family);
-        this.apply(this.queue.shift());return true;
+        const applied=this.apply(this.queue[0]);if(applied)this.queue.shift();return applied;
     };
 })();

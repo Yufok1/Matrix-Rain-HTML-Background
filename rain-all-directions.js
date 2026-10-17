@@ -9,7 +9,7 @@
     const notes={directed:'Original shared direction.',crossflow:'All six headings together; four in flat view.',
         counterflow:'Two opposing currents. The existing conductor steers both lanes.'};
     const state=root.rainAllDirections={mode:'directed',manualMode:'directed',
-        frame:0,depth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0};
+        frame:0,depth:true,axesDepth:true,records:new Map(),forks:new Map(),lastFrame:-1,serial:0};
     Object.defineProperty(state,'enabled',{get(){return this.mode!=='directed';}});
     Object.defineProperty(state,'independentTurns',{get(){return this.mode==='counterflow'||this.transitioning;}});
     try{
@@ -26,6 +26,13 @@
         return ranks&&index>=0&&index<ranks.length?ranks[index]:index;
     }
     function heading(){return typeof MatrixRainEngine==='undefined'?'down':MatrixRainEngine.rainConfig.direction;}
+    function axisDepth(depth){
+        // Projection remains in the same world while its legal future headings
+        // become planar. Existing Z segments can finish before Auto flattens it.
+        if(root.rainAutoScenes?.preparingFlat)return false;
+        if(root.audioReactiveActive&&typeof rainCamera!=='undefined'&&!rainCamera.enabled)return false;
+        return depth;
+    }
     function rotate(name,h,depth){
         const [x,y,z]=vectors[name];let v=[x,y,z];
         if(h==='up')v=[-x,-y,z];else if(h==='left')v=[-y,x,z];else if(h==='right')v=[y,-x,z];
@@ -38,13 +45,14 @@
     }
     function record(index){
         let r=state.records.get(index);
-        if(!r){r={rank:rankFor(index),unit:0,last:null,hold:0};state.records.set(index,r);}
+        if(!r){r={rank:rankFor(index),unit:0,last:null,hold:0,conductor:heading()};state.records.set(index,r);}
         return r;
     }
     state.beginFrame=function(frame){
         const depth=typeof rainCamera==='undefined'?true:(rainCamera.active ?? rainCamera.enabled);
         if(frame<this.lastFrame||depth!==this.depth){this.records.clear();this.clearForks();this.transitioning=false;}
         this.frame=Number.isFinite(frame)?frame:this.frame+1;this.lastFrame=this.frame;this.depth=depth;
+        this.axesDepth=axisDepth(depth);
         if(this.transitioning&&root.activeColumnsMask){
             // A density reduction retires heads. They cannot finish a pending
             // turn, so they must not keep the entire scene waiting forever.
@@ -54,6 +62,7 @@
     };
     state.directionFor=function(index,depth=true){
         if(!this.enabled)return null;
+        depth=axisDepth(depth);
         const rank=rankFor(index),h=heading();
         if(this.mode==='crossflow'){
             const cohort=depth?['down','right','away','up','left','toward']:['down','right','up','left'];
@@ -62,10 +71,23 @@
         return rotate(rank%2?'up':'down',h,depth);
     };
     state.planStep=function(index,depth,fontSize,speed){
+        depth=axisDepth(depth);
         let r=this.records.get(index);
         if(this.mode!=='counterflow'&&!r?.transition)return null;
         r=r||record(index);
-        const desired=this.directionFor(index,depth)||heading();
+        const conductor=heading(),liveDesired=this.directionFor(index,depth)||conductor;
+        const beatTurn=root.audioReactiveActive&&typeof audioReverseEnabled!=='undefined'&&audioReverseEnabled
+            &&r.conductor!==conductor;
+        r.conductor=conductor;
+        if(beatTurn){
+            // A newly accepted beat turn owns the next ordinary glyph step.
+            // Do not finish an older stagger or detour before acknowledging it.
+            r.delay=r.hold=0;delete r.distanceKey;
+            if(r.transition)r.target=liveDesired;
+        }
+        // Complete the chosen handoff even if a new musical attack changes the
+        // conductor mid-segment, unless Beat turns explicitly takes priority.
+        const desired=(r.transition?r.target:null)||liveDesired;
         if(!r.unit)r.unit=fontSize;
         // An opposite request gets a real perpendicular segment, not a one-glyph
         // twitch. Reverse flow remains the user's explicit global reversal.
@@ -77,6 +99,7 @@
             if(r.transition&&!r.forked&&actual!==r.last){this.spawnFork(index,r.last,fontSize);r.forked=true;}
             if(actual===desired&&r.transition){
                 r.transition=false;
+                delete r.target;
                 this.transitioning=[...this.records.values()].some(v=>v.transition);
             }
         }
@@ -147,7 +170,8 @@
             for(let i=0;i<rainMotion.drops.length;i++){
                 if(root.activeColumnsMask&&!root.activeColumnsMask[i])continue;
                 const p=rainMotion.drops[i];if(!p?.lastStepDirection)continue;
-                const r=record(i);Object.assign(r,{last:p.lastStepDirection,transition:true,forked:false,
+                const depth=typeof rainCamera==='undefined'?true:(rainCamera.active ?? rainCamera.enabled);
+                const r=record(i);Object.assign(r,{last:p.lastStepDirection,target:this.directionFor(i,axisDepth(depth))||heading(),transition:true,forked:false,
                     delay:(r.rank%8)*((typeof MatrixRainEngine==='undefined'?10:MatrixRainEngine.rainConfig.fontSize)*.8)});
                 this.transitioning=true;
             }

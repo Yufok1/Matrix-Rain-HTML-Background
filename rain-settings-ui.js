@@ -32,10 +32,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     const colors=document.createElement('div');colors.className='settings-grid';colors.append(control('primaryColor'),control('secondaryColor'));manual.append(colors);
     const manualDetails=sub('Manual appearance');manualDetails.lastElementChild.append(manual);rb.append(manualDetails);
     const auto=el('autoOrchestratorBtn'),reverse=el('reverseFlowBtn'),shuffle=document.querySelector('[onclick="activateChaosRandomizer()"]');
-    auto.title='Explore connected variations at your chosen interval. Bigger changes take intermediate steps; depth changes retain the rain and viewing angle. Runs separately from audio response.';
+    auto.title='Explore connected variations at your chosen interval. Alongside audio response, Auto evolves the view while audio keeps control of timing, direction, colors and characters.';
     shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle,auto));
     const sceneTiming=document.createElement('div');sceneTiming.className='control-item';
-    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="1" max="60" step="1"><small>Transitions finish before another shift starts. Stop Auto scenes to use audio response.</small>';
+    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="1" max="60" step="1"><small id="autoScenePolicy">Transitions finish before another shift starts. Can run alongside audio response.</small>';
     rb.append(sceneTiming);
     sceneTiming.querySelector('#autoSceneInterval').oninput=event=>window.rainAutoScenes.setInterval(event.target.value);
     const trailDetails=sub('3D trails'),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';
@@ -105,7 +105,10 @@ window.addEventListener('DOMContentLoaded',()=>{
         reverse.textContent='Reverse flow';reverse.setAttribute('aria-pressed',String(reverseFlowMultiplier===-1));
         auto.textContent=autoOrchestratorActive?'Stop auto scenes':'Auto scenes';auto.setAttribute('aria-pressed',String(autoOrchestratorActive));
         el('audioReactiveBtn').textContent=isAudio?'Stop audio response':'Start audio response';el('audioReactiveBtn').setAttribute('aria-pressed',String(isAudio));
-        el('audioReactiveBtn').disabled=rainSessionControls.stopped||autoOrchestratorActive||!!window.rainAudioStarting||!canCaptureRainAudio();auto.disabled=rainSessionControls.stopped||isAudio;
+        el('audioReactiveBtn').disabled=rainSessionControls.stopped||!!window.rainAudioStarting||!canCaptureRainAudio();auto.disabled=rainSessionControls.stopped;
+        el('autoScenePolicy').textContent=isAudio
+            ? 'Audio controls timing, direction, colors and characters. Auto explores flow patterns, camera depth, size and density.'
+            : 'Transitions finish before another shift starts. Can run alongside audio response.';
         stop.textContent=rainSessionControls.stopped?'Resume':'Stop';stop.title=rainSessionControls.stopped?'Resume with your settings intact':'Emergency stop — preserve this session';
         stop.dataset.state=rainSessionControls.stopped?'stopped':'running';
         header.querySelector('.panel-drag-hint').textContent=rainSessionControls.stopped?'Stopped · settings preserved':'Settings · drag to reposition';
