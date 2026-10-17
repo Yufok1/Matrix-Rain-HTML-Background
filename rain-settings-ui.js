@@ -35,7 +35,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     auto.title='Explore connected variations at your chosen interval. Bigger changes take intermediate steps; depth changes retain the rain and viewing angle. Runs separately from audio response.';
     shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle,auto));
     const sceneTiming=document.createElement('div');sceneTiming.className='control-item';
-    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="2" max="60" step="1"><small>Transitions finish before another shift starts. Stop Auto scenes to use audio response.</small>';
+    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="1" max="60" step="1"><small>Transitions finish before another shift starts. Stop Auto scenes to use audio response.</small>';
     rb.append(sceneTiming);
     sceneTiming.querySelector('#autoSceneInterval').oninput=event=>window.rainAutoScenes.setInterval(event.target.value);
     const trailDetails=sub('3D trails'),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';

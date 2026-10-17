@@ -45,6 +45,6 @@ RGB depiction affects only the ink of existing moving rain; birth history, world
 
 ## MR15 connected Auto scenes
 
-The new fields are `camera.continuous` (the retained flat/3D world) and `auto.interval` (2–60 seconds, default 12). Current exports cover 50 leaves including version and name. MR14 and earlier codes migrate with the original camera behavior and a 12-second Auto interval. Session activation remains excluded. Auto scenes and audio response are mutually exclusive; stopping Auto preserves its view and starting audio cancels its pending setting changes. The established standalone audio motion, color and character engines are unchanged.
+The new fields are `camera.continuous` (the retained flat/3D world) and `auto.interval` (1–60 seconds, default 12). Current exports cover 50 leaves including version and name. MR14 and earlier codes migrate with the original camera behavior and a 12-second Auto interval. Session activation remains excluded. Auto scenes and audio response are mutually exclusive; stopping Auto preserves its view and starting audio cancels its pending setting changes. The established standalone audio motion, color and character engines are unchanged.
 
 Auto uses the same world and glyph history through projection changes. Density, font size and pacing transitions accept numeric slider values after import. Manual settings cancel pending Auto plans; the timing control reschedules its single timer without resetting the view.

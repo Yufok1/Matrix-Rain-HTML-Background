@@ -11,9 +11,9 @@
     const axes = [...planar,'toward','away'];
     const el = id => document.getElementById(id);
     const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12};
-    try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isInteger(saved)&&saved>=2&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
+    try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isInteger(saved)&&saved>=1&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
     state.setInterval = function(seconds,save=true){
-        this.intervalSeconds=clamp(Math.round(Number(seconds)||12),2,60);
+        this.intervalSeconds=clamp(Math.round(Number(seconds)||12),1,60);
         if(save)try{localStorage.setItem('matrixRain.autoSceneInterval',String(this.intervalSeconds));}catch(_){}
         if(typeof autoOrchestratorActive!=='undefined'&&autoOrchestratorActive){stopAutoOrchestrator();scheduleNextChange();}
         const input=el('autoSceneInterval'),value=el('autoSceneIntervalValue');

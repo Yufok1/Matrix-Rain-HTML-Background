@@ -8,6 +8,10 @@ const fixture={v:15,auto:{interval:12},name:'Zen 雨 🎵',
     trails:{enabled:true,stepped:true,minimum:12,maximum:100},media:{influence:100,exposure:100,contrast:100,gamma:100,characters:'original',dotDensity:50}};
 const blob=codec.encode(fixture);assert.match(blob,/^MR15\.[A-Za-z0-9_-]+$/);assert.deepEqual(codec.decode(blob),fixture);
 assert.equal(codec.encode(codec.decode(blob)),blob);assert.deepEqual(codec.decode(blob.slice(0,40)+'\n'+blob.slice(40)),fixture);
+const oneSecond=structuredClone(fixture);oneSecond.auto.interval=1;
+assert.deepEqual(codec.decode(codec.encode(oneSecond)),oneSecond,'One-second timing survives export/import');
+for(const interval of [0,.5,1.5,61])assert.throws(()=>codec.validate({...fixture,auto:{interval}}),'Timing remains whole seconds from one to sixty');
+assert.match(require('node:fs').readFileSync('rain-settings-ui.js','utf8'),/id="autoSceneInterval" type="range" min="1" max="60" step="1"/);
 const raw=x=>'MR'+x.v+'.'+Buffer.from(JSON.stringify(x)).toString('base64url');
 const fail=edit=>{const x=structuredClone(fixture);edit(x);assert.throws(()=>codec.decode(raw(x)));};
 fail(x=>x.v=16);fail(x=>x.rain.flow='random');fail(x=>x.media.characters='pixels');fail(x=>x.media.dotDensity=101);fail(x=>x.media.dotDensity=2.5);fail(x=>x.rain.fontSize=101);fail(x=>x.camera.speeds.gyroscope=-1);fail(x=>x.render.glow='15');

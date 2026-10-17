@@ -30,7 +30,7 @@
     const legacy12Schema={...legacy11Schema,v:choice(12),rain:{...legacy11Schema.rain,flow:choice('directed','crossflow','counterflow')}};
     const legacy13Schema={...legacy12Schema,v:choice(13),audio:{...legacy12Schema.audio,flowFollow:bool}};
     const legacy14Schema={...legacy12Schema,v:choice(14)};
-    const schema={...legacy14Schema,v:choice(15),camera:{...legacy14Schema.camera,continuous:bool},auto:{interval:integer(2,60)}};
+    const schema={...legacy14Schema,v:choice(15),camera:{...legacy14Schema.camera,continuous:bool},auto:{interval:integer(1,60)}};
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
     const legacyWords={maxWords:integer(1,5),bufferMs:integer(0,3500),verticalOrder:choice('down','up')};
     const legacy9Schema={...legacy10Schema,v:choice(9),words:legacyWords};

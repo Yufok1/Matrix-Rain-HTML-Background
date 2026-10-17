@@ -154,6 +154,11 @@ async function lifecycle() {
     context.autoOrchestratorActive=true;scenes.setInterval(7);
     assert.equal([...timers.values()][0].delay,7000);assert.equal(storage.get('matrixRain.autoSceneInterval'),'7');
     assert.equal(snapshot().auto.interval,7,'Timing is exported');
+    scenes.setInterval(1);assert.equal(scenes.intervalSeconds,1);
+    assert.equal([...timers.values()][0].delay,1000,'The scene scheduler accepts one second');
+    assert.equal(storage.get('matrixRain.autoSceneInterval'),'1');
+    assert.equal(snapshot().auto.interval,1,'One-second timing is exported');
+    scenes.setInterval(-1);assert.equal(scenes.intervalSeconds,1,'One second is the hard minimum');
     scenes.setInterval(0);assert.equal(scenes.intervalSeconds,12);
     scenes.setInterval(120);assert.equal(scenes.intervalSeconds,60);
     context.autoOrchestratorActive=false;context.stopAutoOrchestrator();
