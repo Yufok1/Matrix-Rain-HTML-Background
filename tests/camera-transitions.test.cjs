@@ -14,7 +14,8 @@ camera.marks.push(mark);const stream={x:80,y:45,z:360};camera.streams.set(0,stre
 const history=JSON.stringify(camera.marks),volume=camera.volume,angles=[camera.yaw,camera.pitch,camera.roll];
 const original=camera.project(mark);let now=0;camera.present(now);
 for(const enabled of [false,true]){
-    const before=camera.project(mark);camera.transitionDepth(enabled);
+    // Exercise the actual checkbox setter in a fresh session: Auto has never run.
+    const before=camera.project(mark);camera.setEnabled(enabled);
     assert.deepEqual(camera.project(mark),before,'Switch starts at the identical pixel and size');
     let previous=before;
     for(let i=0;i<250;i++){

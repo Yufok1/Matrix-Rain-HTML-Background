@@ -32,7 +32,10 @@ const rainCameraGPU = {
             if(!gl)throw new Error('WebGL unavailable');this.instances=gl.getExtension('ANGLE_instanced_arrays');if(!this.instances)throw new Error('Instancing unavailable');
             this.derivatives=!!gl.getExtension('OES_standard_derivatives');this.maxSize=gl.getParameter(gl.MAX_TEXTURE_SIZE);
             this.pictureVertexSampling=gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS)>0&&!new URLSearchParams(location.search).has('picture-fragment');
-            const pictureSelection=window.RainMediaCharacters?.selectionGLSL||'';
+            // Wallpaper/iOS builds omit media depiction. GLSL still resolves
+            // functions inside disabled branches, so supply the neutral selector
+            // when that optional module is absent.
+            const pictureSelection=window.RainMediaCharacters?.selectionGLSL||'float chooseMediaPattern(vec4 rect){return 0.;}';
             this.main=this.program(`
                 attribute vec2 corner;attribute vec4 point,color,atlasRect,shape;attribute vec2 lifetime;attribute vec3 delta;attribute float format;
                 uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase,perspective;uniform bool smoothMotion,stepped,variety;

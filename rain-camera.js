@@ -56,9 +56,12 @@ const rainCamera = {
     wrap(value, span, minimum = -span / 2) {
         return minimum + ((value - minimum) % span + span) % span;
     },
-    setEnabled(enabled) {
-        // Manual changes within an adopted world also retain its geometry.
-        if (this.continuous) { this.transitionDepth(enabled); return; }
+    setEnabled(enabled, immediate = false) {
+        // The first manual toggle must use the same morph as Auto scenes.
+        // Imports/Reset may explicitly replace the projection immediately.
+        if (!immediate && (this.continuous || this.enabled !== !!enabled)) {
+            this.transitionDepth(enabled); return;
+        }
         const changed = this.enabled !== !!enabled;
         this.enabled = !!enabled; this.lastTime = null;
         if (changed) {
@@ -316,7 +319,7 @@ window.addEventListener('DOMContentLoaded', () => {
         speed.disabled = !rainCamera.enabled || rainCamera.mode === 'fixed';
         yaw.disabled = pitch.disabled = roll.disabled = !rainCamera.enabled;
         document.getElementById('cameraViewPolicy').textContent = rainCamera.depthTransition ? 'Changing depth · same rain · retained angle' : rainCamera.continuous && !rainCamera.enabled ? 'Flat projection · uniform fonts · retained roll' : rainCamera.enabled ? '3D view · perspective fonts · six directions' : 'Original view · one font size · four directions';
-        for (const button of document.querySelectorAll('[data-control="rainDirection"] [data-value="toward"], [data-control="rainDirection"] [data-value="away"]')) button.disabled = !rainCamera.active;
+        for (const button of document.querySelectorAll('[data-control="rainDirection"] [data-value="toward"], [data-control="rainDirection"] [data-value="away"]')) button.disabled = !rainCamera.enabled;
         speed.value = Math.round((rainCamera.speeds[rainCamera.mode] ?? 1) * 100);
         document.getElementById('cameraSpeedValue').textContent = speed.value + '%';
         for (const button of panel.querySelectorAll('[data-camera-mode]')) {

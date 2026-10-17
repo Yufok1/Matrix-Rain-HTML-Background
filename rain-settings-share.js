@@ -52,7 +52,7 @@
         window.rainAutoScenes?.reset();
         window.rainAutoScenes?.setInterval(s.auto.interval);
         rainCamera.continuous=false;rainCamera.depthTransition=null;rainCamera.motionFade=null;rainCamera.motionGain=1;
-        rainCamera.setEnabled(s.camera.enabled);
+        rainCamera.setEnabled(s.camera.enabled,true);
         rainCamera.continuous=s.camera.continuous;rainCamera.perspective=s.camera.enabled?1:0;
         set('rainDirection',s.rain.direction,updateRainDirection);
         window.rainAllDirections.setMode(s.rain.flow);
