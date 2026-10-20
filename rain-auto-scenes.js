@@ -11,9 +11,9 @@
     const axes = [...planar,'toward','away'];
     const el = id => document.getElementById(id);
     const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12,preparingFlat:false,families:[]};
-    try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isInteger(saved)&&saved>=1&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
+    try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isFinite(saved)&&saved>=.1&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
     state.setInterval = function(seconds,save=true){
-        this.intervalSeconds=clamp(Math.round(Number(seconds)||12),1,60);
+        this.intervalSeconds=clamp(Math.round((Number(seconds)||12)*10)/10,.1,60);
         if(save)try{localStorage.setItem('matrixRain.autoSceneInterval',String(this.intervalSeconds));}catch(_){}
         if(typeof autoOrchestratorActive!=='undefined'&&autoOrchestratorActive){stopAutoOrchestrator();scheduleNextChange();}
         const input=el('autoSceneInterval'),value=el('autoSceneIntervalValue');
@@ -56,7 +56,8 @@
     // Auto owns a bounded workspace. Manual sliders keep their complete range.
     // Source count grows with viewport width; long tails and large glyphs then
     // multiply that cost in every visible copy of the repeating world.
-    const limits = {font:20,tail:64,minimumTail:40,minimumDelay:30};
+    const limits = {minimumFont:14,font:20,tail:64,minimumTail:40,minimumDelay:30};
+    const fontChoices = [14,16,18,20];
     function flatAmount() { return rainCamera.continuous?clamp(1-rainCamera.perspective,0,1):rainCamera.enabled?0:1; }
     state.loadBudget = function() {
         const c=config(),trails=window.matrixRainTrails,flat=flatAmount();
@@ -76,7 +77,7 @@
     function limitWork(audio) {
         const c=config(),trails=window.matrixRainTrails;
         let changed=false;
-        const font=clamp(Number(c.fontSize),8,limits.font);
+        const font=clamp(Number(c.fontSize),limits.minimumFont,limits.font);
         if(Number(c.fontSize)!==font){c.fontSize=font;changed=true;}
         if(!audio&&Number(c.speed)<limits.minimumDelay){c.speed=limits.minimumDelay;changed=true;}
         if(trails?.enabled){
@@ -182,7 +183,11 @@
                 flow.manualMode=step.value;flow.applyMode(step.value,true);
                 {const [lo,hi]=densityRange();tween(c,'density',clamp(c.density,lo,hi),3,true,recomputeActiveColumnsMask);}break;
             case 'density': {const [lo,hi]=densityRange();const target=audio?separatedTarget(c.density,[lo,Math.round((lo+hi)/2),hi],15):clamp(Number(c.density)+pick([-12,12]),lo,hi);tween(c,'density',target,3,true,recomputeActiveColumnsMask);break;}
-            case 'size': tween(c,'fontSize',audio?separatedTarget(c.fontSize,[8,12,16,20],4):clamp(Number(c.fontSize)+pick([-2,2]),8,limits.font),4,true);break;
+            // Choose another readable size rather than a clamped random walk,
+            // which can repeatedly land on the same lower boundary.
+            case 'size':
+                c.fontSize=clamp(Number(c.fontSize),limits.minimumFont,limits.font);
+                tween(c,'fontSize',separatedTarget(c.fontSize,fontChoices,2),4,true);break;
             case 'pace':
                 tween(c,'speed',clamp(Number(c.speed)+pick([-10,10]),limits.minimumDelay,80),3,true);
                 tween(c,'intensity',clamp(Number(c.intensity)+pick([-8,8]),50,90),3,true);break;

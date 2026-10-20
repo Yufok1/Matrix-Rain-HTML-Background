@@ -146,7 +146,7 @@ async function lifecycle() {
         const before=protectedState();context.orchestrateRandomChange();
         if(scenes.description==='size'){
             const change=scenes.tweens.find(t=>t.object===config&&t.key==='fontSize');
-            assert.ok(change&&Math.abs(change.to-change.from)>=4,'Combined size shifts have a visible minimum four-pixel change');
+            assert.ok(change&&Math.abs(change.to-change.from)>=2,'Combined size shifts vary within the readable middle range');
         }
         settle();
         assert.equal(protectedState(),before,'Combined Auto preserves every current musical output and manual reverse');
@@ -330,7 +330,16 @@ async function lifecycle() {
     assert.equal([...timers.values()][0].delay,1000,'The scene scheduler accepts one second');
     assert.equal(storage.get('matrixRain.autoSceneInterval'),'1');
     assert.equal(snapshot().auto.interval,1,'One-second timing is exported');
-    scenes.setInterval(-1);assert.equal(scenes.intervalSeconds,1,'One second is the hard minimum');
+    scenes.setInterval(.1);assert.equal(scenes.intervalSeconds,.1);
+    assert.equal([...timers.values()][0].delay,100,'Rapid preview requests the next shift every 100ms');
+    assert.equal(storage.get('matrixRain.autoSceneInterval'),'0.1');
+    assert.equal(snapshot().auto.interval,.1,'Fractional timing is exported');
+    assert.equal(timers.size,1,'Rapid timing retains exactly one scheduled callback');
+    context.stopAutoOrchestrator();context.scheduleNextChange(true);
+    assert.equal(timers.size,1,'Rapid transition polling schedules exactly one callback');
+    assert.ok([...timers.values()].every(timer=>timer.delay===100),'Waiting for a transition does not slow the requested rapid polling');
+    context.stopAutoOrchestrator();context.scheduleNextChange();
+    scenes.setInterval(-1);assert.equal(scenes.intervalSeconds,.1,'One tenth of a second is the preview minimum');
     scenes.setInterval(0);assert.equal(scenes.intervalSeconds,12);
     scenes.setInterval(120);assert.equal(scenes.intervalSeconds,60);
     context.autoOrchestratorActive=false;context.stopAutoOrchestrator();
@@ -346,7 +355,7 @@ async function lifecycle() {
             assert.ok(Number.isFinite(Number(numeric.density))&&Number(numeric.density)<=58);
             assert.ok(Number(numeric.intensity)>=62&&Number(numeric.intensity)<=78);
             assert.ok(Number(numeric.speed)>=30&&Number(numeric.speed)<=50);
-            assert.ok(Number(numeric.fontSize)>=14&&Number(numeric.fontSize)<=18);
+            assert.ok(Number(numeric.fontSize)>=14&&Number(numeric.fontSize)<=20);
         }
     }
     // Readable oblique views stay intact. Edge-on views align the same world

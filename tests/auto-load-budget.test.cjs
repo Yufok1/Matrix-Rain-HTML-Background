@@ -53,7 +53,7 @@ function bounded(h, label) {
     const budget = h.scenes.loadBudget();
     assert.ok(budget.work <= budget.maximum, label + ': combined work stays within the live budget');
     assert.ok(h.config.density <= budget.density, label + ': density obeys current load capacity');
-    assert.ok(h.config.fontSize <= 20, label + ': new glyph size is bounded');
+    assert.ok(h.config.fontSize >= 14 && h.config.fontSize <= 20, label + ': new glyph size stays in the readable middle range');
     if (h.trails.enabled) {
         assert.ok(h.trails.minimum >= 24 && h.trails.minimum <= 40, label + ': shortest tail stays bounded');
         assert.ok(h.trails.maximum >= h.trails.minimum && h.trails.maximum <= 64, label + ': longest tail stays bounded');
@@ -89,7 +89,7 @@ for (const width of [800, 1920, 3840, 7680]) for (const audio of [false, true]) 
     const before = h.camera.marks.length;
     h.context.drawClassicRain('A', h.config.fontSize, 1);
     assert.equal(h.camera.marks.length - before, active, 'Actual renderer births exactly the independently counted active population');
-    assert.ok(h.camera.marks.slice(before).every(mark => mark.fontSize <= 20), 'Actual new births honor the font cap');
+    assert.ok(h.camera.marks.slice(before).every(mark => mark.fontSize >= 14 && mark.fontSize <= 20), 'Actual new births honor both font limits');
     assert.equal(birthState(h.camera.marks[0]), old, 'Rendering after the cap preserves old positions, size and color');
     assert.deepEqual(h.writes, [], 'Auto does not persist its limits over manual preferences');
 }
@@ -165,7 +165,7 @@ for (const audio of [false, true]) {
             assert.equal(h.scenes.next(kind), true, 'Combined Auto keeps accepting requested spatial changes');
             if (kind === 'size') {
                 const change = h.scenes.tweens.find(tween => tween.object === h.config && tween.key === 'fontSize');
-                assert.ok(change && Math.abs(change.to - change.from) >= 4, 'Combined size targets retain a visible minimum change');
+                assert.ok(change && Math.abs(change.to - change.from) >= 2, 'Combined size targets change within the readable middle range');
             }
             for (let frame = 0; frame < 251; frame++) {h.scenes.advance(1 / 60); bounded(h, 'combined target');}
         }
@@ -174,4 +174,30 @@ for (const audio of [false, true]) {
     }
     assert.ok(sizes.size >= 3 && densities.size >= 3, 'Combined Auto continues producing multiple useful size and density destinations');
 }
-console.log('Auto load budget passed: viewport, retained glyphs, tails, continuous transitions, audio ownership and manual-range guards.');
+// Both standalone and audio-assisted Auto use the same readable destinations.
+// Sampling completed changes catches a lower-bound random walk or repeated
+// clamped targets, rather than only checking the numeric endpoints.
+for (const audio of [false, true]) {
+    const h = fixture(1920, audio), original = birthState(h.camera.marks[0]);
+    const counts = new Map([14, 16, 18, 20].map(size => [size, 0]));
+    h.config.fontSize = 8;
+    h.scenes.apply({kind: 'size'});
+    assert.equal(h.config.fontSize, 14, 'Starting Auto raises an undersized future birth without changing history');
+    const first = h.scenes.tweens.find(tween => tween.key === 'fontSize');
+    assert.equal(first.from, 14, 'An initial size interpolation begins at the readable floor');
+    assert.notEqual(first.to, 14, 'The first size change cannot stall against the floor');
+    h.scenes.advance(4);
+    for (let change = 0; change < 2000; change++) {
+        const previous = h.config.fontSize;
+        h.scenes.apply({kind: 'size'});
+        h.scenes.advance(4);
+        const size = h.config.fontSize;
+        assert.ok(counts.has(size), 'Each completed change uses a readable destination');
+        assert.notEqual(size, previous, 'Size changes never stick at a clamped boundary');
+        counts.set(size, counts.get(size) + 1);
+        bounded(h, 'middle-range size sampling');
+        assert.equal(birthState(h.camera.marks[0]), original, 'The lower font limit never resizes retained rain');
+    }
+    for (const count of counts.values()) assert.ok(count >= 350 && count <= 650, 'No size dominates the completed Auto changes');
+}
+console.log('Auto load budget passed: readable font distribution, viewport, retained glyphs, tails, continuous transitions, audio ownership and manual-range guards.');

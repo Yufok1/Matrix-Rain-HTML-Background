@@ -15,7 +15,7 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:15,name,auto:{interval:window.rainAutoScenes?.intervalSeconds??12},
+            v:16,name,auto:{interval:window.rainAutoScenes?.intervalSeconds??12},
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
@@ -78,7 +78,7 @@
         window.rainSettingsUI?.refresh();
         return s;
     }
-    function defaults(){return RainSettingsCodec.validate({v:15,name:'',auto:{interval:12},
+    function defaults(){return RainSettingsCodec.validate({v:16,name:'',auto:{interval:12},
         rain:{pattern:'classic',speed:66,intensity:70,density:50,fontSize:10,primary:'#00ff41',secondary:'#00cc33',characterSet:'katakana',customCharacters:'',direction:'down',reverse:false,flow:'directed'},
         audio:{preset:'zen',beatTurns:false,fluctuation:100,hueReact:60,saturationGain:60,brightnessDepth:80,spread:.8,trebleHueRange:16,saturationFloor:45,brightnessMin:52,brightnessMax:80},
         camera:{enabled:true,continuous:false,mode:'fixed',yaw:0,pitch:0,roll:0,speeds:{showcase:25,corkscrew:25,gyroscope:25}},

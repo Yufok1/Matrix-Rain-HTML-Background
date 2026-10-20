@@ -1197,7 +1197,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=2b556fea6638"></script>
+    <script src="rain-settings-codec.js?v=13657a45eb28"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -3016,7 +3016,8 @@
             if (!autoOrchestratorActive) return;
 
             const continuingAudioRoute = window.audioReactiveActive && window.rainAutoScenes?.queue.length;
-            const interval = waitForTransition || continuingAudioRoute ? 250 : (window.rainAutoScenes?.intervalSeconds ?? 12) * 1000;
+            const requested = (window.rainAutoScenes?.intervalSeconds ?? 12) * 1000;
+            const interval = waitForTransition || continuingAudioRoute ? Math.min(250, requested) : requested;
             autoOrchestratorInterval = setTimeout(() => {
                 const changed = orchestrateRandomChange();
                 scheduleNextChange(changed === false);
@@ -3494,11 +3495,11 @@
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
 <script src="rain-all-directions.js?v=d28fa514b695"></script>
-<script src="rain-auto-scenes.js?v=5cd0f2b20e16"></script>
+<script src="rain-auto-scenes.js?v=2914b3adcc5c"></script>
 <script src="rain-camera.js?v=a54c05a113b1"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=0e6d4a1f3e30"></script>
+<script src="rain-settings-share.js?v=cc866c581858"></script>
 <script src="rain-session-controls.js?v=6c9044062230"></script>
-<script type="module" src="rain-settings-ui.js?v=2b7d028fb1e1"></script>
+<script type="module" src="rain-settings-ui.js?v=59116e707538"></script>
 </body>
 </html>
