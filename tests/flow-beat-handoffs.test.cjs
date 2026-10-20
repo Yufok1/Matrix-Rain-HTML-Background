@@ -76,6 +76,16 @@ for(const mode of ['directed','counterflow','crossflow']){
 // changing headings. No warping, diagonal steps or backwards trail folding.
 for(const reverse of [1,-1]){
     const ctx=setup('counterflow',true,reverse),flow=ctx.window.rainAllDirections;
+    const formationJoints=new Map(),nativePlan=flow.planStep;
+    flow.planStep=function(index,depth,fontSize,speed){
+        const record=this.records.get(index),previous=record?.last;
+        const formation=record?.transition&&record?.formationReverse&&record.conductor===ctx.MatrixRainEngine.rainConfig.direction;
+        const route=nativePlan.call(this,index,depth,fontSize,speed);
+        // The next capture records this exact native step. Only a deliberate
+        // formation reversal may bypass the ordinary steering corner rule.
+        if(formation&&route?.direction===opposite[previous])formationJoints.set(index,ctx.camera.frame+1);
+        return route;
+    };
     const previous=new Map();ctx.tick(1.3);
     const history=ctx.camera.marks.map(mark=>[mark.x,mark.y,mark.z,mark.char,mark.color]);
     const directions=['down','right','away','up','left','toward'];
@@ -90,10 +100,11 @@ for(const reverse of [1,-1]){
             assert.ok(Number.isFinite(length)&&length<=13.00001,'No native head is accelerated');
             if(length<1e-5)continue;
             const vector=mark.delta.map(value=>value/length),before=previous.get(mark.streamId);
-            // Steady Single direction intentionally retains its original direct
-            // controller behavior; Counterflow and handoffs use perpendiculars.
+            // Steady Single direction retains its original controller behavior;
+            // only exact Single/Counterflow formation joints may reverse directly.
             if(before&&(flow.mode==='counterflow'||flow.transitioning)){
-                assert.ok(vector.reduce((sum,value,i)=>sum+value*before[i],0)>-.001,'No immediate reversal in the native flow router');
+                const dot=vector.reduce((sum,value,i)=>sum+value*before[i],0);
+                assert.ok(dot>-.001||formationJoints.get(mark.streamId)===mark.frame,'Only the deliberate formation joint may reverse in the native flow router');
             }
             previous.set(mark.streamId,vector);
         }

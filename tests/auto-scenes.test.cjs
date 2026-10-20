@@ -126,7 +126,7 @@ async function lifecycle() {
     const protectedState=()=>JSON.stringify({direction:config.direction,speed:config.speed,intensity:config.intensity,
         primary:config.primaryColor,secondary:config.secondaryColor,pattern:config.pattern,characters:config.characterSet,
         reverse:context.reverseFlowMultiplier});
-    const spatialKinds=new Set(['hold viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
+    const spatialKinds=new Set(['hold viewpoint','align viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
     const combined=new Map(),forbidden=['direction','reverse','pace','palette','pattern','characters'];
     for(const kind of forbidden){
         const before=protectedState();
@@ -349,14 +349,24 @@ async function lifecycle() {
             assert.ok(Number(numeric.fontSize)>=14&&Number(numeric.fontSize)<=18);
         }
     }
-    // Restored depth changes keep the existing angle, even an oblique view.
+    // Readable oblique views stay intact. Edge-on views align the same world
+    // before flattening, preserving roll and all glyph history throughout.
     for(const yaw of [25,80,-155]){
         scenes.reset();context.camera.setMode('fixed');context.camera.depthTransition=null;
         context.camera.enabled=true;context.camera.perspective=1;
         context.camera.yaw=yaw;context.camera.pitch=-20;context.camera.roll=45;
         context.MatrixRainEngine.rainConfig.direction='down';context.window.rainAllDirections.setMode('directed');
-        scenes.next('depth');assert.equal(scenes.description,'depth');settle();
-        assert.deepEqual([context.camera.yaw,context.camera.pitch,context.camera.roll],[yaw,-20,45]);
+        const target=context.window.RainCameraMotion.safePlanarAngles(yaw*Math.PI/180,-20*Math.PI/180,45*Math.PI/180);
+        scenes.next('depth');settle();
+        for(let step=0;step<8&&scenes.queue.length;step++){scenes.next();settle();}
+        assert.equal(context.camera.enabled,false);assert.equal(context.camera.perspective,0);
+        assert.equal(context.camera.roll,45,'Flat alignment keeps the established roll');
+        assert.ok(Math.abs(context.camera.yaw-target.yaw*180/Math.PI)<1e-8);
+        assert.ok(Math.abs(context.camera.pitch-target.pitch*180/Math.PI)<1e-8);
+        const r=context.camera.viewRotation();
+        assert.ok(Math.hypot(r[0],r[3])>=.65-1e-8&&Math.hypot(r[1],r[4])>=.65-1e-8,'Both planar rain axes remain readable');
+        assert.ok(Math.abs(r[8])>=.55-1e-8,'The flat plane never settles edge-on');
+        if(yaw!==80)assert.deepEqual([context.camera.yaw,context.camera.pitch,context.camera.roll],[yaw,-20,45],'Already-readable views are unchanged');
     }
     console.log('PASS 1200 standalone + 2100 combined random shifts, 7200 real audio frames including exact standalone/combined parity, retained glyphs/viewpoint, musical ownership, stale plan cancellation, pending capture, independent toggles, combined/standalone Stop/Resume and adjustable/exported timer ownership.');
 }

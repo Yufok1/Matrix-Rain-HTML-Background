@@ -20,7 +20,7 @@
         if(input)input.value=this.intervalSeconds;if(value)value.textContent=this.intervalSeconds+'s';
     };
     const config = () => MatrixRainEngine.rainConfig;
-    const spatialKinds = new Set(['hold viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
+    const spatialKinds = new Set(['hold viewpoint','align viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
     const spatialFamilies = ['camera','depth','flow','density','size','render','tails'];
     function nextSpatialFamily() {
         if(!state.families.length){
@@ -53,21 +53,59 @@
         return audio;
     };
     const ease = t => t*t*t*(t*(t*6-15)+10);
+    // Auto owns a bounded workspace. Manual sliders keep their complete range.
+    // Source count grows with viewport width; long tails and large glyphs then
+    // multiply that cost in every visible copy of the repeating world.
+    const limits = {font:20,tail:64,minimumTail:40,minimumDelay:30};
+    function flatAmount() { return rainCamera.continuous?clamp(1-rainCamera.perspective,0,1):rainCamera.enabled?0:1; }
+    state.loadBudget = function() {
+        const c=config(),trails=window.matrixRainTrails,flat=flatAmount();
+        const columns=Math.max(1,Math.floor(matrixCanvas.width/10));
+        // Old large glyphs stay exactly where they were born until they fade.
+        // Include them while limiting new births rather than resizing history.
+        const font=Math.max(Number(c.fontSize),Number(rainCamera.bounds?.pad||0)/1.6);
+        const life=trails?.enabled?Number(trails.maximum):40;
+        const area=Math.max(1,font/14)**2,reserve=1.12;
+        // Conservative 14px glyph-work units, not a hardware-specific FPS
+        // promise. Reserve room for temporary branches during flow handoffs.
+        const maximum=6000+4000*flat;
+        const density=Math.max(1,Math.floor((maximum/(life*area*reserve)-.5)/columns*100));
+        const sources=Math.max(window.rainAllDirections.enabled?(rainCamera.enabled?6:4):1,Math.round(columns*Number(c.density)/100));
+        return {density,work:sources*life*area*reserve,maximum};
+    };
+    function limitWork(audio) {
+        const c=config(),trails=window.matrixRainTrails;
+        let changed=false;
+        const font=clamp(Number(c.fontSize),8,limits.font);
+        if(Number(c.fontSize)!==font){c.fontSize=font;changed=true;}
+        if(!audio&&Number(c.speed)<limits.minimumDelay){c.speed=limits.minimumDelay;changed=true;}
+        if(trails?.enabled){
+            const min=clamp(Number(trails.minimum),24,limits.minimumTail),max=clamp(Number(trails.maximum),40,limits.tail);
+            if(trails.minimum!==min||trails.maximum!==max){trails.configure(min,max);changed=true;}
+        }
+        const [,high]=densityRange(),density=Math.min(Number(c.density),high);
+        if(Number(c.density)!==density){c.density=density;recomputeActiveColumnsMask();changed=true;}
+        // A pending density tween must not land beyond a budget that has shrunk
+        // as projection opens or larger glyphs enter the field.
+        for(const t of state.tweens)if(t.object===c&&t.key==='density')t.to=Math.min(t.to,high);
+        return changed;
+    }
     function tween(object,key,to,duration=3,rounded=false,changed=null,delay=0) {
         // DOM sliders (including configuration imports) supply text values.
         state.tweens.push({object,key,from:Number(object[key]),to:Number(to),duration,elapsed:0,rounded,changed,delay});
     }
     function densityRange() {
-        const flat = rainCamera.continuous ? 1-rainCamera.perspective : rainCamera.enabled?0:1;
+        const flat = flatAmount();
         // Flat projection has a much smaller visible volume. Keep its coverage
         // fuller, while multi-axis currents need more breathing room in depth.
         const flow = window.rainAllDirections.mode;
-        const low = flow==='crossflow'?24:32, high=flow==='crossflow'?44:58;
-        return [Math.round(low+(68-low)*flat),Math.round(high+(90-high)*flat)];
+        const low = flow==='crossflow'?20:24, high=flow==='crossflow'?32:42;
+        const cap=Math.min(Math.round(high+(78-high)*flat),state.loadBudget().density);
+        return [Math.min(Math.round(low+(58-low)*flat),cap),cap];
     }
     function matchDensity(flat) {
         const flow = window.rainAllDirections.mode;
-        const target = flat?integer(70,86):flow==='crossflow'?integer(28,42):integer(36,54);
+        const target = flat?integer(62,76):flow==='crossflow'?integer(24,30):integer(28,40);
         tween(config(),'density',target,4,true,recomputeActiveColumnsMask);
     }
     function sync() {
@@ -90,6 +128,7 @@
     state.advance = function(dt) {
         this.syncAudioOwnership();
         if(this.preparingFlat && !rainCamera.enabled && !rainCamera.depthTransition)this.preparingFlat=false;
+        const finishingTweens=this.tweens.length>0;
         // Emergency Stop does not advance the presentation clock. Stopping
         // Auto scenes lets an already-started interpolation land gently.
         for(const t of this.tweens){
@@ -99,6 +138,7 @@
             if(t.object[t.key]!==value){t.object[t.key]=value;t.changed?.();}
         }
         this.tweens=this.tweens.filter(t=>t.elapsed<t.duration);
+        if(((typeof autoOrchestratorActive!=='undefined'&&autoOrchestratorActive)||finishingTweens)&&limitWork(this.audioOwned))sync();
         if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade){
             this.refreshTime+=dt;
             if(this.refreshTime>=.1){this.refreshTime=0;sync();}
@@ -119,6 +159,16 @@
         switch(step.kind){
             case 'prepare flat': this.preparingFlat=true;break;
             case 'hold viewpoint': rainCamera.settleMotion(); break;
+            case 'align viewpoint': {
+                // Freeze only the viewpoint, then turn the same world gently
+                // away from an edge-on flat projection. Both planar axes must
+                // remain readable, including when the next beat changes axis.
+                rainCamera.setMode('fixed');
+                const radians=Math.PI/180;
+                const target=window.RainCameraMotion.safePlanarAngles(rainCamera.yaw*radians,rainCamera.pitch*radians,rainCamera.roll*radians);
+                for(const axis of ['yaw','pitch'])if(Math.abs(target[axis]/radians-rainCamera[axis])>1e-6)tween(rainCamera,axis,target[axis]/radians,2.5);
+                break;
+            }
             case 'depth':
                 rainCamera.setMode('fixed');rainCamera.motionGain=1;rainCamera.motionFade=null;
                 if(step.value)this.preparingFlat=false;
@@ -132,9 +182,9 @@
                 flow.manualMode=step.value;flow.applyMode(step.value,true);
                 {const [lo,hi]=densityRange();tween(c,'density',clamp(c.density,lo,hi),3,true,recomputeActiveColumnsMask);}break;
             case 'density': {const [lo,hi]=densityRange();const target=audio?separatedTarget(c.density,[lo,Math.round((lo+hi)/2),hi],15):clamp(Number(c.density)+pick([-12,12]),lo,hi);tween(c,'density',target,3,true,recomputeActiveColumnsMask);break;}
-            case 'size': tween(c,'fontSize',audio?separatedTarget(c.fontSize,[8,12,16,20,24],4):clamp(Number(c.fontSize)+pick([-2,2]),8,24),4,true);break;
+            case 'size': tween(c,'fontSize',audio?separatedTarget(c.fontSize,[8,12,16,20],4):clamp(Number(c.fontSize)+pick([-2,2]),8,limits.font),4,true);break;
             case 'pace':
-                tween(c,'speed',clamp(Number(c.speed)+pick([-10,10]),22,80),3,true);
+                tween(c,'speed',clamp(Number(c.speed)+pick([-10,10]),limits.minimumDelay,80),3,true);
                 tween(c,'intensity',clamp(Number(c.intensity)+pick([-8,8]),50,90),3,true);break;
             case 'palette': {
                 // A nearby hue, shared by both inks. Only new glyphs get it.
@@ -170,12 +220,12 @@
                 else if(step.value==='fade')trails.stepped=!trails.stepped;
                 else {
                     const update=()=>trails.configure(trails.minimum,trails.maximum);
-                    tween(trails,'minimum',clamp(trails.minimum+pick([-8,8]),24,48),3,true,update);
-                    tween(trails,'maximum',clamp(trails.maximum+pick([-12,12]),48,100),3,true,update);
+                    tween(trails,'minimum',clamp(trails.minimum+pick([-8,8]),24,limits.minimumTail),3,true,update);
+                    tween(trails,'maximum',clamp(trails.maximum+pick([-12,12]),40,limits.tail),3,true,update);
                 }
                 break;
         }
-        sync();
+        limitWork(audio);sync();
         return true;
     };
     state.next = function(requestedFamily) {
@@ -193,6 +243,7 @@
                 if(flow.mode!=='directed')add('flow','directed');
                 if(!audio && !planar.includes(c.direction))add('direction',pick(planar));
                 if(rainCamera.mode!=='fixed'&&rainCamera.motionGain>0)add('hold viewpoint');
+                add('align viewpoint');
                 add('depth',false);
             }else{add('depth',true);add('camera',pick(['showcase','corkscrew','gyroscope']));}
         }else if(family==='camera'){

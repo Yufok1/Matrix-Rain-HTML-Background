@@ -2166,6 +2166,11 @@
                     continue;
                 }
 
+                // Apply density mask (do not skip user columns)
+                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                    continue;
+                }
+
                 const char = getNextCharacter(characters, i, isUserColumn);
                 const x = rainPosition(i, fontSize).x;
                 const y = rainPosition(i, fontSize).y;
@@ -2256,6 +2261,11 @@
                         continue;
                     }
 
+                    // Apply density mask (do not skip user columns)
+                    if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
+                        continue;
+                    }
+
                     const char = getNextCharacter(characters, i, isUserColumn);
                     const y = (rainPosition(i, fontSize).y) + (Math.random() - 0.5) * 10;
                     const x = rainPosition(i, fontSize).x;
@@ -2334,6 +2344,11 @@
 
                 // Skip columns used ONLY by Ollama
                 if (!isUserColumn && window.ollamaMessageColumns && window.ollamaMessageColumns.has(i)) {
+                    continue;
+                }
+
+                // Apply density mask (do not skip user columns)
+                if (!isUserColumn && window.activeColumnsMask && window.activeColumnsMask.length > i && !window.activeColumnsMask[i]) {
                     continue;
                 }
 
@@ -3473,13 +3488,13 @@
 <script src="assets/media-characters.js?v=21b0aad25a02"></script>
 <script src="rain-media-characters.js?v=268a9ad2014a"></script>
 <script src="rain-camera-gpu.js?v=7f05305e8159"></script>
-<script src="rain-camera-motion.js?v=fa4d75e30d2e"></script>
+<script src="rain-camera-motion.js?v=a6e366fbd4ac"></script>
 <script src="rain-audio-characters.js?v=3f847c91d51b"></script>
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
-<script src="rain-all-directions.js?v=be66450c30c4"></script>
-<script src="rain-auto-scenes.js?v=e13f2d2fe794"></script>
+<script src="rain-all-directions.js?v=d28fa514b695"></script>
+<script src="rain-auto-scenes.js?v=5cd0f2b20e16"></script>
 <script src="rain-camera.js?v=a54c05a113b1"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
 <script src="rain-settings-share.js?v=0e6d4a1f3e30"></script>

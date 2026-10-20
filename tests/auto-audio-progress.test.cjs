@@ -128,7 +128,8 @@ function fixture(seed=6241){
     for(const family of ['camera','depth','flow','size','density'])assert.ok(families.has(family),'The major-family bag reaches '+family);
     assert.deepEqual(new Set(flows),new Set(['directed','counterflow','crossflow']),'A real autonomous session reaches and settles all flow patterns');
     assert.ok(depths.has(0)&&depths.has(1),'A real autonomous session completes both flat and spatial endpoints');
-    assert.ok(Math.max(...sizes)-Math.min(...sizes)>=8,'Font changes have meaningful visible range');
+    assert.ok(Math.max(...sizes)-Math.min(...sizes)>=4,'Bounded font changes retain a visible four-pixel range');
+    assert.ok(Math.max(...sizes)<=20,'Auto does not trade performance for oversized glyphs');
     assert.ok(Math.max(...densities)-Math.min(...densities)>=25,'Density changes have meaningful visible range');
     assert.equal(h.context.reverseFlowMultiplier,1,'Global reverse remains manual');
     console.log(`PASS two-minute real combined progression: families=${[...families]}, flows=${[...flows]}, native frames=${h.moves()}.`);

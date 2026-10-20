@@ -30,7 +30,7 @@
         // Projection remains in the same world while its legal future headings
         // become planar. Existing Z segments can finish before Auto flattens it.
         if(root.rainAutoScenes?.preparingFlat)return false;
-        if(root.audioReactiveActive&&typeof rainCamera!=='undefined'&&!rainCamera.enabled)return false;
+        if(typeof rainCamera!=='undefined'&&!rainCamera.enabled)return false;
         return depth;
     }
     function rotate(name,h,depth){
@@ -82,24 +82,24 @@
         if(beatTurn){
             // A newly accepted beat turn owns the next ordinary glyph step.
             // Do not finish an older stagger or detour before acknowledging it.
-            r.delay=r.hold=0;delete r.distanceKey;
+            r.delay=r.hold=0;delete r.distanceKey;delete r.formationReverse;
             if(r.transition)r.target=liveDesired;
         }
         // Complete the chosen handoff even if a new musical attack changes the
         // conductor mid-segment, unless Beat turns explicitly takes priority.
         const desired=(r.transition?r.target:null)||liveDesired;
         if(!r.unit)r.unit=fontSize;
-        // An opposite request gets a real perpendicular segment, not a one-glyph
-        // twitch. Reverse flow remains the user's explicit global reversal.
+        // Ordinary steering reversals retain their perpendicular segment. A
+        // Single/Counterflow lane swap reverses at the existing native joint.
         let actual=r.last||desired;
         if(r.delay>0){r.distanceKey='delay';}
         else if(r.hold<=0){
-            if(actual===opposite[desired]){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*6;}
+            if(actual===opposite[desired]&&!(r.transition&&r.formationReverse)){actual=perpendicular(actual,depth,r.rank);r.hold=r.unit*6;}
             else actual=desired;
             if(r.transition&&!r.forked&&actual!==r.last){this.spawnFork(index,r.last,fontSize);r.forked=true;}
             if(actual===desired&&r.transition){
                 r.transition=false;
-                delete r.target;
+                delete r.target;delete r.formationReverse;
                 this.transitioning=[...this.records.values()].some(v=>v.transition);
             }
         }
@@ -164,6 +164,7 @@
     };
     state.applyMode=function(mode,organic=false){
         if(!modes.includes(mode)||this.mode===mode)return;
+        const formationReverse=(this.mode==='directed'&&mode==='counterflow')||(this.mode==='counterflow'&&mode==='directed');
         this.mode=mode;this.records.clear();
         this.transitioning=false;
         if(organic&&typeof rainMotion!=='undefined'){
@@ -171,7 +172,7 @@
                 if(root.activeColumnsMask&&!root.activeColumnsMask[i])continue;
                 const p=rainMotion.drops[i];if(!p?.lastStepDirection)continue;
                 const depth=typeof rainCamera==='undefined'?true:(rainCamera.active ?? rainCamera.enabled);
-                const r=record(i);Object.assign(r,{last:p.lastStepDirection,target:this.directionFor(i,axisDepth(depth))||heading(),transition:true,forked:false,
+                const r=record(i);Object.assign(r,{last:p.lastStepDirection,target:this.directionFor(i,axisDepth(depth))||heading(),transition:true,forked:false,formationReverse,
                     delay:(r.rank%8)*((typeof MatrixRainEngine==='undefined'?10:MatrixRainEngine.rainConfig.fontSize)*.8)});
                 this.transitioning=true;
             }
