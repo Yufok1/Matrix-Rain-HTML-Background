@@ -45,6 +45,9 @@
         startMatrixAnimation();updateModeButtons(audioReactiveActive?'audio':autoOrchestratorActive?'orchestrator':null);refresh();
     }
     function reset(){
+        window.rainCloud?.reset();
+        window.rainAutoScenes?.setIncludeCloud(false);
+        window.rainAutoPreferences?.reset();
         operation++;stopMatrixAnimation();
         window.rainMedia?.reset();
         audioReactiveActive=window.audioReactiveActive=false;

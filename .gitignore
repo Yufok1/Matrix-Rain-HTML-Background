@@ -55,3 +55,4 @@ matrix-rain-android*.zip
 
 # Private soundtrack fixtures and local research outputs.
 tests/*.private.*
+*.log

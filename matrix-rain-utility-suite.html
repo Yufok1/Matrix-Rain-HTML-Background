@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>document.documentElement.dataset.rainStartup='preparing';</script>
+    <style>
+      html[data-rain-startup="preparing"] body > :not(#rain-startup) { visibility:hidden!important; }
+      #rain-startup { position:fixed;inset:0;z-index:2147483647;display:grid;place-content:center;gap:14px;background:#050907;color:#c6d5cb;font:14px/1.5 system-ui,sans-serif;text-align:center;padding:24px; }
+      #rain-startup[hidden] { display:none; }
+      #rain-startup strong { font-size:17px;font-weight:500; }
+      #rain-startup progress { width:240px;max-width:80vw;height:5px;accent-color:#80b997;justify-self:center; }
+      #rain-startup-status { color:#91a79a; }
+      #rain-startup button { background:#17291e;color:#d2dbd6;border:1px solid #52745e;padding:12px;cursor:pointer; }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matrix Rain Omni</title>
@@ -980,9 +990,14 @@
             }
         }
 </style>
-<link rel="stylesheet" href="rain-settings-ui.css?v=ac98cc021d79">
+<link rel="stylesheet" href="rain-settings-ui.css?v=4fca5d967ab4">
 </head>
 <body>
+    <div id="rain-startup" role="status" aria-live="polite">
+      <strong>Preparing Omni</strong><span id="rain-startup-status">Loading renderers…</span>
+      <progress id="rain-startup-progress" max="1" value="0" aria-label="Preparing effects"></progress>
+      <button id="rain-startup-continue" type="button" hidden>Continue with rain</button>
+    </div>
     <!-- Matrix Rain Canvas - Dual Layer System -->
     <canvas id="matrixRainCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; background: #000;"></canvas>
 
@@ -1197,7 +1212,7 @@
     <script src="choreography-preview.js?v=41f2cf9303be"></script>
     <script src="rain-audio-color.js?v=b25075caaa69"></script>
     <script src="color-preview.js?v=100dbeab2b31"></script>
-    <script src="rain-settings-codec.js?v=13657a45eb28"></script>
+    <script src="rain-settings-codec.js?v=a4ca318bae2b"></script>
 <script>
         // === REVERSE FLOW CONTROL ===
         let reverseFlowMultiplier = 1; // 1 = normal, -1 = reversed
@@ -2997,6 +3012,7 @@
                 btn.style.background = '#0080ff';
                 stopAutoOrchestrator();
                 window.rainAutoScenes?.cancelPlan();
+                window.rainAutoPreferences?.stop?.();
                 MatrixRainEngine.logActivity('🎭 Auto Orchestrator STOPPED', 'info');
                 updateModeButtons(null); // Re-enable all buttons
             }
@@ -3005,6 +3021,7 @@
         function startAutoOrchestrator() {
             stopAutoOrchestrator();
             window.rainAutoScenes?.cancelPlan();
+            window.rainAutoPreferences?.start?.();
             // Run first change immediately
             orchestrateRandomChange();
 
@@ -3488,18 +3505,28 @@
 <script src="assets/rain-font-msdf.js?v=a2e4dfe46fde"></script>
 <script src="assets/media-characters.js?v=21b0aad25a02"></script>
 <script src="rain-media-characters.js?v=268a9ad2014a"></script>
-<script src="rain-camera-gpu.js?v=7f05305e8159"></script>
+<script src="cloud-source/space-physics.js?v=790bd7c3d9bd"></script>
+<script src="cloud-source/space-gpu.js?v=14132e386a2e"></script>
+<script src="cloud-source/fire-motion.js?v=36a3bb7c45d1"></script>
+<script src="cloud-source/audio-director.js?v=bb5006adbffe"></script>
+<script src="cloud-source/surface-samples.js?v=94ca102b39e6"></script>
+<script src="rain-cloud-field.js?v=6dd6372086e6"></script>
+<script src="rain-cloud.js?v=64aba052f760"></script>
+<script src="rain-camera-gpu.js?v=daa3275b94c5"></script>
 <script src="rain-camera-motion.js?v=a6e366fbd4ac"></script>
 <script src="rain-audio-characters.js?v=3f847c91d51b"></script>
 <script src="rain-media-assembly.js?v=9816f7528d8c"></script>
 <script src="rain-tab-audio.js?v=daa99f24bd0f"></script>
 <script src="rain-media-depiction.js?v=7bf630fd682b"></script>
 <script src="rain-all-directions.js?v=d28fa514b695"></script>
-<script src="rain-auto-scenes.js?v=2914b3adcc5c"></script>
-<script src="rain-camera.js?v=a54c05a113b1"></script>
+<script src="rain-auto-scenes.js?v=7c382f69e4b9"></script>
+<script src="rain-auto-preferences.js?v=1ec6c5c5ab94"></script>
+<script src="rain-camera.js?v=b8cd48812086"></script>
 <script src="settings-panel.js?v=09645a7bc8c6"></script>
-<script src="rain-settings-share.js?v=cc866c581858"></script>
-<script src="rain-session-controls.js?v=6c9044062230"></script>
-<script type="module" src="rain-settings-ui.js?v=59116e707538"></script>
+<script src="rain-settings-share.js?v=2219e04255ee"></script>
+<script src="rain-session-controls.js?v=866d2663ed64"></script>
+<script src="rain-auto-ui.js?v=7c9cf586f384"></script>
+<script type="module" src="rain-settings-ui.js?v=075decc1d2c1"></script>
+<script src="rain-startup.js?v=146af8d3fc33"></script>
 </body>
 </html>

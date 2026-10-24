@@ -24,6 +24,8 @@ window.addEventListener('DOMContentLoaded',()=>{
         const output=document.createElement('output');output.setAttribute('for',id);output.id=id+'Value';output.className='settings-value';control(id).querySelector('label').append(output);
     }
     rb.append(density,size);
+    window.rainCloud?.mount(rb);
+    el('rain-cloud-toggle')?.addEventListener('click',()=>window.rainAutoScenes?.manualCloudChoice());
     window.rainAllDirections.mount(rb);
     const manual=document.createElement('fieldset');manual.id='rain-manual-settings';
     const patterns=document.querySelector('.pattern-btn').parentElement;patterns.classList.add('pattern-controls');
@@ -33,11 +35,12 @@ window.addEventListener('DOMContentLoaded',()=>{
     const manualDetails=sub('Manual appearance');manualDetails.lastElementChild.append(manual);rb.append(manualDetails);
     const auto=el('autoOrchestratorBtn'),reverse=el('reverseFlowBtn'),shuffle=document.querySelector('[onclick="activateChaosRandomizer()"]');
     auto.title='Explore connected variations at your chosen interval. Alongside audio response, Auto evolves the view while audio keeps control of timing, direction, colors and characters.';
-    shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle,auto));
+    shuffle.id='rain-shuffle';rb.append(row(reverse,shuffle));
+    const autoCategory=category('settings-auto','Auto scenes','Appearances · timing · choices');
     const sceneTiming=document.createElement('div');sceneTiming.className='control-item';
-    sceneTiming.innerHTML='<label for="autoSceneInterval">Time between shifts <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="0.1" max="60" step="0.1"><small id="autoScenePolicy">Transitions finish before another shift starts. Can run alongside audio response.</small>';
-    rb.append(sceneTiming);
+    sceneTiming.innerHTML='<label for="autoSceneInterval">Change other settings every <output id="autoSceneIntervalValue" class="settings-value" for="autoSceneInterval"></output></label><input id="autoSceneInterval" type="range" min="0.1" max="60" step="0.1"><small id="autoScenePolicy">Transitions finish before another shift starts. Can run alongside audio response.</small>';
     sceneTiming.querySelector('#autoSceneInterval').oninput=event=>window.rainAutoScenes.setInterval(event.target.value);
+    window.rainAutoUI.mount(autoCategory.lastElementChild,auto,sceneTiming);
     const trailDetails=sub('3D trails'),trailField=document.createElement('fieldset');trailField.id='rain-trail-settings';
     trailField.append(el('rain-trails-panel'));trailDetails.lastElementChild.append(trailField,hint('Tail length and stepped fade apply to the 3D camera view.'));rb.append(trailDetails);
 
@@ -70,8 +73,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     cb.append(pose);
     const render=category('settings-rendering','Rendering','Clarity · performance'),renderField=document.createElement('fieldset');renderField.id='rain-render-settings';renderField.append(el('rain-rendering-panel'));render.lastElementChild.append(renderField,hint('Rendering options apply to the 3D camera view.'));
     const share=el('rain-share-panel');share.className='settings-category';share.removeAttribute('style');share.querySelector('summary').innerHTML='Configurations<span class="category-note">Copy · paste · share</span>';
-    share.querySelector('p').textContent='Share every visual setting in one code. Import keeps listening, playback and Auto Orchestrator activation as they are.';
-    content.replaceChildren(rain,audio,camera,render,share);
+    share.querySelector('p').textContent='Share your visual settings and Auto program in one code. Import keeps listening, playback and Auto Orchestrator activation as they are.';
+    content.replaceChildren(rain,autoCategory,audio,camera,render,share);
     window.rainAutoScenes.setInterval(window.rainAutoScenes.intervalSeconds,false);
     window.rainMedia?.mount(content,render);
 
@@ -104,6 +107,7 @@ window.addEventListener('DOMContentLoaded',()=>{
         el('rain-trail-settings').disabled=el('rain-render-settings').disabled=!rainCamera.active;
         reverse.textContent='Reverse flow';reverse.setAttribute('aria-pressed',String(reverseFlowMultiplier===-1));
         auto.textContent=autoOrchestratorActive?'Stop auto scenes':'Auto scenes';auto.setAttribute('aria-pressed',String(autoOrchestratorActive));
+        window.rainAutoUI?.refresh();
         el('audioReactiveBtn').textContent=isAudio?'Stop audio response':'Start audio response';el('audioReactiveBtn').setAttribute('aria-pressed',String(isAudio));
         el('audioReactiveBtn').disabled=rainSessionControls.stopped||!!window.rainAudioStarting||!canCaptureRainAudio();auto.disabled=rainSessionControls.stopped;
         el('autoScenePolicy').textContent=isAudio
@@ -121,8 +125,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     new MutationObserver(()=>rainSettingsUI.refresh()).observe(modal,{attributes:true,attributeFilter:['class']});
     // Refresh after existing handlers; audio startup is async and announces
     // state through status/buttons. No polling or work in the animation loop.
-    content.addEventListener('click',()=>queueMicrotask(()=>rainSettingsUI.refresh()));
-    content.addEventListener('input',event=>{if(event.target.id!=='autoSceneInterval')window.rainAutoScenes?.reset();rainSettingsUI.refresh();});
+    // Auto form controls commit on change. A refresh between native click and
+    // change would restore their old checked value before the edit is read.
+    content.addEventListener('click',event=>{if(!event.target.closest('#settings-auto input'))queueMicrotask(()=>rainSettingsUI.refresh());});
+    content.addEventListener('input',event=>{if(event.target.closest('#settings-auto'))return;window.rainAutoScenes?.reset();rainSettingsUI.refresh();});
     content.addEventListener('click',event=>{
         if(event.target.closest('.setting-choice,[data-camera-mode],.pattern-btn,[data-flow]'))window.rainAutoScenes?.reset();
     });

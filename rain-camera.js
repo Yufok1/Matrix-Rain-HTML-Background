@@ -156,6 +156,7 @@ const rainCamera = {
             const tone = ((Number(appearanceId)||0)*.618033988749895%1+1)%1;
             mark.rgb = Object.freeze(palette.colorA.map((value, channel) => value + (palette.colorB[channel]-value)*tone));
         }
+        if(window.rainCloud?.capture?.(mark,this))return;
         this.marks.push(mark); this.pending.push(mark);
     },
     prepareView() {
@@ -230,7 +231,7 @@ const rainCamera = {
         let x0=Infinity,y0=Infinity,z0=Infinity,x1=-Infinity,y1=-Infinity,z1=-Infinity,pad=0,motionMargin=0;
         for (const mark of this.marks) {
             const lifetime=window.matrixRainTrails?.enabled?mark.trailLength:40;
-            if (this.frame-mark.frame>=lifetime) continue;
+            if (mark.cloudAge===undefined && this.frame-mark.frame>=lifetime) continue;
             this.marks[write++]=mark;
             const px=mark.x-mark.delta[0],py=mark.y-mark.delta[1],pz=mark.z-mark.delta[2];
             x0=Math.min(x0,mark.x,px);y0=Math.min(y0,mark.y,py);z0=Math.min(z0,mark.z,pz);
@@ -242,6 +243,16 @@ const rainCamera = {
         this.bounds=write?{center:[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2],half:[(x1-x0)/2,(y1-y0)/2,(z1-z0)/2],pad,motionMargin}:null;
         this.frame++;
     },
+    refreshCloudBounds() {
+        let x0=Infinity,y0=Infinity,z0=Infinity,x1=-Infinity,y1=-Infinity,z1=-Infinity,pad=0,motionMargin=0;
+        for(const mark of this.marks){
+            const px=mark.x-mark.delta[0],py=mark.y-mark.delta[1],pz=mark.z-mark.delta[2];
+            x0=Math.min(x0,mark.x,px);y0=Math.min(y0,mark.y,py);z0=Math.min(z0,mark.z,pz);
+            x1=Math.max(x1,mark.x,px);y1=Math.max(y1,mark.y,py);z1=Math.max(z1,mark.z,pz);
+            pad=Math.max(pad,mark.fontSize*1.6);motionMargin=Math.max(motionMargin,...mark.delta.map(Math.abs));
+        }
+        this.bounds=this.marks.length?{center:[(x0+x1)/2,(y0+y1)/2,(z0+z1)/2],half:[(x1-x0)/2,(y1-y0)/2,(z1-z0)/2],pad,motionMargin}:null;
+    },
     present(now = performance.now(), phase = 1) {
         this.syncTrailSettings();
         window.rainMedia?.present(now);
@@ -249,6 +260,7 @@ const rainCamera = {
         const dt=gap>250?0:Math.min(.1,gap/1000);this.lastTime=now;
         this.advanceTransitions(dt);
         window.rainAutoScenes?.advance(dt);
+        window.rainCloud?.advance(dt,this,phase);
         if(this.active){
             if(this.mode!=='fixed'){
                 this.motionTime+=dt*this.speeds[this.mode]*this.phaseRates[this.mode]*this.motionGain*(this.continuous?this.perspective:1);

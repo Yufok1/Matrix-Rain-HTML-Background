@@ -38,17 +38,32 @@ const rainCameraGPU = {
             const pictureSelection=window.RainMediaCharacters?.selectionGLSL||'float chooseMediaPattern(vec4 rect){return 0.;}';
             this.main=this.program(`
                 attribute vec2 corner;attribute vec4 point,color,atlasRect,shape;attribute vec2 lifetime;attribute vec3 delta;attribute float format;
-                uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase,perspective;uniform bool smoothMotion,stepped,variety;
-                varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
+                uniform vec3 cell,rowX,rowY,rowZ;uniform vec2 viewport,range;uniform float focal,ageNow,phase,perspective,cloudAmount;uniform bool smoothMotion,stepped,variety,untiledPass;
+                varying vec2 uv,ownerLife;varying vec4 tint;varying float glyphFormat,imagePotential;
                 uniform bool mediaLive;uniform lowp int mediaCharacters;uniform sampler2D mediaImage;uniform mediump float mediaDotAmount,mediaShadeCount;
                 varying vec2 pictureLocal;varying vec4 pictureRect;varying float pictureIndex;
+                uniform sampler2D ownershipOffsets,ownership;uniform bool displacedRain,ownedRain;uniform mediump vec2 ownershipSize;uniform mediump float ownershipCell;uniform float ownershipUnit;
                 ${this.pictureVertexSampling?pictureSelection:''}
                 float level(float p){float s=floor(p*8.);if(s<1.)return 1.;if(s<2.)return .68;if(s<3.)return .45;if(s<4.)return .29;if(s<5.)return .18;if(s<6.)return .105;if(s<7.)return .06;return .032;}
                 void main(){
-                    float age=mod(ageNow-lifetime.x+4096.,4096.),length=variety?lifetime.y:40.;
-                    if(age>=length){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=mod(format,2.);imagePotential=0.;pictureLocal=vec2(0.);pictureRect=vec4(0.);pictureIndex=0.;return;}
+                    ownerLife=vec2(floor(format/4.),lifetime.x);
+                    float age=mod(ageNow-lifetime.x+4096.,4096.),length=variety?abs(lifetime.y):40.;
+                    bool hiddenOwner=false;
+                    if(ownedRain&&!untiledPass){
+                        vec4 gate=texture2D(ownership,vec2(ownershipCell+.5,ownerLife.x+.5)/ownershipSize);
+                        float born=floor(gate.g*255.+.5)+floor(gate.b*255.+.5)*256.,before=mod(born-ownerLife.y+4096.,4096.);
+                        hiddenOwner=gate.r<.5||(gate.a>.5&&before>.5&&before<2048.);
+                    }
+                    if(hiddenOwner||age>=length||((mod(floor(format/2.),2.)>.5)!=untiledPass)){gl_Position=vec4(2.,2.,2.,1.);uv=vec2(0.);tint=vec4(0.);glyphFormat=mod(format,2.);imagePotential=0.;pictureLocal=vec2(0.);pictureRect=vec4(0.);pictureIndex=0.;return;}
                     float p=age/length,fade=stepped?level(p):(variety?exp(-4.*p)*(1.-p):pow(.88,age));
+                    if(lifetime.y<0.)fade=1.;
                     vec3 location=point.xyz;if(smoothMotion&&age<.5)location-=delta*(1.-phase);
+                    if(displacedRain&&!untiledPass){
+                        vec2 at=vec2(ownershipCell*2.+.5,ownerLife.x+.5)/vec2(ownershipSize.x*2.,ownershipSize.y);
+                        vec3 high=floor(texture2D(ownershipOffsets,at).rgb*255.+.5);
+                        vec3 low=floor(texture2D(ownershipOffsets,at+vec2(.5/ownershipSize.x,0.)).rgb*255.+.5);
+                        location+=(high*256.+low-32768.)*ownershipUnit;
+                    }
                     vec3 world=location+cell-vec3(0.,0.,focal);
                     vec3 view=vec3(dot(rowX,world),dot(rowY,world),dot(rowZ,world)+focal);
                     float projectedDepth=mix(focal,view.z,perspective);
@@ -74,10 +89,17 @@ const rainCameraGPU = {
                 #endif
                 uniform sampler2D msdf,raster,mediaImage;uniform vec2 atlasSize,mediaViewport;uniform float pxRange,mediaInfluence;uniform bool mediaLive;varying vec2 uv;varying vec4 tint;varying float glyphFormat,imagePotential;
                 uniform sampler2D pictureAtlas;uniform lowp int mediaCharacters;uniform mediump float mediaDotAmount,mediaShadeCount;uniform vec2 pictureGrid;uniform float pictureInset;
+                uniform sampler2D ownership;uniform bool ownedRain,untiledPass;uniform mediump vec2 ownershipSize;uniform mediump float ownershipCell;varying vec2 ownerLife;
                 varying vec2 pictureLocal;varying vec4 pictureRect;varying float pictureIndex;
                 ${this.pictureVertexSampling?'':pictureSelection}
                 float median3(vec3 v){return max(min(v.r,v.g),min(max(v.r,v.g),v.b));}
                 void main(){float a;
+                    if(ownedRain&&!untiledPass){
+                        vec4 gate=texture2D(ownership,vec2(ownershipCell+.5,ownerLife.x+.5)/ownershipSize);
+                        float born=floor(gate.g*255.+.5)+floor(gate.b*255.+.5)*256.;
+                        float before=mod(born-ownerLife.y+4096.,4096.);
+                        if(gate.r<.5||(gate.a>.5&&before>.5&&before<2048.))discard;
+                    }
                     float strength=0.,mediaCoverage=0.;
                     vec3 ink=tint.rgb;
                     if(mediaLive){
@@ -108,14 +130,18 @@ const rainCameraGPU = {
                     float alpha=tint.a+(1.-tint.a)*clamp(visibility*imagePotential*1.8,0.,1.);
                     if(a*alpha<.003)discard;gl_FragColor=vec4(ink,alpha*a);
                 }`,['corner','point','color','atlasRect','shape','lifetime','delta','format']);
-            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','perspective','smoothMotion','stepped','variety','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
+            this.u=this.uniforms(this.main,['cell','rowX','rowY','rowZ','viewport','range','focal','ageNow','phase','perspective','cloudAmount','smoothMotion','stepped','variety','untiledPass','msdf','raster','atlasSize','pxRange','mediaImage','mediaLive','mediaViewport','mediaInfluence']);
             Object.assign(this.u,this.uniforms(this.main,['pictureAtlas','mediaCharacters','mediaDotAmount','mediaShadeCount','pictureGrid','pictureInset']));
+            Object.assign(this.u,this.uniforms(this.main,['ownership','ownedRain','ownershipSize','ownershipCell']));
+            Object.assign(this.u,this.uniforms(this.main,['ownershipOffsets','displacedRain','ownershipUnit']));
             this.corners=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.corners);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
             this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.capacity*this.stride*4,gl.DYNAMIC_DRAW);this.staging=new Float32Array(this.capacity*this.stride);
             this.msdfTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
             this.rasterTexture=this.texture();this.atlas=document.createElement('canvas');this.atlas.width=this.atlas.height=Math.min(1536,this.maxSize);this.grid=Math.floor(this.atlas.width/96);this.ctx=this.atlas.getContext('2d');this.ctx.font='64px monospace';this.ctx.fillStyle='#fff';this.rasterDirty=true;
             this.mediaTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,255]));this.mediaRevision=-1;
             this.pictureTexture=this.texture();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));this.pictureRevision=-1;
+            this.ownershipTexture=this.texture();gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
+            this.ownershipOffsetsTexture=this.texture();gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));
             const c=document.createElement('canvas');c.width=c.height=1;this.colorCtx=c.getContext('2d',{willReadFrequently:true});this.glyph('�');
             this.fontReady=false;this.loadFont();this.initPost();this.initialized=true;this.invalidate=true;return true;
         }catch(error){this.failed=true;this.hide();console.warn('3D renderer unavailable; using Original View.',error.message);return false;}
@@ -154,10 +180,10 @@ const rainCameraGPU = {
         for(const [index,count,offset]of [[1,4,0],[2,4,4],[3,4,8],[4,4,12],[5,2,16],[6,3,18],[7,1,21]]){gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,count,gl.FLOAT,false,this.stride*4,(start*this.stride+offset)*4);this.instances.vertexAttribDivisorANGLE(index,1);}
     },
     pack(mark,index,target=this.staging,slot=(this.write+index)%this.capacity){
-        const glyph=this.glyph(mark.char),rgb=mark.rgb||(mark.rgb=this.color(mark.color)),v=target;let n=index*this.stride;
-        v[n++]=mark.x;v[n++]=mark.y;v[n++]=mark.z;v[n++]=mark.fontSize;v[n++]=rgb[0];v[n++]=rgb[1];v[n++]=rgb[2];v[n++]=mark.alpha;
-        for(const value of glyph.uv)v[n++]=value;for(const value of glyph.shape)v[n++]=value;v[n++]=mark.frame%4096;v[n++]=mark.trailLength;for(const value of mark.delta)v[n++]=value;
-        v[n]=glyph.mode;
+        const glyph=this.glyph(mark.char),base=mark.rgb||(mark.rgb=this.color(mark.color)),rgb=mark.cloudRGB||base,v=target;let n=index*this.stride;
+        v[n++]=mark.x;v[n++]=mark.y;v[n++]=mark.z;v[n++]=mark.fontSize;v[n++]=rgb[0];v[n++]=rgb[1];v[n++]=rgb[2];v[n++]=mark.cloudAlpha??mark.alpha;
+        for(const value of glyph.uv)v[n++]=value;for(const value of glyph.shape)v[n++]=value;v[n++]=(mark.cloudAge===undefined?mark.frame:rainCamera.frame-1-mark.cloudAge)%4096;v[n++]=mark.cloudAge===undefined?mark.trailLength:-Math.max(1,mark.trailLength);for(const value of mark.delta)v[n++]=mark.cloudAge===undefined?value:0;
+        v[n]=glyph.mode+(mark.cloudInstance?2:0)+4*(mark.ownerRow||0);
     },
     upload(marks){
         if(!marks.length)return 0;const gl=this.gl;gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);for(let i=0;i<marks.length;i++)this.pack(marks[i],i);
@@ -187,6 +213,7 @@ const rainCameraGPU = {
     },
     render(camera,phase=1){
         const started=performance.now();if(!this.init())return;const gl=this.gl,options=window.matrixRainRendering,width=matrixCanvas.width,height=matrixCanvas.height;
+        const owned=window.rainCloud?.ownershipMask?.(camera);
         const age=Math.max(0,camera.frame-1),trails=window.matrixRainTrails;this.expire(age,trails?.enabled!==false);let uploaded=0;
         // Unequal lifetimes leave holes inside a birth batch. Compact occasionally
         // when those dead slots would cost more than an amortized history upload.
@@ -203,6 +230,10 @@ const rainCameraGPU = {
         gl.bindFramebuffer(gl.FRAMEBUFFER,post?this.targets.scene.fbo:null);gl.viewport(0,0,pw,ph);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.useProgram(this.main);
         gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.msdfTexture);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.rasterTexture);
         const u=this.u,r=camera.rotation;gl.uniform1i(u.msdf,0);gl.uniform1i(u.raster,1);gl.uniform2f(u.atlasSize,this.fontInfo?.width||1,this.fontInfo?.height||1);gl.uniform1f(u.pxRange,this.fontInfo?.distanceRange||6);
+        gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,this.ownershipTexture);gl.uniform1i(u.ownership,4);gl.uniform1i(u.ownedRain,!!owned);
+        if(owned){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,owned.width,owned.height,0,gl.RGBA,gl.UNSIGNED_BYTE,owned.data);gl.uniform2f(u.ownershipSize,owned.width,owned.height);}
+        gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,this.ownershipOffsetsTexture);gl.uniform1i(u.ownershipOffsets,5);gl.uniform1i(u.displacedRain,!!owned?.displaced);
+        if(owned?.displaced){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,owned.width*2,owned.height,0,gl.RGBA,gl.UNSIGNED_BYTE,owned.offsets);gl.uniform1f(u.ownershipUnit,owned.unit);}
         const media=window.rainMedia,live=media?.active,frame=live?media.frame:null;
         gl.uniform1i(u.mediaImage,2);gl.uniform1i(u.mediaLive,!!frame);
         gl.uniform2f(u.mediaViewport,pw,ph);gl.uniform1f(u.mediaInfluence,media?.active?media.options.influence/100:0);
@@ -219,10 +250,17 @@ const rainCameraGPU = {
         if(characters?.image&&this.pictureRevision!==characters.revision){gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,characters.image);this.pictureRevision=characters.revision;}
         gl.uniform3f(u.rowX,r[0],r[1],r[2]);gl.uniform3f(u.rowY,r[3],r[4],r[5]);gl.uniform3f(u.rowZ,r[6],r[7],r[8]);gl.uniform2f(u.viewport,width,height);gl.uniform1f(u.focal,rainFocalLength);gl.uniform2f(u.range,camera.near,camera.far);
         gl.uniform1f(u.perspective,camera.continuous?camera.perspective:1);
+        gl.uniform1f(u.cloudAmount,window.rainCloud?.amount||0);
         gl.uniform1f(u.ageNow,age%4096);gl.uniform1f(u.phase,Math.max(0,Math.min(1,phase)));gl.uniform1i(u.smoothMotion,options.smooth!==false);gl.uniform1i(u.stepped,trails?.stepped!==false);gl.uniform1i(u.variety,trails?.enabled!==false);
 
         const start=this.batches[this.batchFirst]?.start||0,first=Math.min(this.used,this.capacity-start);let cells=0;
-        for(let ti=0;ti<camera.tiles.length;ti++){const tile=camera.tiles[ti];if(!this.tileVisible(camera,tile))continue;cells++;gl.uniform3fv(u.cell,tile.offset);if(first){this.bindInstances(start);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,first);}if(first<this.used){this.bindInstances(0);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,this.used-first);}}
+        const draw=offset=>{cells++;gl.uniform3fv(u.cell,offset);if(first){this.bindInstances(start);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,first);}if(first<this.used){this.bindInstances(0);this.instances.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,this.used-first);}};
+        // Historical tails retain their original tiled projection and lifetime.
+        // Only adopted cloud heads are individual, untiled world instances.
+        gl.uniform1i(u.untiledPass,false);
+        const drawTiles=owned?.tiles||camera.tiles;
+        if(camera.marks.some(p=>!p.cloudInstance))for(let i=0;i<drawTiles.length;i++){const tile=drawTiles[i];if(owned?.packed||this.tileVisible(camera,tile)){gl.uniform1f(u.ownershipCell,i);draw(tile.offset);}}
+        if(camera.marks.some(p=>p.cloudInstance)){gl.uniform1i(u.untiledPass,true);draw([0,0,0]);}
         gl.uniform1i(u.mediaLive,false);gl.uniform1f(u.mediaInfluence,0);
         if(post)this.post(glow,contrast,pw,ph);
         this.stats={cells,selectedCells:camera.tiles.length,marks:camera.marks.length,gpuSlots:this.used,instances:cells*this.used,cpuMs:performance.now()-started,uploadedBytes:uploaded,sharp:this.fontReady&&options.sharp!==false,pixelRatio:ratio,size:[pw,ph],glow,phase};
@@ -234,9 +272,9 @@ const rainCameraGPU = {
         this.blur=this.program(vertex,`precision mediump float;varying vec2 uv;uniform sampler2D source;uniform vec2 stepSize;uniform bool threshold;
             vec3 sample(vec2 p){vec3 c=texture2D(source,p).rgb;if(threshold){float m=max(c.r,max(c.g,c.b));c*=max(0.,m-.12)/max(m,.0001);}return c;}
             void main(){vec3 c=sample(uv)*.227027;c+=(sample(uv+stepSize*1.384615)+sample(uv-stepSize*1.384615))*.316216;c+=(sample(uv+stepSize*3.230769)+sample(uv-stepSize*3.230769))*.070270;gl_FragColor=vec4(c,1.);}`,['corner']);
-        this.combine=this.program(vertex,`precision mediump float;varying vec2 uv;uniform sampler2D scene,bloom;uniform float strength,contrast;
-            void main(){vec3 c=texture2D(scene,uv).rgb+texture2D(bloom,uv).rgb*strength*.8;c=pow(max(c,vec3(0.)),vec3(contrast));gl_FragColor=vec4(c,1.);}`,['corner']);
-        this.bu=this.uniforms(this.blur,['source','stepSize','threshold']);this.cu=this.uniforms(this.combine,['scene','bloom','strength','contrast']);
+        this.combine=this.program(vertex,`precision mediump float;varying vec2 uv;uniform sampler2D scene,bloom;uniform float strength,contrast,cloudTone;
+            void main(){vec3 c=texture2D(scene,uv).rgb+texture2D(bloom,uv).rgb*strength*.8;c=pow(max(c,vec3(0.)),vec3(contrast));float peak=max(c.r,max(c.g,c.b));vec3 burn=c*(1.-exp(-peak*3.6))/max(peak,.00001);c=mix(c,burn,cloudTone);gl_FragColor=vec4(c,1.);}`,['corner']);
+        this.bu=this.uniforms(this.blur,['source','stepSize','threshold']);this.cu=this.uniforms(this.combine,['scene','bloom','strength','contrast','cloudTone']);
     },
     target(width,height){
         const gl=this.gl,tex=this.texture(),fbo=gl.createFramebuffer();gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
@@ -254,7 +292,7 @@ const rainCameraGPU = {
         gl.bindFramebuffer(gl.FRAMEBUFFER,t.h.fbo);gl.viewport(0,0,t.h.width,t.h.height);gl.bindTexture(gl.TEXTURE_2D,t.scene.tex);gl.uniform2f(this.bu.stepSize,1/t.h.width,0);gl.uniform1i(this.bu.threshold,1);this.quad();
         gl.bindFramebuffer(gl.FRAMEBUFFER,t.v.fbo);gl.bindTexture(gl.TEXTURE_2D,t.h.tex);gl.uniform2f(this.bu.stepSize,0,1/t.v.height);gl.uniform1i(this.bu.threshold,0);this.quad();
         gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,width,height);gl.useProgram(this.combine);gl.bindTexture(gl.TEXTURE_2D,t.scene.tex);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,t.v.tex);
-        gl.uniform1i(this.cu.scene,0);gl.uniform1i(this.cu.bloom,1);gl.uniform1f(this.cu.strength,strength);gl.uniform1f(this.cu.contrast,contrast);this.quad();
+        gl.uniform1i(this.cu.scene,0);gl.uniform1i(this.cu.bloom,1);gl.uniform1f(this.cu.strength,strength);gl.uniform1f(this.cu.contrast,contrast);gl.uniform1f(this.cu.cloudTone,0);this.quad();
     },
     hide(){if(this.canvas)this.canvas.style.display='none';if(matrixCanvas)matrixCanvas.style.visibility='visible';}
 };

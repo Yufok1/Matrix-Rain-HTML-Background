@@ -10,8 +10,44 @@
     const planar = ['down','right','up','left'];
     const axes = [...planar,'toward','away'];
     const el = id => document.getElementById(id);
-    const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12,preparingFlat:false,families:[]};
+    const state = window.rainAutoScenes = {queue:[],tweens:[],last:null,description:'',refreshTime:0,intervalSeconds:12,preparingFlat:false,families:[],
+        includeCloud:false,cloudPass:null};
     try { const saved=Number(localStorage.getItem('matrixRain.autoSceneInterval'));if(Number.isFinite(saved)&&saved>=.1&&saved<=60)state.intervalSeconds=saved; } catch (_) {}
+    try { state.includeCloud=localStorage.getItem('matrixRain.autoSceneCloud')==='1'; } catch (_) {}
+    const cloudActive = () => !!window.rainCloud?.active;
+    const cloudTransition = () => {
+        const cloud=window.rainCloud;
+        return !!(cloud?.active&&(cloud.returning||(!state.cloudPass&&(cloud.gathering||cloud.entryAge<cloud.entryDuration))));
+    };
+    const directional = step => ['direction','reverse','flow'].includes(step.kind);
+    const cloudStepAllowed = step => state.cloudPass?directional(step)
+        : step.kind!=='tails'&&!(step.kind==='depth'&&!step.value)&&step.kind!=='align viewpoint'&&step.kind!=='prepare flat';
+    // A passage covers an already-chosen direction/flow change. It does not
+    // choose destinations or create a second scene/residence scheduler.
+    // Cloud alone gets at least five seconds before the unchanged rewind.
+    // The ordinary Auto scene interval retains its full 0.1–60 second range.
+    const passageDuration = variation => window.rainAutoPreferences?.cloudSeconds ?? Math.max(5,state.intervalSeconds*.4*variation);
+    state.beginCloudPass = function(step){
+        if(window.rainAutoPreferences?.managesAppearances)return;
+        const cloud=window.rainCloud;
+        if(!this.includeCloud||!directional(step)||cloudActive()||!cloud||cloud.error)return;
+        if(!cloud.engine?.ready){cloud.prepare?.();return;}
+        cloud.choose(true); // Capture the displayed heads BEFORE changing course.
+        if(cloud.active)this.cloudPass={variation:.85+Math.random()*.3};
+    };
+    state.setIncludeCloud = function(enabled,save=true){
+        this.includeCloud=!!enabled;
+        if(save)try{localStorage.setItem('matrixRain.autoSceneCloud',this.includeCloud?'1':'0');}catch(_){}
+        if(this.includeCloud)window.rainCloud?.prepare?.();
+        if(!this.includeCloud&&this.cloudPass&&cloudActive()&&!window.rainCloud.returning)window.rainCloud.choose(false);
+        const input=el('autoSceneCloud');if(input)input.checked=this.includeCloud;
+        window.rainSettingsUI?.refresh();
+    };
+    state.manualCloudChoice = function(){
+        // Manual cloud has no automatic deadline, even with Auto scenes on.
+        this.cloudPass=null;this.reset();
+        window.rainAutoPreferences?.manual?.();
+    };
     state.setInterval = function(seconds,save=true){
         this.intervalSeconds=clamp(Math.round((Number(seconds)||12)*10)/10,.1,60);
         if(save)try{localStorage.setItem('matrixRain.autoSceneInterval',String(this.intervalSeconds));}catch(_){}
@@ -23,12 +59,14 @@
     const spatialKinds = new Set(['hold viewpoint','align viewpoint','prepare flat','depth','camera','flow','density','size','render','tails']);
     const spatialFamilies = ['camera','depth','flow','density','size','render','tails'];
     function nextSpatialFamily() {
+        if(window.rainAutoPreferences)state.families=state.families.filter(window.rainAutoPreferences.familyAllowed);
         if(!state.families.length){
             // Cover the major controls in random order before visiting any again.
             // This prevents long runs of tiny rendering/tail changes.
             state.families=['camera','depth','flow','density','size',pick(['render','tails'])];
-            for(let i=state.families.length-1;i>0;i--){const j=integer(0,i);[state.families[i],state.families[j]]=[state.families[j],state.families[i]];}
-            if(state.families[0]===state.last)[state.families[0],state.families[1]]=[state.families[1],state.families[0]];
+            if(window.rainAutoPreferences)state.families=window.rainAutoPreferences.families(state.families);
+            if(window.rainAutoPreferences?.program?.order!=='sequence')for(let i=state.families.length-1;i>0;i--){const j=integer(0,i);[state.families[i],state.families[j]]=[state.families[j],state.families[i]];}
+            if(state.families.length>1&&state.families[0]===state.last)[state.families[0],state.families[1]]=[state.families[1],state.families[0]];
         }
         return state.families.shift();
     }
@@ -76,22 +114,31 @@
     };
     function limitWork(audio) {
         const c=config(),trails=window.matrixRainTrails;
+        const keeps=key=>window.rainAutoPreferences?.keeps(key);
         let changed=false;
-        const font=clamp(Number(c.fontSize),limits.minimumFont,limits.font);
-        if(Number(c.fontSize)!==font){c.fontSize=font;changed=true;}
-        if(!audio&&Number(c.speed)<limits.minimumDelay){c.speed=limits.minimumDelay;changed=true;}
-        if(trails?.enabled){
+        const fontRange=window.rainAutoPreferences?.range('fontSize',[limits.minimumFont,limits.font])||[limits.minimumFont,limits.font];
+        const font=clamp(Number(c.fontSize),...fontRange);
+        if(!keeps('size')&&Number(c.fontSize)!==font){c.fontSize=font;changed=true;}
+        if(!keeps('speed')&&!audio&&Number(c.speed)<limits.minimumDelay){c.speed=limits.minimumDelay;changed=true;}
+        if(!keeps('trails')&&trails?.enabled&&!cloudActive()){
             const min=clamp(Number(trails.minimum),24,limits.minimumTail),max=clamp(Number(trails.maximum),40,limits.tail);
             if(trails.minimum!==min||trails.maximum!==max){trails.configure(min,max);changed=true;}
         }
         const [,high]=densityRange(),density=Math.min(Number(c.density),high);
-        if(Number(c.density)!==density){c.density=density;recomputeActiveColumnsMask();changed=true;}
+        if(!keeps('density')&&Number(c.density)!==density){c.density=density;recomputeActiveColumnsMask();changed=true;}
         // A pending density tween must not land beyond a budget that has shrunk
         // as projection opens or larger glyphs enter the field.
         for(const t of state.tweens)if(t.object===c&&t.key==='density')t.to=Math.min(t.to,high);
         return changed;
     }
     function tween(object,key,to,duration=3,rounded=false,changed=null,delay=0) {
+        const policy=window.rainAutoPreferences;
+        if(object===config()&&policy){
+            if(policy.keepsField(key))return;
+            let range={fontSize:[14,20],density:densityRange(),speed:[30,80],intensity:[50,90]}[key];
+            if(range&&key!=='density')range=policy.range?.(key,range)||range;
+            if(range)to=policy.numeric(Number(object[key]),Number(to),...range);
+        }
         // DOM sliders (including configuration imports) supply text values.
         state.tweens.push({object,key,from:Number(object[key]),to:Number(to),duration,elapsed:0,rounded,changed,delay});
     }
@@ -100,6 +147,8 @@
         // Flat projection has a much smaller visible volume. Keep its coverage
         // fuller, while multi-axis currents need more breathing room in depth.
         const flow = window.rainAllDirections.mode;
+        const requested=window.rainAutoPreferences?.range('density',null);
+        if(requested){const high=Math.min(requested[1],state.loadBudget().density);return[Math.min(requested[0],high),high];}
         const low = flow==='crossflow'?20:24, high=flow==='crossflow'?32:42;
         const cap=Math.min(Math.round(high+(78-high)*flat),state.loadBudget().density);
         return [Math.min(Math.round(low+(58-low)*flat),cap),cap];
@@ -128,6 +177,13 @@
     }
     state.advance = function(dt) {
         this.syncAudioOwnership();
+        window.rainAutoPreferences?.advance?.(dt);
+        if(this.cloudPass&&!window.rainAutoPreferences?.managesAppearances){
+            const cloud=window.rainCloud;
+            if(!cloudActive())this.cloudPass=null;
+            else if(!cloud.returning&&!window.rainSessionControls?.stopped
+                &&(!this.includeCloud||cloud.entryAge>=passageDuration(this.cloudPass.variation)))cloud.choose(false);
+        }
         if(this.preparingFlat && !rainCamera.enabled && !rainCamera.depthTransition)this.preparingFlat=false;
         const finishingTweens=this.tweens.length>0;
         // Emergency Stop does not advance the presentation clock. Stopping
@@ -139,7 +195,7 @@
             if(t.object[t.key]!==value){t.object[t.key]=value;t.changed?.();}
         }
         this.tweens=this.tweens.filter(t=>t.elapsed<t.duration);
-        if(((typeof autoOrchestratorActive!=='undefined'&&autoOrchestratorActive)||finishingTweens)&&limitWork(this.audioOwned))sync();
+        if(!this.cloudPass&&!cloudTransition()&&((typeof autoOrchestratorActive!=='undefined'&&autoOrchestratorActive)||finishingTweens)&&limitWork(this.audioOwned))sync();
         if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade){
             this.refreshTime+=dt;
             if(this.refreshTime>=.1){this.refreshTime=0;sync();}
@@ -148,14 +204,18 @@
     state.cancelPlan = function(){this.queue.length=0;this.preparingFlat=false;};
     state.reset = function(){this.queue.length=0;this.tweens.length=0;this.last=null;this.preparingFlat=false;this.families.length=0;};
     state.apply = function(step) {
+        if(window.rainAutoPreferences&&!window.rainAutoPreferences.allows(step))return false;
         const audio = this.syncAudioOwnership();
         if(audio && !spatialKinds.has(step.kind))return false;
+        if(cloudTransition())return false;
+        if(cloudActive()&&!cloudStepAllowed(step))return false;
         const c=config(),flow=window.rainAllDirections,render=window.matrixRainRendering,trails=window.matrixRainTrails;
         // Closing only starts from a compatible current heading. Audio then
         // sees enabled=false and keeps its existing four-direction steering.
         // Preparation lets the audio controller choose a planar heading, and
         // existing native paths finish their depth segments before closing.
         if(audio && step.kind==='depth' && !step.value && !canFlattenWithAudio())return false;
+        this.beginCloudPass(step);
         this.description=step.kind;this.last=step.family||step.kind;
         switch(step.kind){
             case 'prepare flat': this.preparingFlat=true;break;
@@ -175,7 +235,7 @@
                 if(step.value)this.preparingFlat=false;
                 rainCamera.transitionDepth(step.value);matchDensity(!step.value);break;
             case 'camera':
-                if(step.value!=='fixed')rainCamera.speeds[step.value]=integer(18,36)/100;
+                if(step.value!=='fixed'&&(!window.rainAutoPreferences||window.rainAutoPreferences.values('camera').length>1))rainCamera.speeds[step.value]=integer(18,36)/100;
                 rainCamera.resumeMotion(step.value);break;
             case 'direction': c.direction=step.value;break;
             case 'reverse': c.direction=step.value;reverseFlowMultiplier*=-1;break;
@@ -186,14 +246,16 @@
             // Choose another readable size rather than a clamped random walk,
             // which can repeatedly land on the same lower boundary.
             case 'size':
-                c.fontSize=clamp(Number(c.fontSize),limits.minimumFont,limits.font);
-                tween(c,'fontSize',separatedTarget(c.fontSize,fontChoices,2),4,true);break;
+                {const [lo,hi]=window.rainAutoPreferences?.range('fontSize',[limits.minimumFont,limits.font])||[limits.minimumFont,limits.font];
+                c.fontSize=clamp(Number(c.fontSize),lo,hi);
+                const choices=window.rainAutoPreferences?[lo,Math.round((lo+hi)/2),hi]:fontChoices;
+                tween(c,'fontSize',separatedTarget(c.fontSize,choices,2),4,true);}break;
             case 'pace':
                 tween(c,'speed',clamp(Number(c.speed)+pick([-10,10]),limits.minimumDelay,80),3,true);
                 tween(c,'intensity',clamp(Number(c.intensity)+pick([-8,8]),50,90),3,true);break;
             case 'palette': {
                 // A nearby hue, shared by both inks. Only new glyphs get it.
-                const turn=pick([-40,-24,24,40])*Math.PI/180;
+                const turn=(window.rainAutoPreferences?.hueTurn()??pick([-40,-24,24,40]))*Math.PI/180;
                 const cos=Math.cos(turn),sin=Math.sin(turn),u=[1,1,1].map(()=>1/Math.sqrt(3));
                 for(const key of ['primaryColor','secondaryColor']){
                     const hex=/^#[0-9a-f]{6}$/i.test(c[key])?c[key]:el(key).value;
@@ -208,7 +270,7 @@
                 el('customCharacters').style.display=step.value==='custom'?'block':'none';
                 c.characterSet=step.value==='custom'?el('customCharacters').value.trim():step.value;break;
             case 'render': {
-                const option=pick(audio?['sharp','glow','contrast']:['sharp','smooth','glow','contrast']);
+                const option=pick(audio||cloudActive()?['sharp','glow','contrast']:['sharp','smooth','glow','contrast']);
                 if(option==='sharp'||option==='smooth'){render[option]=!render[option];if(option==='sharp')rainCameraGPU.invalidate=true;}
                 else tween(render,option,option==='glow'?integer(5,40)/100:integer(85,125)/100);
                 break;
@@ -235,14 +297,26 @@
     };
     state.next = function(requestedFamily) {
         const audio = this.syncAudioOwnership();
+        const policy=window.rainAutoPreferences;
+        if(requestedFamily&&policy&&!policy.familyAllowed(requestedFamily))return false;
         if(audio && requestedFamily && !spatialFamilies.includes(requestedFamily))return false;
-        if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade||(!audio&&window.rainAllDirections.transitioning))return false;
+        if(this.tweens.length||rainCamera.depthTransition||rainCamera.motionFade||cloudTransition()||(!audio&&window.rainAllDirections.transitioning))return false;
         rainCamera.beginContinuousView();
+        // A manually held cloud can keep exploring compatible Auto settings;
+        // do not leave it stuck behind a queued flatten/tail operation.
+        if(cloudActive()&&!this.cloudPass&&this.queue.length&&!cloudStepAllowed(this.queue[0]))this.cancelPlan();
         if(this.queue.length){const applied=this.apply(this.queue[0]);if(applied)this.queue.shift();return applied;}
+        if(policy?.canSchedule&&!policy.canSchedule())return false;
+        if(this.cloudPass&&cloudActive())return false;
         const c=config(),flow=window.rainAllDirections;
-        let family=requestedFamily||(audio?nextSpatialFamily():other(['direction','direction','flow','camera','depth','palette','pace','density','size','characters','pattern','render','tails','reverse'],this.last));
+        let choices=['direction','direction','flow','camera','depth','palette','pace','density','size','characters','pattern','render','tails','reverse'];
+        if(policy)choices=policy.families(choices);
+        let family=requestedFamily||policy?.requiredFamily?.()||(audio?nextSpatialFamily():policy?.program?.order==='sequence'?choices[(choices.indexOf(this.last)+1)%choices.length]:pick(choices.some(v=>v!==this.last)?choices.filter(v=>v!==this.last):choices));
+        if(!family){this.description='Keeping your settings';sync();return true;}
+        if(cloudActive()&&!this.cloudPass&&['depth','tails'].includes(family))return false;
         const add=(kind,value)=>this.queue.push({kind,value,family});
-        if(family==='depth'){
+        const cameraTarget=family==='camera'&&policy?.choose?policy.choose('camera',policy.cameraNow(),policy.available('camera')):null;
+        if(family==='depth'||cameraTarget==='flat'){
             if(rainCamera.enabled){
                 if(audio)add('prepare flat');
                 if(flow.mode!=='directed')add('flow','directed');
@@ -254,9 +328,11 @@
         }else if(family==='camera'){
             if(!rainCamera.enabled)add('depth',true);
             else if(rainCamera.mode!=='fixed')add('hold viewpoint');
-            add('camera',other(['fixed','showcase','corkscrew','gyroscope'],rainCamera.mode));
+            add('camera',cameraTarget||other(['fixed','showcase','corkscrew','gyroscope'],rainCamera.mode));
         }else if(family==='direction'){
-            const choices=rainCamera.enabled?axes:planar,target=other(choices,c.direction);
+            const choices=rainCamera.enabled?axes:planar,allowed=policy?.values?policy.values('direction').filter(v=>choices.includes(v)):choices;
+            if(!allowed.length)return false;
+            const target=policy?.choose?policy.choose('direction',c.direction,allowed):other(choices,c.direction);
             if(target===opposite[c.direction])add('direction',pick(choices.filter(v=>v!==target&&v!==c.direction)));
             add('direction',target);
         }else if(family==='reverse'){
@@ -264,7 +340,7 @@
             add('direction',pick(choices.filter(v=>v!==c.direction&&v!==opposite[c.direction])));
             add('reverse',c.direction);
         }else if(family==='flow'){
-            const target=other(['directed','counterflow','crossflow'],flow.mode);
+            const target=policy?.choose?policy.choose('flow',flow.mode):other(['directed','counterflow','crossflow'],flow.mode);
             if((target==='directed'&&flow.mode==='crossflow')||(target==='crossflow'&&flow.mode==='directed'))add('flow','counterflow');
             add('flow',target);
         }else if(family==='pattern'){
@@ -272,9 +348,10 @@
             if(c.pattern!=='classic'&&target!=='classic')add('pattern','classic');
             add('pattern',target);
         }else if(family==='characters'){
-            const choices=['matrix','binary','hex','symbols','katakana'];
-            if(el('customCharacters').value.trim())choices.push('custom');
-            add('characters',other(choices,el('characterSet').value));
+            const choices=policy?.values?policy.values('characters').filter(v=>v!=='custom'||el('customCharacters').value.trim()):['matrix','binary','hex','symbols','katakana'];
+            if(!policy?.values&&el('customCharacters').value.trim())choices.push('custom');
+            if(!choices.length)return false;
+            add('characters',policy?.choose?policy.choose('characters',el('characterSet').value,choices):other(choices,el('characterSet').value));
         }else if(family==='tails'){
             const trails=window.matrixRainTrails;
             if(Math.random()<.3)add('tails','fade');
@@ -282,6 +359,9 @@
             else if(Math.random()<.5){add('tails','uniform');add('tails','disable');}
             else add('tails','vary');
         }else add(family);
+        // A route may have prerequisites in another family. Never bypass a
+        // kept setting just to reach a random destination.
+        if(policy&&this.queue.some(step=>!policy.allows(step))){this.cancelPlan();return false;}
         const applied=this.apply(this.queue[0]);if(applied)this.queue.shift();return applied;
     };
 })();

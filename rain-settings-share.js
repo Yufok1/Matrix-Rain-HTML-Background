@@ -15,7 +15,8 @@
     function capture(name='') {
         const r=window.matrixRainRendering,t=window.matrixRainTrails;
         return RainSettingsCodec.validate({
-            v:16,name,auto:{interval:window.rainAutoScenes?.intervalSeconds??12},
+            v:window.rainAutoPreferences?17:16,name,auto:{interval:window.rainAutoScenes?.intervalSeconds??12,
+                ...(window.rainAutoPreferences?{program:window.rainAutoPreferences.capture()}: {})},
             rain:{pattern:MatrixRainEngine.rainConfig.pattern,speed:num('rainSpeed'),intensity:num('rainIntensity'),
                 density:num('rainDensity'),fontSize:num('characterSize'),primary:el('primaryColor').value,secondary:el('secondaryColor').value,
                 characterSet:el('characterSet').value,customCharacters:el('customCharacters').value,
@@ -51,6 +52,7 @@
         if (audioReverseEnabled!==s.audio.beatTurns) toggleAudioReverse();
         window.rainAutoScenes?.reset();
         window.rainAutoScenes?.setInterval(s.auto.interval);
+        window.rainAutoPreferences?.applyProgram(s.auto.program||RainSettingsCodec.programDefaults());
         rainCamera.continuous=false;rainCamera.depthTransition=null;rainCamera.motionFade=null;rainCamera.motionGain=1;
         rainCamera.setEnabled(s.camera.enabled,true);
         rainCamera.continuous=s.camera.continuous;rainCamera.perspective=s.camera.enabled?1:0;

@@ -32,6 +32,29 @@
     const legacy14Schema={...legacy12Schema,v:choice(14)};
     const legacy15Schema={...legacy14Schema,v:choice(15),camera:{...legacy14Schema.camera,continuous:bool},auto:{interval:integer(1,60)}};
     const schema={...legacy15Schema,v:choice(16),auto:{interval:number(.1,60)}};
+    const pool=(...keys)=>({change:bool,allowed:Object.fromEntries(keys.map(k=>[k,bool]))});
+    const range=(min,max)=>({change:bool,min:integer(min,max),max:integer(min,max)});
+    const programSchema={order:choice('random','sequence'),
+        appearances:{rain:{enabled:bool,min:number(.1,60),max:number(.1,60)},cloud:{enabled:bool,min:number(.1,60),max:number(.1,60)}},
+        camera:pool('flat','fixed','showcase','corkscrew','gyroscope'),flow:pool('directed','counterflow','crossflow'),
+        characters:pool('katakana','matrix','binary','hex','symbols','custom'),direction:pool('down','right','up','left','toward','away'),
+        size:range(14,25),density:range(1,100),speed:range(21,71),colors:bool,trails:bool,clarity:bool};
+    const schema17={...schema,v:choice(17),auto:{interval:number(.1,60),program:programSchema}};
+    function programDefaults(){
+        const allowed=(keys)=>({change:true,allowed:Object.fromEntries(keys.map(k=>[k,true]))});
+        return {order:'random',appearances:{rain:{enabled:true,min:12,max:12},cloud:{enabled:false,min:5,max:5}},
+            camera:allowed(['flat','fixed','showcase','corkscrew','gyroscope']),flow:allowed(['directed','counterflow','crossflow']),
+            characters:{change:true,allowed:{katakana:true,matrix:true,binary:true,hex:true,symbols:true,custom:false}},
+            direction:allowed(['down','right','up','left','toward','away']),size:{change:true,min:14,max:20},
+            density:{change:true,min:20,max:78},speed:{change:true,min:21,max:71},colors:true,trails:true,clarity:true};
+    }
+    function validateProgram(value){
+        const clean=check(value,programSchema,'auto.program');
+        if(!Object.values(clean.appearances).some(v=>v.enabled))throw Error('Choose at least one appearance.');
+        for(const [key,r]of Object.entries({...clean.appearances,size:clean.size,density:clean.density,speed:clean.speed}))if(r.min>r.max)throw Error('Minimum exceeds maximum: '+key);
+        for(const key of ['camera','flow','characters','direction'])if(!Object.values(clean[key].allowed).some(Boolean))throw Error('Choose at least one '+key+' mode.');
+        return clean;
+    }
     const previewSchema={motion:choice('original','refined'),color:choice('original','cohesive')};
     const legacyWords={maxWords:integer(1,5),bufferMs:integer(0,3500),verticalOrder:choice('down','up')};
     const legacy9Schema={...legacy10Schema,v:choice(9),words:legacyWords};
@@ -85,7 +108,8 @@
         if(settings?.v===13){settings=check(settings,legacy13Schema,'');delete settings.audio.flowFollow;settings.v=14;}
         if(settings?.v===14){settings=check(settings,legacy14Schema,'');settings.camera.continuous=false;settings.auto={interval:12};settings.v=15;}
         if(settings?.v===15){settings=check(settings,legacy15Schema,'');settings.v=16;}
-        const clean=check(settings,schema,'');
+        const clean=check(settings,settings?.v===17?schema17:schema,'');
+        if(clean.v===17)clean.auto.program=validateProgram(clean.auto.program);
         if (clean.trails.minimum>clean.trails.maximum) throw Error('Shortest trail exceeds longest trail.');
         if (clean.audio.brightnessMin>clean.audio.brightnessMax) throw Error('Invalid brightness range.');
         if (clean.rain.characterSet==='custom' && !clean.rain.customCharacters.trim()) throw Error('Custom characters are empty.');
@@ -93,14 +117,14 @@
         return clean;
     }
     function encode(settings) {
-        const bytes=new TextEncoder().encode(JSON.stringify(validate(settings)));
+        const clean=validate(settings),bytes=new TextEncoder().encode(JSON.stringify(clean));
         let binary='';for (const byte of bytes) binary+=String.fromCharCode(byte);
-        return 'MR16.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        return 'MR'+clean.v+'.'+btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     function decode(blob) {
         if (typeof blob!=='string' || blob.length>24000) throw Error('Configuration is too large.');
         const compact=blob.replace(/[\t\r\n ]/g,'');
-        const prefix=compact.match(/^MR(16|15|14|13|12|11|10|[1-9])\./);
+        const prefix=compact.match(/^MR(17|16|15|14|13|12|11|10|[1-9])\./);
         if (!prefix) throw Error('Expected a Matrix Rain configuration.');
         const payload=compact.slice(prefix[0].length);
         if (!payload || payload.length>12000 || !/^[A-Za-z0-9_-]+$/.test(payload) || payload.length%4===1) throw Error('Damaged configuration.');
@@ -117,7 +141,7 @@
         if(rule.kind)return [prefix];
         return Object.entries(rule).flatMap(([key,value])=>paths(value,prefix?prefix+'.'+key:key));
     }
-    const api={encode,decode,validate,paths:()=>paths(),schema};
+    const api={encode,decode,validate,paths:()=>paths(),schema,programDefaults,validateProgram,programSchema};
     if (typeof module!=='undefined' && module.exports) module.exports=api;
     root.RainSettingsCodec=api;
 })(typeof window==='undefined'?globalThis:window);

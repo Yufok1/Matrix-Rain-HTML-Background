@@ -68,7 +68,7 @@ for(const [,attributes,body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/scr
         if(!attributes.includes('module')) new vm.Script(fs.readFileSync(path.join(preview,source),'utf8'));
     } else {new vm.Script(body);scripts++;}
 }
-assert.equal(scripts,1);
+assert.equal(scripts,2); // Startup visibility marker and the main application.
 assert.doesNotMatch(html,/<(select|option)\b/i,'Preserve CEF-safe settings');
 assert.equal((html.match(/window\.wallpaperRegisterAudioListener\(function/g)||[]).length,1);
 assert.doesNotMatch(html,/chooseAudioDirection|audioDirectionState/,'Remove the previous competing selector');

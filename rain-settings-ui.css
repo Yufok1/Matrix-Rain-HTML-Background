@@ -1,4 +1,7 @@
 /* Settings chrome stays quiet; the rain supplies the spectacle. */
+.matrix-modal .auto-keep-buttons { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.matrix-modal #autoCloudDuration { margin-top:12px; }
+.matrix-modal #autoCloudDuration[hidden] { display:none; }
 .matrix-modal { --ink:#d2dbd6; --muted:#8e9f96; --accent:#80b997; --line:#29362f; font:14px/1.45 system-ui,sans-serif; color:var(--ink); background:#0b100ef5; border:1px solid var(--line); border-radius:0!important; box-shadow:0 12px 36px #0008; width:410px; height:min(82dvh,850px); max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); bottom:16px; right:16px; }
 .matrix-modal *, .matrix-modal *::before, .matrix-modal *::after { border-radius:0!important; }
 .matrix-modal .modal-header { background:#101713; color:var(--ink); border-bottom:1px solid var(--line); padding:12px 14px; min-height:54px; }
@@ -86,3 +89,18 @@
 @media(max-width:700px) { .matrix-modal:not(.minimized) { width:calc(100vw - 20px); max-width:none; height:48dvh; max-height:calc(100dvh - 20px); bottom:max(10px,env(safe-area-inset-bottom)); right:10px; } .matrix-modal button { min-height:44px; } .matrix-modal input[type=text], .matrix-modal textarea { font-size:16px!important; } .matrix-modal .modal-content { padding:0 12px 12px; } }
 @media(max-width:700px) { .matrix-modal .settings-header-actions button { min-height:44px; } .matrix-modal .full-header-text { font-size:12px; letter-spacing:.08em; } }
 @media(max-height:500px) and (min-width:701px) { .matrix-modal:not(.minimized) { width:360px; height:calc(100dvh - 24px); bottom:12px; right:12px; } }
+.matrix-modal .auto-program fieldset { border:0; margin:0; padding:0; min-width:0; }
+.matrix-modal .auto-program legend { font-size:13px; color:var(--ink); margin:0 0 10px; }
+.matrix-modal .auto-program label:has(input[type=radio]) { display:flex; align-items:center; gap:8px; }
+.matrix-modal .auto-program input[type=radio] { accent-color:var(--accent); margin:0; width:16px; height:16px; flex-shrink:0; }
+.matrix-modal .auto-program input[type=number] { width:100%; min-width:0; box-sizing:border-box; padding:7px; margin-top:5px; color:var(--ink); background:#060b08; border:1px solid var(--line); font:14px monospace; }
+.matrix-modal .auto-program input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.matrix-modal .auto-program fieldset:disabled { opacity:.5; }
+.matrix-modal .auto-program .auto-pool { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.matrix-modal .auto-choice { display:grid; gap:9px; }
+.matrix-modal .auto-range { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.matrix-modal .auto-appearance { display:grid; gap:9px; padding:12px; margin-bottom:8px; border:1px solid var(--line); border-radius:6px; }
+.matrix-modal .auto-program-summary { margin:0; color:var(--ink)!important; }
+.matrix-modal .auto-program-error { margin:0; color:#ffb7a4!important; }
+.matrix-modal .auto-program-error:empty { display:none; }
+.matrix-modal .auto-program [hidden] { display:none!important; }

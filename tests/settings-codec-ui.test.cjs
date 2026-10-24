@@ -12,7 +12,7 @@ const oneSecond=structuredClone(fixture);oneSecond.auto.interval=1;
 assert.deepEqual(codec.decode(codec.encode(oneSecond)),oneSecond,'One-second timing survives export/import');
 for(const interval of [.1,.5,1.5]){
     const rapid=structuredClone(fixture);rapid.auto.interval=interval;
-    assert.deepEqual(codec.decode(codec.encode(rapid)),rapid,'Fractional timing survives local preview export/import');
+    assert.deepEqual(codec.decode(codec.encode(rapid)),rapid,'Fractional timing survives export/import');
 }
 for(const interval of [0,.09,61])assert.throws(()=>codec.validate({...fixture,auto:{interval}}),'Preview timing remains between 0.1 and sixty seconds');
 assert.match(require('node:fs').readFileSync('rain-settings-ui.js','utf8'),/id="autoSceneInterval" type="range" min="0.1" max="60" step="0.1"/);
